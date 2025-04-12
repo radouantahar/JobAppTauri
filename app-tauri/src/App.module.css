@@ -1,0 +1,34 @@
+.rootLayout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rootLayout {
+    padding: 1rem;
+  }
+}
+
+/* Animation for loading states */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fadeIn {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Dark mode adjustments */
+[data-mantine-color-scheme="dark"] .rootLayout {
+  background-color: var(--mantine-color-dark-8);
+}
+
+/* Focus states for accessibility */
+:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}

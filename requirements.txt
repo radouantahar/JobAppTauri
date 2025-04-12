@@ -1,0 +1,85 @@
+# Requirements pour l'application d'automatisation de recherche d'emploi
+# Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+# .\venv_310\Scripts\activate
+
+# Dépendances principales
+python-jobspy
+pdfminer.six==20181108
+spacy==3.7.2
+requests==2.31.0
+beautifulsoup4
+selenium==4.15.2
+webdriver-manager==4.0.1
+numpy
+pandas==2.1.3
+scikit-learn==1.3.2
+sentence-transformers==2.2.2
+python-dotenv==1.0.0
+fastapi==0.104.1
+uvicorn==0.24.0
+jinja2==3.1.2
+python-multipart==0.0.6
+aiofiles==23.2.1
+sqlalchemy==2.0.23
+sqlite3-api
+pytz==2023.3.post1
+tqdm==4.66.1
+colorama==0.4.6
+loguru==0.7.2
+python-docx==1.0.1
+fpdf2==2.7.6
+# difflib36
+cydifflib
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.23.0
+nltk==3.8.1
+transformers==4.35.2
+ollama
+httpx
+tiktoken==0.5.1
+pytest==7.4.3
+pytest-cov==4.1.0
+python-docx
+
+# Dépendances pour le scraping de Google Maps
+playwright==1.40.0
+undetected-chromedriver==3.5.3
+
+# Dépendances pour l'intégration NocoDB
+# nocodb-sdk
+aiohttp
+
+# Dépendances pour le traitement du langage naturel et l'IA
+torch==2.1.1
+accelerate==0.24.1
+bitsandbytes==0.41.1
+langchain==0.0.350
+openai==1.3.0
+anthropic==0.7.7
+chromadb
+faiss-cpu==1.7.4
+
+# Dépendances pour la gestion des données géographiques
+geopy==2.4.0
+geocoder==1.38.1
+
+# Dépendances pour le traitement des documents
+pypdf2==3.0.1
+docx2txt==0.8
+# textract
+
+# Dépendances pour le développement et le débogage
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pylint==3.0.2
+ipython==8.18.1
+
+# Modèles spaCy
+# Exécuter après l'installation des dépendances:
+# python -m spacy download fr_core_news_md
+# python -m spacy download en_core_web_md
+
+# Dépendances pour le développement Tauri
+# Ces dépendances sont gérées par npm dans le projet Tauri
+# et ne sont pas installées via pip

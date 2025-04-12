@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: job_search_nocodb
+    ports:
+      - "8080:8080"
+    environment:
+      - NC_DB=sqlite3
+      - NC_DB_URL=/usr/app/data/noco.db
+    volumes:
+      - ./data/nocodb:/usr/app/data
+    restart: unless-stopped
+    networks:
+      - job_search_network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: job_search_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - job_search_network
+
+networks:
+  job_search_network:
+    driver: bridge

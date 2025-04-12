@@ -1,0 +1,147 @@
+u es une IA experte en développement d’applications locales complètes avec des outils open source. Tu vas concevoir une solution locale pour automatiser la recherche d'emploi d'un utilisateur. Voici les exigences précises du projet :
+
+🔧 Objectif général :
+
+Créer une application desktop locale (via Electron, Tauri ou équivalent) avec une interface utilisateur en mode Kanban (intégration avec NocoDB ou UI équivalente) pour gérer la recherche d’emploi.
+Tous les traitements doivent se faire localement : pas d’appel à des API externes, uniquement du scraping et du traitement offline avec des outils open source, installables en local via Docker si nécessaire.
+
+🧠 Connaissance du profil utilisateur :
+
+Le système connaît le profil de l’utilisateur via un fichier de configuration YAML ou JSON (ex. : préférences, localisation, secteurs visés, mobilité géographique, types de contrats souhaités).
+
+Le système extrait automatiquement les données du CV au format PDF (parsing sémantique + structuration) pour en extraire : expériences, compétences, formations, soft skills, etc.
+
+🔎 Scraping intelligent & recherche d’offres :
+
+Génère automatiquement des mots-clés de recherche d’emploi à partir du profil et du CV (extraction sémantique).
+
+Scrape les sites suivants de manière intelligente :
+
+LinkedIn
+
+Indeed
+
+Apec
+
+(et tout autre site français populaire si pertinent)
+
+Utilise Playwright ou Selenium pour le scraping dynamique. Les résultats doivent être stockés dans une base locale (SQLite ou équivalent).
+
+🎯 Matching, scoring et filtrage :
+
+Calcule un score de matching (de 0 à 100) basé sur la similarité entre l’annonce et le profil de l’utilisateur :
+
+Matching sémantique via embeddings (LLM local ou Sentence Transformers)
+
+Pondération basée sur les critères de préférence utilisateur (distance, niveau d'expérience, salaire, etc.)
+
+Filtrage avancé des offres :
+
+Temps de transport : Pour chaque offre, estime le temps de transport entre le domicile de l'utilisateur et le lieu de l'offre (via géolocalisation et calcul d'itinéraire). Si le temps de transport est supérieur à 1 heure, l'offre est automatiquement filtrée.
+
+Salaire : Si le salaire est mentionné dans l'offre et qu'il est inférieur à 50K€, filtre l'offre. Seules les offres avec un salaire égal ou supérieur à 50K€ ou sans information salariale explicite sont conservées.
+
+🧩 Interface Kanban - NocoDB :
+
+Les annonces sont affichées dans une interface type Kanban, avec les colonnes suivantes :
+
+Backlog
+
+To Be Reviewed
+
+For Application
+
+Applied
+
+Rejected by me
+
+Negative Answer
+
+Chaque carte doit contenir :
+
+L’annonce (titre, entreprise, lieu, lien, description complète, date)
+
+Le score de matching
+
+Les tags métiers / compétences
+
+Champs personnalisables (notes, intérêt, deadline, etc.)
+
+📄 Génération de contenus automatisée :
+
+Pour chaque carte déplacée vers For Application :
+
+Génère une lettre de motivation personnalisée en .docx, basée sur :
+
+L’annonce
+
+Le poste et l’entreprise
+
+Le profil utilisateur et son parcours
+
+Génère un CV personnalisé avec des recommandations d'amélioration et crée un nouveau fichier .docx prêt à l’envoi.
+
+Utilise un LLM local (ex : LLaMA 3.2 via Ollama) et des templates de prompt prédéfinis pour ces tâches.
+
+📦 Contraintes techniques & architecture attendue :
+
+Tout est local, sans appel d’API externes.
+
+Utilise uniquement des outils open source (Python, Node.js, Docker, Ollama, NocoDB, SQLite…).
+
+L’interface peut être développée avec :
+
+Tauri (Rust + frontend web)
+
+Electron.js
+
+Ou une webapp locale (ex. Flask + React/Tailwind)
+
+Propose une architecture modulaire, facilement extensible et maintenable.
+
+📈 Bonus et améliorations supplémentaires :
+
+Mise en place d’un scheduler local (ex. avec cron) pour lancer les scrapes à intervalles réguliers (quotidiens ou hebdomadaires).
+
+Intégration d’une boucle de feedback pour améliorer le scoring : lorsque des offres sont rejetées, possibilité d’entraîner un modèle local pour affiner les critères de matching.
+
+Intégration possible de Haystack + Qdrant pour des recherches sémantiques avancées dans la base d’annonces.
+
+Implémentation d’un plugin de scraping configurable par YAML pour ajouter de nouveaux sites facilement.
+
+Génération d’un journal de bord exportable en PDF pour suivre l’historique des candidatures et les statistiques de matching.
+
+✅ Livrables attendus :
+
+Schéma d’architecture détaillé
+
+Stack technique et scripts de setup Docker
+
+Design du schéma de données
+
+Code ou pseudo-code des modules clés
+
+JSON de la structure NocoDB (si utilisé)
+
+Templates pour les prompts de lettre de motivation et CV
+
+Instructions supplémentaires :
+
+Documente chaque étape du développement et ajoute des commentaires détaillés.
+
+Fournis des idées et propositions d’amélioration à chaque module (scraping, matching, filtrage, interface Kanban, génération de documents).
+
+Assure la modularité et la possibilité d’étendre ou d’intégrer facilement d’autres fonctionnalités ultérieurement.
+
+💡 Propositions d’amélioration supplémentaires :
+Scheduler local pour automatiser le scraping à des intervalles réguliers.
+
+Feedback loop : Utilisation des retours (ex. refus, taux de conversion) pour ajuster automatiquement le scoring.
+
+Recherche sémantique avancée en intégrant Haystack + Qdrant pour des filtres plus précis.
+
+Plugin configurable : Permettre l'ajout de nouveaux sites de scraping via un fichier de configuration YAML.
+
+Tableau de bord analytique pour visualiser les KPIs (nombre d'offres scrappées, taux de matching, taux de conversion des candidatures, etc.).
+
+CLI pour lancer manuellement ou planifier des actions spécifiques (scraping, scoring, génération de documents).

@@ -1,0 +1,51 @@
+Vous êtes un expert en rédaction professionnelle chargé de créer une lettre de motivation personnalisée. Utilisez les informations suivantes pour générer une lettre de motivation adaptée à l'offre d'emploi spécifique.
+
+# INSTRUCTIONS
+
+Créez une lettre de motivation convaincante qui établit clairement le lien entre le profil du candidat et le poste visé. La lettre doit être professionnelle, personnalisée et démontrer une compréhension approfondie de l'entreprise et du poste.
+
+## FORMAT
+
+- Respectez le format standard d'une lettre professionnelle
+- Limitez la lettre à une page maximum (environ 300-400 mots)
+- Utilisez un ton professionnel mais engageant
+- Structurez en 3-4 paragraphes bien définis
+- Personnalisez pour l'entreprise et le poste spécifiques
+
+## STRUCTURE RECOMMANDÉE
+
+1. **Introduction** (1 paragraphe)
+   - Mentionnez le poste visé et comment vous avez découvert l'offre
+   - Exprimez votre intérêt pour le poste et l'entreprise
+   - Incluez une phrase d'accroche qui résume votre adéquation
+
+2. **Corps** (1-2 paragraphes)
+   - Mettez en avant 2-3 réalisations ou compétences directement pertinentes
+   - Établissez des liens clairs entre vos expériences et les besoins de l'entreprise
+   - Démontrez votre connaissance de l'entreprise et du secteur
+   - Expliquez pourquoi vous êtes un excellent candidat pour ce poste spécifique
+
+3. **Conclusion** (1 paragraphe)
+   - Réaffirmez votre intérêt et votre adéquation
+   - Proposez une action concrète (entretien, appel)
+   - Remerciez le recruteur pour sa considération
+   - Formule de politesse adaptée
+
+## PERSONNALISATION
+
+- Adressez la lettre à une personne spécifique si possible
+- Mentionnez le nom de l'entreprise au moins 2 fois
+- Référencez des aspects spécifiques de l'entreprise (valeurs, projets, actualités)
+- Utilisez les mots-clés de l'offre d'emploi
+- Adaptez le ton à la culture de l'entreprise
+
+# DONNÉES DU CANDIDAT
+{{user_profile}}
+
+# OFFRE D'EMPLOI CIBLE
+{{job_details}}
+
+# INFORMATIONS SUR L'ENTREPRISE
+{{company_info}}
+
+Générez maintenant une lettre de motivation professionnelle et personnalisée pour cette offre d'emploi.
