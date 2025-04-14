@@ -11,6 +11,8 @@ La base de données est conçue pour stocker les informations suivantes :
 - Données de transport
 - Suivi des candidatures
 - Données d'analyse et de scoring
+- Configuration de l'interface Tauri
+- Historique des actions utilisateur
 
 ## Schéma Entité-Relation
 
@@ -200,6 +202,7 @@ Stocke les informations de transport entre le domicile de l'utilisateur et le li
 CREATE TABLE transport_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL,
+    location_id INTEGER NOT NULL,  -- référence à user_locations
     travel_time INTEGER,  -- en minutes
     travel_mode TEXT,  -- car, public_transport, walking, etc.
     distance REAL,  -- en km
@@ -207,7 +210,8 @@ CREATE TABLE transport_data (
     scrape_url TEXT,  -- URL Google Maps utilisée
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
-    UNIQUE (job_id, travel_mode)
+    FOREIGN KEY (location_id) REFERENCES user_locations(id) ON DELETE CASCADE,
+    UNIQUE (job_id, location_id, travel_mode)
 );
 ```
 
@@ -315,7 +319,158 @@ INSERT INTO system_settings (key, value, description) VALUES
 ('scraping_schedule', '0 0 * * *', 'Planification CRON pour le scraping automatique'),
 ('max_scraping_results', '100', 'Nombre maximum de résultats par source'),
 ('ollama_model', 'llama3:8b', 'Modèle Ollama à utiliser'),
-('nocodb_url', 'http://localhost:8080', 'URL de l\'instance NocoDB');
+('nocodb_url', 'http://localhost:8080', 'URL de l\'instance NocoDB'),
+('tauri_theme', 'system', 'Thème de l\'interface Tauri'),
+('tauri_window_size', '{"width": 1200, "height": 800}', 'Taille de la fenêtre Tauri'),
+('tauri_window_position', '{"x": 100, "y": 100}', 'Position de la fenêtre Tauri');
+```
+
+### Table: `duplicate_jobs`
+
+Stocke les informations sur les offres d'emploi identifiées comme doublons.
+
+```sql
+CREATE TABLE duplicate_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    original_job_id INTEGER NOT NULL,
+    duplicate_job_id INTEGER NOT NULL,
+    similarity_score REAL NOT NULL,
+    match_type TEXT NOT NULL,  -- url, content, title
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (original_job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (duplicate_job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    UNIQUE (original_job_id, duplicate_job_id)
+);
+```
+
+### Table: `user_locations`
+
+Stocke les adresses de domicile de l'utilisateur.
+
+```sql
+CREATE TABLE user_locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    address TEXT NOT NULL,
+    is_primary BOOLEAN DEFAULT TRUE,
+    latitude REAL,
+    longitude REAL,
+    transport_preferences TEXT,  -- stocké en JSON
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id) ON DELETE CASCADE
+);
+```
+
+### Table: `search_preferences`
+
+Stocke les préférences de recherche de l'utilisateur.
+
+```sql
+CREATE TABLE search_preferences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    keywords TEXT NOT NULL,  -- stocké en JSON
+    weightings TEXT NOT NULL,  -- stocké en JSON
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id) ON DELETE CASCADE
+);
+```
+
+### Table: `ai_suggestions`
+
+Stocke les suggestions générées par l'IA.
+
+```sql
+CREATE TABLE ai_suggestions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    suggestion_type TEXT NOT NULL,  -- keywords, companies, positions
+    content TEXT NOT NULL,  -- stocké en JSON
+    confidence_score REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id) ON DELETE CASCADE
+);
+```
+
+### Table: `kanban_feedback`
+
+Stocke les analyses du feedback du tableau Kanban.
+
+```sql
+CREATE TABLE kanban_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    job_id INTEGER NOT NULL,
+    feedback_type TEXT NOT NULL,  -- accepted, rejected, ignored
+    analysis TEXT,  -- stocké en JSON
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+);
+```
+
+### Table: `llm_api_config`
+
+Stocke la configuration des API LLM.
+
+```sql
+CREATE TABLE llm_api_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,  -- ollama, openai, etc.
+    model_name TEXT NOT NULL,
+    api_key TEXT,
+    base_url TEXT,
+    max_tokens INTEGER,
+    temperature REAL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (provider, model_name)
+);
+```
+
+### Table: `tauri_settings`
+
+Stocke les paramètres spécifiques à l'interface Tauri.
+
+```sql
+CREATE TABLE tauri_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL,
+    value TEXT,  -- stocké en JSON
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (key)
+);
+
+-- Insertion des paramètres par défaut
+INSERT INTO tauri_settings (key, value, description) VALUES
+('window_state', '{"width": 1200, "height": 800, "x": 100, "y": 100}', 'État de la fenêtre Tauri'),
+('theme', 'system', 'Thème de l\'interface'),
+('notifications', '{"enabled": true, "sound": true}', 'Paramètres de notification'),
+('shortcuts', '{"search": "Ctrl+K", "new_job": "Ctrl+N"}', 'Raccourcis clavier');
+```
+
+### Table: `user_actions`
+
+Stocke l'historique des actions de l'utilisateur.
+
+```sql
+CREATE TABLE user_actions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    action_type TEXT NOT NULL,  -- search, apply, reject, etc.
+    target_id INTEGER,  -- id de l\'offre, de la candidature, etc.
+    target_type TEXT,  -- job, application, etc.
+    details TEXT,  -- stocké en JSON
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user_profile(id) ON DELETE CASCADE
+);
 ```
 
 ## Indexes
@@ -336,10 +491,27 @@ CREATE INDEX idx_job_skills_name ON job_skills(skill_name);
 
 -- Index sur les données de transport
 CREATE INDEX idx_transport_travel_time ON transport_data(travel_time);
+CREATE INDEX idx_transport_location ON transport_data(location_id);
 
 -- Index sur les candidatures
 CREATE INDEX idx_applications_status ON applications(status);
 CREATE INDEX idx_applications_applied_date ON applications(applied_date);
+
+-- Index sur les doublons
+CREATE INDEX idx_duplicate_jobs_similarity ON duplicate_jobs(similarity_score);
+
+-- Index sur les préférences de recherche
+CREATE INDEX idx_search_preferences_user ON search_preferences(user_id, is_active);
+
+-- Index sur les suggestions IA
+CREATE INDEX idx_ai_suggestions_user ON ai_suggestions(user_id, suggestion_type);
+
+-- Index sur le feedback Kanban
+CREATE INDEX idx_kanban_feedback_user ON kanban_feedback(user_id, feedback_type);
+
+-- Index sur les actions utilisateur
+CREATE INDEX idx_user_actions_type ON user_actions(action_type);
+CREATE INDEX idx_user_actions_date ON user_actions(created_at);
 ```
 
 ## Triggers
@@ -383,6 +555,28 @@ BEGIN
                   FROM kanban_columns WHERE id = NEW.column_id)
     WHERE id = NEW.job_id;
 END;
+
+-- Mise à jour automatique du feedback Kanban
+CREATE TRIGGER update_kanban_feedback
+AFTER UPDATE OF status ON applications
+BEGIN
+    INSERT INTO kanban_feedback (user_id, job_id, feedback_type)
+    VALUES (NEW.user_id, NEW.job_id, 
+            CASE 
+                WHEN NEW.status = 'rejected' THEN 'rejected'
+                WHEN NEW.status = 'interview' THEN 'accepted'
+                ELSE NULL
+            END);
+END;
+
+-- Enregistrement automatique des actions utilisateur
+CREATE TRIGGER log_user_action
+AFTER INSERT ON applications
+BEGIN
+    INSERT INTO user_actions (user_id, action_type, target_id, target_type, details)
+    VALUES (NEW.user_id, 'apply', NEW.job_id, 'job', 
+            json_object('status', NEW.status, 'date', NEW.applied_date));
+END;
 ```
 
 ## Vues
@@ -407,13 +601,16 @@ CREATE VIEW view_jobs_with_transport AS
 SELECT 
     j.id, j.title, j.location, j.matching_score, j.status,
     c.name as company_name,
-    t.travel_time, t.travel_mode, t.distance
+    t.travel_time, t.travel_mode, t.distance,
+    l.address as home_address
 FROM 
     jobs j
 LEFT JOIN 
     companies c ON j.company_id = c.id
 LEFT JOIN 
     transport_data t ON j.id = t.job_id
+LEFT JOIN
+    user_locations l ON t.location_id = l.id
 WHERE 
     t.travel_mode = 'public_transport' OR t.travel_mode IS NULL;
 
@@ -450,6 +647,45 @@ LEFT JOIN
     companies c ON j.company_id = c.id
 ORDER BY 
     col.position, kc.position;
+
+-- Vue des doublons d'offres
+CREATE VIEW view_duplicate_jobs AS
+SELECT 
+    d.id as duplicate_id,
+    j1.id as original_job_id, j1.title as original_title, j1.url as original_url,
+    j2.id as duplicate_job_id, j2.title as duplicate_title, j2.url as duplicate_url,
+    d.similarity_score, d.match_type, d.created_at
+FROM 
+    duplicate_jobs d
+JOIN 
+    jobs j1 ON d.original_job_id = j1.id
+JOIN 
+    jobs j2 ON d.duplicate_job_id = j2.id;
+
+-- Vue des suggestions IA
+CREATE VIEW view_ai_suggestions AS
+SELECT 
+    s.id, s.user_id, s.suggestion_type,
+    u.name as user_name,
+    s.content, s.confidence_score, s.created_at
+FROM 
+    ai_suggestions s
+JOIN 
+    user_profile u ON s.user_id = u.id;
+
+-- Vue des actions utilisateur récentes
+CREATE VIEW view_recent_user_actions AS
+SELECT 
+    ua.id, ua.action_type, ua.target_type,
+    u.name as user_name,
+    ua.details, ua.created_at
+FROM 
+    user_actions ua
+JOIN 
+    user_profile u ON ua.user_id = u.id
+ORDER BY 
+    ua.created_at DESC
+LIMIT 100;
 ```
 
 ## Migrations
@@ -462,6 +698,8 @@ Les migrations de la base de données seront gérées avec Alembic, ce qui perme
 - Les vues sont utilisées pour simplifier les requêtes complexes
 - Les triggers automatisent les opérations courantes et maintiennent l'intégrité des données
 - Les contraintes d'unicité évitent les doublons dans les données
+- Les tables sont optimisées pour les opérations de lecture fréquentes
+- Les données JSON sont utilisées judicieusement pour les champs flexibles
 
 ## Intégration avec NocoDB
 

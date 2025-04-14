@@ -19,17 +19,22 @@ L'application est une solution desktop locale qui automatise et optimise le proc
    - Migration du code vers la nouvelle architecture
    - Amélioration des performances
 
-2. **Automatisation de la Recherche**
+2. **Implémentation des Modules Manquants**
+   - Développement des modules de base
+   - Implémentation des modules d'analyse
+   - Intégration des modules avancés
+
+3. **Automatisation de la Recherche**
    - Optimisation du scraping existant
    - Amélioration du filtrage et du tri
    - Détection des doublons
 
-3. **Analyse et Matching**
+4. **Analyse et Matching**
    - Optimisation de l'analyse sémantique
    - Amélioration du matching avec le profil
    - Refonte du système de scoring
 
-4. **Gestion des Candidatures**
+5. **Gestion des Candidatures**
    - Interface Kanban améliorée
    - Génération de documents optimisée
    - Suivi des temps de trajet
@@ -61,6 +66,19 @@ L'application est une solution desktop locale qui automatise et optimise le proc
    - Templates Jinja2
    - python-docx pour les documents
 
+### Modules à Implémenter
+1. **Modules de Base**
+   - `duplicate_detector.py` : Détection des offres similaires
+   - `location_manager.py` : Gestion des domiciles multiples
+
+2. **Modules d'Analyse**
+   - `search_preferences.py` : Gestion des préférences de recherche
+   - `ai_suggestions.py` : Suggestions basées sur le CV
+
+3. **Modules Avancés**
+   - `kanban_feedback.py` : Analyse du feedback Kanban
+   - `llm_api_manager.py` : Gestion des API LLM
+
 ### Infrastructure (existante)
 - **Docker**: NocoDB, Ollama
 - **Scheduler**: APScheduler
@@ -68,22 +86,38 @@ L'application est une solution desktop locale qui automatise et optimise le proc
 
 ## Planning de Développement
 
-### Phase 1: Migration (2 semaines)
+### Phase 1: Migration et Documentation (2 semaines)
 - Mise à jour de la documentation
 - Migration du code existant
 - Tests de compatibilité
 
-### Phase 2: Optimisation (2 semaines)
+### Phase 2: Implémentation des Modules Manquants (3 semaines)
+1. **Semaine 1: Modules de Base**
+   - Implémentation de `duplicate_detector.py`
+   - Implémentation de `location_manager.py`
+   - Tests unitaires et intégration
+
+2. **Semaine 2: Modules d'Analyse**
+   - Implémentation de `search_preferences.py`
+   - Implémentation de `ai_suggestions.py`
+   - Tests unitaires et intégration
+
+3. **Semaine 3: Modules Avancés**
+   - Implémentation de `kanban_feedback.py`
+   - Implémentation de `llm_api_manager.py`
+   - Tests unitaires et intégration
+
+### Phase 3: Optimisation (2 semaines)
 - Amélioration des performances
 - Refonte des modules critiques
 - Tests de performance
 
-### Phase 3: Interface (2 semaines)
+### Phase 4: Interface (2 semaines)
 - Développement de l'UI avec Tauri
 - Intégration des modules migrés
 - Tests utilisateurs
 
-### Phase 4: Finalisation (1 semaine)
+### Phase 5: Finalisation (1 semaine)
 - Tests finaux
 - Documentation finale
 - Préparation au déploiement
@@ -106,11 +140,15 @@ L'application est une solution desktop locale qui automatise et optimise le proc
 - **Migration complexe**: Tests approfondis et documentation détaillée
 - **Performance LLM**: Optimisation des modèles et mise en cache
 - **Compatibilité**: Tests multiplateformes réguliers
+- **Intégration des nouveaux modules**: Tests d'intégration rigoureux
+- **Performance des modules d'analyse**: Profilage et optimisation continue
 
 ### Risques Projet
 - **Délais**: Planning flexible avec priorités claires
 - **Qualité**: Revue de code et tests automatisés
 - **Utilisabilité**: Tests utilisateurs précoces
+- **Complexité des nouveaux modules**: Documentation détaillée et revues de code
+- **Dépendances entre modules**: Planification claire des interfaces
 
 ## Suivi et Métriques
 
@@ -119,8 +157,12 @@ L'application est une solution desktop locale qui automatise et optimise le proc
 - Précision du matching
 - Temps de génération des documents
 - Satisfaction utilisateur
+- Performance des nouveaux modules
+- Couverture des tests
 
 ### Revue Hebdomadaire
 - Avancement des tâches
 - Résolution des problèmes
-- Ajustement du planning 
+- Ajustement du planning
+- Revue des métriques
+- Évaluation des risques 

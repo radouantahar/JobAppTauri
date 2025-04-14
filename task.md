@@ -12,7 +12,65 @@
   - [ ] Vérifier les dépendances
   - [ ] Documenter les fonctionnalités existantes
 
-## 2. Migration du Backend
+## 2. Implémentation des Modules Manquants
+
+### Semaine 1: Modules de Base
+- [ ] Implémentation de duplicate_detector.py
+  - [ ] Développer la détection par URL
+  - [ ] Implémenter l'analyse de similarité textuelle
+  - [ ] Créer la fusion des informations complémentaires
+  - [ ] Ajouter l'historique des doublons
+  - [ ] Implémenter les statistiques sur les sources
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+- [ ] Implémentation de location_manager.py
+  - [ ] Développer le stockage des adresses
+  - [ ] Implémenter le géocodage
+  - [ ] Ajouter la validation des adresses
+  - [ ] Créer la gestion des préférences de transport
+  - [ ] Implémenter le calcul des zones accessibles
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+### Semaine 2: Modules d'Analyse
+- [ ] Implémentation de search_preferences.py
+  - [ ] Développer la gestion des catégories de mots-clés
+  - [ ] Implémenter la pondération personnalisable
+  - [ ] Ajouter le support des ensembles de préférences multiples
+  - [ ] Créer l'historique des recherches
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+- [ ] Implémentation de ai_suggestions.py
+  - [ ] Développer l'analyse du CV avec LLM
+  - [ ] Implémenter les suggestions de mots-clés
+  - [ ] Ajouter l'identification des postes adaptés
+  - [ ] Créer les recommandations d'entreprises
+  - [ ] Implémenter l'optimisation des critères
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+### Semaine 3: Modules Avancés
+- [ ] Implémentation de kanban_feedback.py
+  - [ ] Développer l'analyse des offres acceptées/refusées
+  - [ ] Implémenter l'extraction de patterns
+  - [ ] Ajouter l'ajustement automatique des pondérations
+  - [ ] Créer l'optimisation des mots-clés
+  - [ ] Implémenter l'amélioration continue du scoring
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+- [ ] Implémentation de llm_api_manager.py
+  - [ ] Développer le support d'Ollama local
+  - [ ] Implémenter l'intégration d'API alternatives
+  - [ ] Ajouter la gestion des coûts et quotas
+  - [ ] Créer le basculement automatique
+  - [ ] Implémenter le suivi de l'utilisation
+  - [ ] Écrire les tests unitaires
+  - [ ] Documenter le module
+
+## 3. Migration du Backend
 - [ ] Migration de la base de données
   - [ ] Vérifier la compatibilité du schéma existant
   - [ ] Mettre à jour les migrations SQLAlchemy
@@ -25,7 +83,7 @@
   - [ ] Mettre à jour content_generator.py
   - [ ] Optimiser nocodb_integration.py
 
-## 3. Infrastructure
+## 4. Infrastructure
 - [ ] Mise à jour de l'environnement Docker
   - [ ] Vérifier la configuration existante
   - [ ] Optimiser les conteneurs
@@ -35,7 +93,7 @@
   - [ ] Ollama (déjà configuré)
   - [ ] Configuration des backups
 
-## 4. Interface Utilisateur
+## 5. Interface Utilisateur
 - [ ] Migration vers Tauri
   - [ ] Configurer le projet Rust
   - [ ] Mettre en place la communication backend
@@ -49,7 +107,7 @@
   - [ ] Implémenter le drag-and-drop
   - [ ] Créer les vues personnalisées
 
-## 5. Optimisation des Fonctionnalités
+## 6. Optimisation des Fonctionnalités
 - [ ] Recherche d'Offres
   - [ ] Optimiser le scraping existant
   - [ ] Améliorer les filtres
@@ -63,7 +121,7 @@
   - [ ] Améliorer la génération de documents
   - [ ] Optimiser le suivi
 
-## 6. Tests et Qualité
+## 7. Tests et Qualité
 - [ ] Tests Backend
   - [ ] Tests unitaires Python
   - [ ] Tests d'intégration
@@ -77,7 +135,7 @@
   - [ ] Tests de génération
   - [ ] Tests de performance globale
 
-## 7. Documentation
+## 8. Documentation
 - [ ] Documentation Technique
   - [ ] Architecture mise à jour
   - [ ] API documentée
@@ -91,7 +149,7 @@
   - [ ] Standards de code
   - [ ] Procédures de déploiement
 
-## 8. Déploiement
+## 9. Déploiement
 - [ ] Packaging
   - [ ] Configuration des builds
   - [ ] Création des installateurs
@@ -100,16 +158,6 @@
   - [ ] Configuration des mises à jour
   - [ ] Gestion des versions
   - [ ] Support multiplateforme
-
-## 9. Optimisation
-- [ ] Performance
-  - [ ] Optimisation du scraping
-  - [ ] Optimisation des LLM
-  - [ ] Optimisation de l'interface
-- [ ] Sécurité
-  - [ ] Audit de sécurité
-  - [ ] Protection des données
-  - [ ] Gestion des accès
 
 ## 10. Maintenance
 - [ ] Monitoring

@@ -3,15 +3,16 @@
 ## Table des matières
 
 1. [Introduction](#introduction)
-2. [Architecture générale](#architecture-générale)
-3. [Installation et configuration](#installation-et-configuration)
-4. [Modules principaux](#modules-principaux)
-5. [Interface graphique](#interface-graphique)
-6. [Utilisation de l'application](#utilisation-de-lapplication)
-7. [Personnalisation](#personnalisation)
-8. [Dépannage](#dépannage)
-9. [Développement et extension](#développement-et-extension)
-10. [Références](#références)
+2. [État actuel du projet](#état-actuel-du-projet)
+3. [Architecture générale](#architecture-générale)
+4. [Installation et configuration](#installation-et-configuration)
+5. [Modules principaux](#modules-principaux)
+6. [Interface graphique](#interface-graphique)
+7. [Utilisation de l'application](#utilisation-de-lapplication)
+8. [Personnalisation](#personnalisation)
+9. [Dépannage](#dépannage)
+10. [Développement et extension](#développement-et-extension)
+11. [Références](#références)
 
 ## Introduction
 
@@ -21,12 +22,14 @@ L'application d'automatisation de recherche d'emploi est une solution complète 
 
 - **Scraping d'offres d'emploi** : Collecte automatique d'offres depuis diverses plateformes
 - **Analyse de CV** : Extraction intelligente des informations de votre CV
-- **Calcul des temps de trajet** : Évaluation des temps de trajet depuis deux domiciles différents
+- **Calcul des temps de trajet** : Évaluation des temps de trajet depuis plusieurs domiciles
 - **Scoring et matching** : Évaluation de la pertinence des offres par rapport à votre profil
 - **Détection des doublons** : Identification et gestion des offres similaires
 - **Génération de contenu** : Création automatique de CV et lettres de motivation personnalisés
 - **Gestion Kanban** : Suivi visuel de vos candidatures avec intégration NocoDB
-- **Interface graphique moderne** : Application de bureau réactive et intuitive
+- **Interface graphique moderne** : Application de bureau réactive et intuitive avec Tauri
+- **Suggestions IA** : Recommandations personnalisées basées sur votre profil
+- **Analyse de feedback** : Optimisation continue basée sur vos décisions
 
 ### Avantages
 
@@ -35,6 +38,78 @@ L'application d'automatisation de recherche d'emploi est une solution complète 
 - **Multimodale** : Prise en compte de différents modes de transport
 - **Intelligence artificielle** : Utilisation de LLM locaux ou distants pour l'analyse et la génération
 - **Open source** : Code source disponible et modifiable
+- **Performant** : Interface légère et réactive grâce à Tauri
+- **Sécurisé** : Protection des données personnelles avec sandboxing
+
+## État actuel du projet
+
+Le projet dispose d'une base de code fonctionnelle avec les composants suivants :
+
+### Modules Python implémentés
+- `cv_parser.py` : Analyse de CV
+- `job_scraper.py` : Scraping d'offres d'emploi
+- `transport_scraper.py` : Calcul des temps de trajet
+- `matching_engine.py` : Évaluation des offres
+- `content_generator.py` : Génération de documents
+- `nocodb_integration.py` : Intégration avec NocoDB
+
+### Modules à implémenter
+- `duplicate_detector.py` : Détection des offres similaires
+- `location_manager.py` : Gestion des domiciles multiples
+- `search_preferences.py` : Gestion des préférences de recherche
+- `ai_suggestions.py` : Suggestions basées sur le CV
+- `kanban_feedback.py` : Analyse du feedback Kanban
+- `llm_api_manager.py` : Gestion des API LLM
+
+### Infrastructure configurée
+- Base de données SQLite fonctionnelle
+- Docker avec NocoDB et Ollama
+- Environnement de développement Python 3.10+
+- Interface Tauri en cours de développement
+
+### Interface en cours de développement
+- Développement avec Tauri et React/TypeScript
+- Structure de base React/TypeScript
+- Intégration NocoDB en cours
+- Composants modernes avec Tailwind CSS
+
+## Plan de développement
+
+### Phase 1: Migration et Documentation (2 semaines)
+- Mise à jour de la documentation existante
+- Migration du code existant vers Tauri
+- Tests de compatibilité
+
+### Phase 2: Implémentation des modules manquants (3 semaines)
+1. **Semaine 1: Modules de base**
+   - Implémentation de `duplicate_detector.py`
+   - Implémentation de `location_manager.py`
+   - Tests unitaires et intégration
+
+2. **Semaine 2: Modules d'analyse**
+   - Implémentation de `search_preferences.py`
+   - Implémentation de `ai_suggestions.py`
+   - Tests unitaires et intégration
+
+3. **Semaine 3: Modules avancés**
+   - Implémentation de `kanban_feedback.py`
+   - Implémentation de `llm_api_manager.py`
+   - Tests unitaires et intégration
+
+### Phase 3: Optimisation (2 semaines)
+- Amélioration des performances
+- Refonte des modules critiques
+- Tests de performance
+
+### Phase 4: Interface (2 semaines)
+- Développement de l'UI avec Tauri
+- Intégration des modules migrés
+- Tests utilisateurs
+
+### Phase 5: Finalisation (1 semaine)
+- Tests finaux
+- Documentation finale
+- Préparation au déploiement
 
 ## Architecture générale
 
@@ -86,7 +161,7 @@ L'application est structurée selon une architecture modulaire qui sépare clair
 - **Docker** : Pour NocoDB et Ollama
 - **Python 3.10+** : Pour les modules principaux
 - **Node.js 20+** : Pour l'interface Tauri
-- **Rust** : Pour la compilation de Tauri
+- **Rust 1.70+** : Pour la compilation de Tauri
 
 ### Installation
 
@@ -128,7 +203,7 @@ L'application est structurée selon une architecture modulaire qui sépare clair
    chmod +x init_tauri_project.sh
    ./init_tauri_project.sh
    cd app-tauri
-   npm initial
+   npm install
    npm run tauri build
    ```
 
@@ -181,6 +256,7 @@ Ce module collecte les offres d'emploi depuis diverses plateformes en utilisant 
 - Extraction des informations salariales
 - Détection de la langue de l'offre
 - Normalisation des données
+- Détection des doublons
 
 **Utilisation** :
 ```python
@@ -196,20 +272,21 @@ jobs = scraper.search_jobs(
 )
 ```
 
-### Calcul des temps de trajet (`transport_scraper_v2.py`)
+### Calcul des temps de trajet (`transport_scraper.py`)
 
 Ce module calcule les temps de trajet entre vos domiciles et les lieux de travail.
 
 **Fonctionnalités** :
-- Support de deux domiciles (principal et secondaire)
+- Support de plusieurs domiciles
 - Calcul multimodal (voiture, transports en commun, vélo)
 - Scraping de Google Maps pour des données précises
 - Estimation des distances et durées
 - Prise en compte des heures de pointe
+- Visualisation des trajets
 
 **Utilisation** :
 ```python
-from modules.transport_scraper_v2 import TransportScraper
+from modules.transport_scraper import TransportScraper
 
 scraper = TransportScraper()
 commute_times = scraper.calculate_commute_times(
@@ -217,27 +294,6 @@ commute_times = scraper.calculate_commute_times(
     primary_home="20 Avenue de la République, 75011 Paris",
     secondary_home="15 Rue de la Paix, 78000 Versailles"
 )
-```
-
-### Gestion des domiciles multiples (`location_manager.py`)
-
-Ce module gère les différentes adresses de domicile et leurs paramètres.
-
-**Fonctionnalités** :
-- Stockage de deux adresses de domicile
-- Géocodage des adresses
-- Validation des adresses
-- Préférences de transport par domicile
-- Calcul des zones accessibles
-
-**Utilisation** :
-```python
-from modules.location_manager import LocationManager
-
-manager = LocationManager()
-manager.set_primary_home("20 Avenue de la République, 75011 Paris")
-manager.set_secondary_home("15 Rue de la Paix, 78000 Versailles")
-manager.set_transport_preference("primary", "public_transport")
 ```
 
 ### Évaluation des offres (`matching_engine.py`)
@@ -250,6 +306,7 @@ Ce module évalue la pertinence des offres par rapport à votre profil.
 - Prise en compte de l'expérience
 - Analyse des mots-clés
 - Scoring global de 0 à 1
+- Détection des doublons
 
 **Utilisation** :
 ```python
@@ -258,109 +315,6 @@ from modules.matching_engine import MatchingEngine
 engine = MatchingEngine()
 score = engine.calculate_matching_score(job_id=42)
 print(f"Score de correspondance: {score * 100}%")
-```
-
-### Détection des doublons (`duplicate_detector.py`)
-
-Ce module identifie et gère les offres similaires ou identiques.
-
-**Fonctionnalités** :
-- Détection par URL
-- Analyse de similarité textuelle
-- Fusion des informations complémentaires
-- Historique des doublons
-- Statistiques sur les sources
-
-**Utilisation** :
-```python
-from modules.duplicate_detector import DuplicateDetector
-
-detector = DuplicateDetector()
-duplicates = detector.find_duplicates(job_id=42)
-if duplicates:
-    detector.merge_jobs(job_id=42, duplicate_ids=duplicates)
-```
-
-### Préférences de recherche (`search_preferences.py`)
-
-Ce module gère vos préférences de recherche et les pondérations des mots-clés.
-
-**Fonctionnalités** :
-- Catégories de mots-clés
-- Pondération personnalisable
-- Ensembles de préférences multiples
-- Suggestions basées sur le CV
-- Historique des recherches
-
-**Utilisation** :
-```python
-from modules.search_preferences import SearchPreferences
-
-prefs = SearchPreferences()
-prefs.add_keyword("python", category="skills", weight=0.9)
-prefs.add_keyword("remote", category="conditions", weight=0.7)
-criteria = prefs.generate_search_criteria()
-```
-
-### Suggestions IA (`ai_suggestions.py`)
-
-Ce module génère des suggestions de recherche basées sur votre CV.
-
-**Fonctionnalités** :
-- Analyse du CV avec LLM
-- Suggestions de mots-clés pertinents
-- Identification des postes adaptés
-- Recommandations d'entreprises
-- Optimisation des critères de recherche
-
-**Utilisation** :
-```python
-from modules.ai_suggestions import AISuggestions
-
-ai = AISuggestions()
-suggestions = ai.generate_suggestions_from_cv()
-for category, keywords in suggestions.items():
-    print(f"{category}: {', '.join(keywords)}")
-```
-
-### Analyse du feedback Kanban (`kanban_feedback.py`)
-
-Ce module analyse votre utilisation du Kanban pour améliorer les recherches futures.
-
-**Fonctionnalités** :
-- Analyse des offres acceptées/refusées
-- Extraction de patterns
-- Ajustement automatique des pondérations
-- Optimisation des mots-clés
-- Amélioration continue du scoring
-
-**Utilisation** :
-```python
-from modules.kanban_feedback import KanbanFeedbackAnalyzer
-
-analyzer = KanbanFeedbackAnalyzer()
-feedback = analyzer.analyze_kanban_feedback()
-analyzer.update_search_preferences()
-```
-
-### Gestion des API LLM (`llm_api_manager.py`)
-
-Ce module gère différentes API LLM (locales et distantes) et choisit automatiquement la plus appropriée.
-
-**Fonctionnalités** :
-- Support d'Ollama local
-- Intégration d'API alternatives (OpenAI, Mistral, etc.)
-- Gestion des coûts et quotas
-- Basculement automatique
-- Suivi de l'utilisation
-
-**Utilisation** :
-```python
-from modules.llm_api_manager import LLMApiManager
-
-manager = LLMApiManager()
-provider = manager.get_best_provider(operation_type="document_generation")
-model = manager.get_best_model(provider["id"], model_type="chat")
 ```
 
 ### Génération de contenu (`content_generator.py`)
@@ -416,6 +370,8 @@ L'interface graphique est développée avec Tauri, React et TypeScript, offrant 
 - **Profil** : Gestion du profil utilisateur et des préférences
 - **Générateur de documents** : Création de CV et lettres de motivation
 - **Analyse des trajets** : Visualisation des temps de trajet
+- **Gestion des doublons** : Interface de gestion des offres similaires
+- **Suggestions IA** : Visualisation des recommandations
 
 ### Composants principaux
 
@@ -425,6 +381,8 @@ L'interface graphique est développée avec Tauri, React et TypeScript, offrant 
 - **KanbanBoard** : Tableau Kanban interactif
 - **DocumentEditor** : Éditeur de documents générés
 - **CommuteMap** : Carte interactive des temps de trajet
+- **DuplicateManager** : Interface de gestion des doublons
+- **SuggestionPanel** : Affichage des suggestions IA
 
 ### Fonctionnalités d'accessibilité
 
@@ -466,6 +424,7 @@ L'interface s'adapte à différentes tailles d'écran :
 3. Lancez la recherche
 4. Parcourez les résultats triés par score de correspondance
 5. Utilisez les filtres pour affiner les résultats
+6. Consultez les suggestions IA pour affiner votre recherche
 
 ### Gestion des candidatures
 
@@ -474,6 +433,7 @@ L'interface s'adapte à différentes tailles d'écran :
 3. Ajoutez des notes et des rappels
 4. Générez des documents personnalisés pour chaque offre
 5. Suivez l'historique des interactions
+6. Consultez l'analyse du feedback pour améliorer vos recherches
 
 ### Génération de documents
 
@@ -482,14 +442,25 @@ L'interface s'adapte à différentes tailles d'écran :
 3. Personnalisez les options selon vos besoins
 4. Prévisualisez le document généré
 5. Exportez ou modifiez le document final
+6. Choisissez le format de sortie (PDF, DOCX, TXT)
 
 ### Analyse des temps de trajet
 
 1. Accédez à l'onglet "Trajets"
 2. Visualisez les offres sur la carte
-3. Comparez les temps de trajet depuis vos deux domiciles
+3. Comparez les temps de trajet depuis vos différents domiciles
 4. Filtrez les offres selon le temps de trajet maximum
 5. Explorez les différentes options de transport
+6. Consultez les visualisations des trajets
+
+### Gestion des doublons
+
+1. Accédez à l'onglet "Doublons"
+2. Consultez les offres identifiées comme similaires
+3. Choisissez l'offre à conserver
+4. Fusionnez les informations complémentaires
+5. Supprimez les doublons non pertinents
+6. Configurez les paramètres de détection
 
 ## Personnalisation
 
@@ -502,5 +473,121 @@ Les templates pour la génération de documents se trouvent dans le dossier `tem
 
 Vous pouvez les modifier pour adapter le style et le contenu des documents générés.
 
-### Préférences de
-(Content truncated due to size limit. Use line ranges to read in chunks)
+### Préférences de recherche
+
+Vous pouvez personnaliser vos préférences de recherche via l'interface ou en modifiant directement le fichier de configuration :
+
+```json
+{
+  "keywords": {
+    "required": ["python", "développeur"],
+    "preferred": ["django", "fastapi"],
+    "excluded": ["junior", "stage"]
+  },
+  "location": {
+    "primary": "Paris",
+    "radius": 30,
+    "remote": true
+  },
+  "salary": {
+    "min": 50000,
+    "currency": "EUR"
+  },
+  "job_types": ["CDI", "CDD"],
+  "experience_level": "senior",
+  "transport_preferences": {
+    "max_time": 60,
+    "modes": ["public_transport", "car"],
+    "avoid_tolls": true
+  }
+}
+```
+
+## Dépannage
+
+### Problèmes courants
+
+1. **Scraping bloqué**
+   - Vérifiez votre connexion Internet
+   - Essayez de changer de proxy
+   - Réduisez la fréquence des requêtes
+
+2. **Erreurs de génération**
+   - Vérifiez que Ollama est en cours d'exécution
+   - Assurez-vous d'avoir assez de RAM
+   - Essayez un modèle plus léger
+
+3. **Problèmes de synchronisation NocoDB**
+   - Vérifiez la connexion à la base de données
+   - Regénérez le token d'API
+   - Vérifiez les permissions
+
+4. **Problèmes d'interface Tauri**
+   - Vérifiez que Rust est correctement installé
+   - Mettez à jour les dépendances Node.js
+   - Reconstruisez l'application
+
+### Logs et débogage
+
+Les logs sont stockés dans le dossier `logs/` :
+- `app.log` : Logs principaux de l'application
+- `scraping.log` : Logs spécifiques au scraping
+- `generation.log` : Logs de génération de documents
+- `tauri.log` : Logs de l'interface Tauri
+
+Pour activer le mode debug :
+```bash
+export LOG_LEVEL=DEBUG
+python app.py
+```
+
+## Développement et extension
+
+### Structure du code
+
+Le code est organisé en modules indépendants qui peuvent être étendus ou remplacés :
+
+```
+modules/
+├── base/           # Classes de base et interfaces
+├── scraping/       # Modules de scraping
+├── analysis/       # Modules d'analyse
+├── generation/     # Modules de génération
+└── integration/    # Modules d'intégration
+```
+
+### Ajout de nouvelles fonctionnalités
+
+1. Créez un nouveau module dans le dossier approprié
+2. Implémentez l'interface correspondante
+3. Ajoutez les tests unitaires
+4. Documentez le module
+5. Mettez à jour la configuration
+
+### Tests et qualité
+
+- Tests unitaires avec pytest
+- Tests d'intégration avec Docker
+- Analyse statique avec pylint
+- Formatage avec black
+- Documentation avec sphinx
+- Tests Rust avec cargo test
+- Tests frontend avec Jest
+
+## Références
+
+### Documentation technique
+
+- [Tauri Documentation](https://tauri.app/docs)
+- [React Documentation](https://reactjs.org/docs)
+- [FastAPI Documentation](https://fastapi.tiangolo.com)
+- [SQLAlchemy Documentation](https://docs.sqlalchemy.org)
+- [NocoDB Documentation](https://docs.nocodb.com)
+
+### Ressources utiles
+
+- [JobSpy Documentation](https://github.com/taharbelarbi/jobspy)
+- [Ollama Documentation](https://ollama.ai/docs)
+- [spaCy Documentation](https://spacy.io/docs)
+- [Sentence Transformers](https://www.sbert.net)
+- [Google Maps API](https://developers.google.com/maps)
