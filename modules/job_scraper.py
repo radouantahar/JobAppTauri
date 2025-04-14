@@ -26,6 +26,81 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def search_jobs(self, keywords: List[str], location: str, job_type: List[str], 
+               is_remote: bool = False, hours_old: int = 72) -> Dict[str, Any]:
+    """Search jobs in database with filters"""
+    try:
+        query = """
+        SELECT j.id, j.title, c.name as company_name, j.location, j.description,
+               j.url, j.date_posted, j.salary_min, j.salary_max, j.salary_currency,
+               j.matching_score 
+        FROM jobs j
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE 1=1
+        """
+        
+        params = []
+        conditions = []
+        
+        if keywords:
+            conditions.append("(" + " OR ".join(["j.title LIKE ?" for _ in keywords]) + ")")
+            params.extend([f"%{kw}%" for kw in keywords])
+        
+        if location:
+            conditions.append("j.location LIKE ?")
+            params.append(f"%{location}%")
+            
+        if job_type:
+            conditions.append("j.job_type IN (" + ",".join(["?"]*len(job_type)) + ")")
+            params.extend(job_type)
+            
+        if is_remote:
+            conditions.append("j.is_remote = 1")
+            
+        if hours_old:
+            conditions.append("j.date_posted >= datetime('now', ?)")
+            params.append(f"-{hours_old} hours")
+            
+        if conditions:
+            query += " AND " + " AND ".join(conditions)
+            
+        query += " ORDER BY j.matching_score DESC, j.date_posted DESC"
+        
+        self.cursor.execute(query, params)
+        jobs = self.cursor.fetchall()
+        
+        # Convert to list of dicts
+        job_list = []
+        for job in jobs:
+            salary = None
+            if job[7] is not None and job[8] is not None:
+                salary = f"{job[7]}-{job[8]} {job[9] or 'EUR'}"
+                
+            job_list.append({
+                "id": str(job[0]),
+                "title": job[1],
+                "company_name": job[2],
+                "location": job[3],
+                "description": job[4],
+                "url": job[5],
+                "date_posted": job[6],
+                "salary": salary,
+                "matching_score": job[10]
+            })
+            
+        return {
+            "jobs": job_list,
+            "stats": {
+                "total": len(job_list),
+                "new": 0,  # You'll need to implement new job detection
+                "updated": 0  # And update detection
+            }
+        }
+        
+    except sqlite3.Error as e:
+        logger.error(f"Database error during search: {e}")
+        return {"jobs": [], "stats": {"total": 0, "new": 0, "updated": 0}}
+
 
 class JobScraper:
     """

@@ -128,6 +128,7 @@ L'application est structurée selon une architecture modulaire qui sépare clair
    chmod +x init_tauri_project.sh
    ./init_tauri_project.sh
    cd app-tauri
+   npm initial
    npm run tauri build
    ```
 

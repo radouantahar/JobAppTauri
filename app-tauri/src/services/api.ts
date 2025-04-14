@@ -11,7 +11,8 @@ import type {
   SearchPreference, 
   LLMProvider, 
   DocumentTemplate, 
-  GeneratedDocument 
+  GeneratedDocument,
+  DocumentType // Added this import
 } from '../types';
 
 // Service pour les offres d'emploi
@@ -103,10 +104,14 @@ export const llmService = {
   
   async generateDocument(
     jobId: number, 
-    templateId: number, 
-    type: 'cv' | 'coverLetter' | 'email'
+    templateId: number,
+    type: DocumentType  // Fixed: Properly typed as DocumentType
   ): Promise<GeneratedDocument> {
-    return await invoke<GeneratedDocument>('generate_document', { jobId, templateId, type });
+    return await invoke<GeneratedDocument>('generate_document', { 
+      jobId, 
+      templateId, 
+      type 
+    });
   }
 };
 

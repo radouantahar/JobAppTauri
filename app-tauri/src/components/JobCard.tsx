@@ -28,6 +28,34 @@ export function JobCard({ job, onClick }: JobCardProps) {
     return 'red';
   };
 
+  // Format salary to string if it's an object
+  const formatSalary = (salary: Job['salary']) => {
+    if (!salary) return '';
+    
+    const { min, max, currency = 'USD', period = 'year' } = salary;
+    const currencySymbol = currency === 'USD' ? '$' : 
+                          currency === 'EUR' ? '€' : 
+                          currency === 'GBP' ? '£' : 
+                          currency === 'CHF' ? 'CHF' : currency;
+    
+    let salaryText = '';
+    if (min && max) {
+      salaryText = `${currencySymbol}${min} - ${currencySymbol}${max}`;
+    } else if (min) {
+      salaryText = `${currencySymbol}${min}+`;
+    } else if (max) {
+      salaryText = `Up to ${currencySymbol}${max}`;
+    }
+    
+    if (salaryText) {
+      salaryText += period === 'hour' ? '/hr' : 
+                   period === 'week' ? '/week' : 
+                   period === 'month' ? '/month' : '/year';
+    }
+    
+    return salaryText;
+  };
+
   return (
     <Card shadow="sm" padding={0} radius="md" className={classes.card}>
       <Card.Section className={classes.body}>
@@ -48,7 +76,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
         {job.salary && (
           <Group gap="xs" mb="xs">
             <IconBriefcase size={16} />
-            <Text size="sm">{job.salary}</Text>
+            <Text size="sm">{formatSalary(job.salary)}</Text>
           </Group>
         )}
         

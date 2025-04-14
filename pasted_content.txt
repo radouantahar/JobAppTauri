@@ -1,4 +1,4 @@
-u es une IA experte en développement d’applications locales complètes avec des outils open source. Tu vas concevoir une solution locale pour automatiser la recherche d'emploi d'un utilisateur. Voici les exigences précises du projet :
+Tu es une IA experte en développement d’applications locales complètes avec des outils open source. Tu vas concevoir une solution locale pour automatiser la recherche d'emploi d'un utilisateur. Voici les exigences précises du projet :
 
 🔧 Objectif général :
 
