@@ -1,127 +1,78 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { Container, Grid, Text, Badge, Card, Group, Button } from '@mantine/core';
-import { IconPlus, IconArrowRight } from '@tabler/icons-react';
-import { kanbanService } from '../services/api';
-import { useAppStore } from '../store';
-import type { KanbanColumn as KanbanColumnType } from '../types';
+import React, { useEffect } from 'react';
+import { useKanbanBoard } from '../hooks/useKanbanBoard';
+import { KanbanCard } from '../types';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
-const KanbanColumn = memo(function KanbanColumn({ 
-  column, 
-  onMoveJob, 
-  nextColumnId 
-}: { 
-  column: KanbanColumnType;
-  onMoveJob: (jobId: number, toColumnId: number) => void;
-  nextColumnId?: number;
-}) {
-  const formatDate = useCallback((date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR');
-  }, []);
-
+const KanbanColumn: React.FC<{
+  title: string;
+  cards: KanbanCard[];
+}> = ({ title, cards }) => {
   return (
-    <Card withBorder radius="md" h="100%">
-      <Group justify="space-between" mb="md">
-        <Group gap="xs">
-          <Badge color={column.color} variant="filled" />
-          <Text fw={600}>{column.name}</Text>
-        </Group>
-        <Badge variant="light">{column.cards.length}</Badge>
-      </Group>
-
-      {column.cards.length > 0 ? (
-        column.cards.map((card) => (
-          <Card key={card.id} withBorder mb="sm" p="sm">
-            <Text fw={500} lineClamp={1}>{card.job.title}</Text>
-            <Text size="sm" c="dimmed" lineClamp={1}>{card.job.company}</Text>
-            <Group justify="space-between" mt="sm">
-              <Text size="xs">
-                {card.appliedAt ? formatDate(card.appliedAt) : 'Non postulé'}
-              </Text>
-              {nextColumnId && (
-                <Button
-                  size="xs"
-                  variant="subtle"
-                  rightSection={<IconArrowRight size={14} />}
-                  onClick={() => onMoveJob(card.id, nextColumnId)}
-                >
-                  Suivant
-                </Button>
-              )}
-            </Group>
-          </Card>
-        ))
-      ) : (
-        <Text size="sm" c="dimmed" ta="center" py="md">
-          Aucune offre dans cette colonne
-        </Text>
-      )}
-    </Card>
+    <div className="flex-1 p-4 bg-gray-100 rounded-lg">
+      <h2 className="text-lg font-semibold mb-4">{title}</h2>
+      <div className="space-y-4">
+        {cards.map(card => (
+          <div key={card.id} className="kanban-card">
+            <h3>{card.title}</h3>
+            <p>{card.description}</p>
+            <p>Dernière mise à jour : {format(new Date(card.updatedAt), 'PPP', { locale: fr })}</p>
+            {card.notes && <p>Notes : {card.notes}</p>}
+            {card.interviews && card.interviews.length > 0 && (
+              <div className="interviews">
+                <h4>Entretiens :</h4>
+                {card.interviews.map((interview, index) => (
+                  <p key={index}>
+                    {interview.type} - {format(new Date(interview.date), 'PPP', { locale: fr })}
+                    {interview.notes && <span> - {interview.notes}</span>}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
-});
+};
 
-export function KanbanPage() {
-  const [columns, setColumns] = useState<KanbanColumnType[]>([]);
-  const { setLoading } = useAppStore();
-
-  const loadKanbanData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const kanbanColumns = await kanbanService.getKanbanColumns();
-      setColumns(kanbanColumns);
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
+const Kanban: React.FC = () => {
+  const { cards, isLoading, error, fetchCards } = useKanbanBoard();
 
   useEffect(() => {
-    loadKanbanData();
-  }, [loadKanbanData]);
+    fetchCards();
+  }, [fetchCards]);
 
-  const handleMoveJob = useCallback(async (jobId: number, toColumnId: number) => {
-    setLoading(true);
-    try {
-      await kanbanService.moveCard(jobId, toColumnId, 0);
-      await loadKanbanData();
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, loadKanbanData]);
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
 
-  const handleAddJob = useCallback(() => {
-    // TODO: Implémenter l'ajout d'une nouvelle offre
-    console.log('Ajouter une nouvelle offre');
-  }, []);
+  if (error) {
+    return <div>Erreur: {error.message}</div>;
+  }
 
-  const columnComponents = useMemo(() => 
-    columns.map((column, index) => {
-      const nextColumn = columns[index + 1];
-      return (
-        <Grid.Col key={column.id} span={3}>
-          <KanbanColumn
-            column={column}
-            onMoveJob={handleMoveJob}
-            nextColumnId={nextColumn?.id}
-          />
-        </Grid.Col>
-      );
-    }), [columns, handleMoveJob]);
+  const columns = {
+    'À postuler': cards.filter(card => card.status === 'À postuler'),
+    'En cours': cards.filter(card => card.status === 'En cours'),
+    'Entretiens': cards.filter(card => card.status === 'Entretiens'),
+    'Offres': cards.filter(card => card.status === 'Offres'),
+    'Refusés': cards.filter(card => card.status === 'Refusés'),
+  };
 
   return (
-    <Container size="xl" py="xl">
-      <Group justify="space-between" mb="xl">
-        <Text size="xl" fw={700}>Suivi des Candidatures</Text>
-        <Button 
-          leftSection={<IconPlus size={16} />} 
-          variant="light"
-          onClick={handleAddJob}
-        >
-          Ajouter une offre
-        </Button>
-      </Group>
-
-      <Grid gutter="xl">
-        {columnComponents}
-      </Grid>
-    </Container>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Tableau Kanban</h1>
+      <div className="flex gap-4">
+        {Object.entries(columns).map(([title, columnCards]) => (
+          <KanbanColumn
+            key={title}
+            title={title}
+            cards={columnCards}
+          />
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+export default Kanban;

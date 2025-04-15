@@ -1,8 +1,8 @@
-import React from 'react';
 import { render, act } from '@testing-library/react';
 import { KanbanForm } from '../KanbanForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { useKanban } from '../../hooks/useKanban';
+import { vi } from 'vitest';
 
 // Mock des hooks
 jest.mock('../../contexts/AuthContext');
@@ -40,7 +40,11 @@ describe('KanbanForm Performance Tests', () => {
     lastUpdated: new Date().toISOString(),
   };
 
+  const mockSubmit = vi.fn();
+
   beforeEach(() => {
+    vi.clearAllMocks();
+
     // Configuration des mocks par défaut
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
@@ -60,7 +64,7 @@ describe('KanbanForm Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<KanbanForm kanbanId="1" onClose={() => {}} />);
+      render(<KanbanForm onSubmit={mockSubmit} onCancel={() => {}} />);
     });
     
     const endTime = performance.now();
@@ -81,7 +85,7 @@ describe('KanbanForm Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<KanbanForm kanbanId="1" onClose={() => {}} />);
+      render(<KanbanForm onSubmit={mockSubmit} onCancel={() => {}} />);
     });
     
     const endTime = performance.now();
@@ -102,7 +106,7 @@ describe('KanbanForm Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<KanbanForm kanbanId="1" onClose={() => {}} />);
+      render(<KanbanForm onSubmit={mockSubmit} onCancel={() => {}} />);
     });
     
     const endTime = performance.now();
@@ -117,7 +121,7 @@ describe('KanbanForm Performance Tests', () => {
 
     for (let i = 0; i < 10; i++) {
       act(() => {
-        render(<KanbanForm kanbanId="1" onClose={() => {}} />);
+        render(<KanbanForm onSubmit={mockSubmit} onCancel={() => {}} />);
       });
 
       if (performance.memory) {
@@ -158,7 +162,7 @@ describe('KanbanForm Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<KanbanForm kanbanId="1" onClose={() => {}} />);
+      render(<KanbanForm onSubmit={mockSubmit} onCancel={() => {}} />);
     });
     
     const endTime = performance.now();

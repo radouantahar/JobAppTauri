@@ -9,7 +9,7 @@ interface KanbanModalProps {
 
 export const KanbanModal: React.FC<KanbanModalProps> = ({ cardId, onClose }) => {
   const { isAuthenticated } = useAuth();
-  const { card, isLoading, error, updateCard, deleteCard, moveCard } = useKanban(cardId);
+  const { card, isLoading, error } = useKanban(cardId);
 
   if (!isAuthenticated) return null;
   if (isLoading) return <div>Chargement...</div>;

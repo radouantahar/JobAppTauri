@@ -1,4 +1,4 @@
-import type { Job, SearchCriteria, JobType, ExperienceLevel } from '../../types';
+import type { Job, JobType, ExperienceLevel } from '../../types';
 import { DatePostedOption } from '../../components/search/SearchFilters';
 
 export interface SearchResponse {

@@ -4,58 +4,32 @@ import { SearchPage } from '../Search';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import type { Job, JobID, ISODateString, SalaryRange, JobSource, AppState } from '../../types';
+import type { Job, JobID, ISODateString, AppState } from '../../types';
 
 // Mock des dépendances
 vi.mock('../../store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn()
 }));
 
 vi.mock('../../services/api', () => ({
   jobService: {
-    searchJobs: vi.fn(),
-  },
+    searchJobs: vi.fn()
+  }
 }));
 
-// Données de test
-const mockJobs: Job[] = [
-  {
-    id: 1 as JobID,
-    title: 'Développeur React',
-    company: 'TechCorp',
-    location: 'Paris',
-    description: 'Description du poste',
-    url: 'https://example.com/job1',
-    source: 'linkedin' as JobSource,
-    publishedAt: new Date().toISOString() as ISODateString,
-    salary: {
-      min: 45000,
-      max: 55000,
-      currency: 'EUR',
-      period: 'year'
-    } as SalaryRange,
-    matchingScore: 0.85,
-    skills: ['React', 'TypeScript'],
-    experienceLevel: 'mid',
-    commuteTimes: {
-      primaryHome: {
-        duration: 30,
-        distance: 5,
-        mode: 'transit'
-      }
-    }
-  },
-  // ... autres jobs
-];
-
 describe('SearchPage', () => {
+  const mockAppState: AppState = {
+    isAuthenticated: false,
+    user: null,
+    loading: false,
+    error: null,
+    setUser: vi.fn(),
+    setLoading: vi.fn(),
+    setError: vi.fn()
+  };
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    (useAppStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      setLoading: vi.fn(),
-      isAuthenticated: false,
-    } as Partial<AppState>);
-    (jobService.searchJobs as ReturnType<typeof vi.fn>).mockResolvedValue(mockJobs);
+    vi.mocked(useAppStore).mockReturnValue(mockAppState);
   });
 
   // Test du cas normal
@@ -187,6 +161,70 @@ describe('SearchPage', () => {
       const jobCard = screen.getByText('Développeur React');
       fireEvent.click(jobCard);
       expect(window.location.pathname).toBe('/login');
+    });
+  });
+
+  it('should display search results when jobs are found', async () => {
+    const mockJobs: Job[] = [
+      {
+        id: '1' as JobID,
+        title: 'Développeur React',
+        company: 'Tech Corp',
+        description: 'Description du poste',
+        location: 'Paris',
+        url: 'https://example.com/job/1',
+        source: 'linkedin',
+        publishedAt: new Date().toISOString() as ISODateString,
+        jobType: 'full-time',
+        salary: {
+          min: 40000,
+          max: 50000,
+          currency: 'EUR',
+          period: 'year'
+        },
+        matchingScore: 0.85,
+        skills: ['React', 'TypeScript'],
+        experienceLevel: 'mid',
+        commuteTimes: {
+          primaryHome: {
+            duration: 30,
+            distance: 5,
+            mode: 'transit'
+          }
+        }
+      }
+    ];
+
+    vi.mocked(jobService.searchJobs).mockResolvedValue(mockJobs);
+
+    render(
+      <MemoryRouter>
+        <SearchPage />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByPlaceholderText('Rechercher un emploi...');
+    fireEvent.change(searchInput, { target: { value: 'react' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Développeur React')).toBeInTheDocument();
+    });
+  });
+
+  it('should display no results message when no jobs are found', async () => {
+    vi.mocked(jobService.searchJobs).mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <SearchPage />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByPlaceholderText('Rechercher un emploi...');
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Aucun résultat trouvé')).toBeInTheDocument();
     });
   });
 }); 

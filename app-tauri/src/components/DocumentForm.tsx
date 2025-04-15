@@ -38,8 +38,8 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Stack spacing="md" pos="relative">
-        <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      <Stack gap="md" pos="relative">
+        <LoadingOverlay visible={isLoading} />
         
         {error && (
           <Alert color="red" title="Erreur">

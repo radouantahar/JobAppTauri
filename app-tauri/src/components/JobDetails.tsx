@@ -18,10 +18,9 @@ import {
   IconHeart, 
   IconHeartFilled, 
   IconShare, 
-  IconMapPin, 
-  IconBuilding, 
-  IconCalendar, 
-  IconCurrencyEuro,
+  IconMapPin,
+  IconBuildingSkyscraper,
+  IconCalendar,
   IconX,
   IconCheck
 } from '@tabler/icons-react';
@@ -131,7 +130,7 @@ export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsP
   return (
     <Card withBorder shadow="sm" radius="md">
       <Stack gap="md">
-        <Group position="apart">
+        <Group justify="space-between">
           <Title order={2}>{job.title}</Title>
           <Group>
             <Tooltip label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
@@ -172,8 +171,8 @@ export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsP
           </Alert>
         )}
 
-        <Group>
-          <Badge leftSection={<IconBuilding size={12} />}>
+        <Group justify="space-between">
+          <Badge leftSection={<IconBuildingSkyscraper size={12} />}>
             {job.company}
           </Badge>
           <Badge leftSection={<IconMapPin size={12} />}>
@@ -183,9 +182,9 @@ export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsP
             {formattedDate}
           </Badge>
           {job.salary && (
-            <Badge leftSection={<IconCurrencyEuro size={12} />}>
-              {job.salary}
-            </Badge>
+            <Text>
+              {`${job.salary.min}-${job.salary.max} ${job.salary.currency}/${job.salary.period}`}
+            </Text>
           )}
         </Group>
 
@@ -200,7 +199,7 @@ export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsP
           {job.description}
         </Text>
 
-        <Group position="right">
+        <Group justify="right">
           <Button 
             component="a" 
             href={job.url} 
@@ -226,7 +225,7 @@ export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsP
             onChange={(e) => setShareMessage(e.target.value)}
             minRows={3}
           />
-          <Group position="right">
+          <Group justify="flex-end">
             <Button
               variant="light"
               onClick={() => setIsShareModalOpen(false)}

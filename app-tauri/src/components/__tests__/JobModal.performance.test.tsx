@@ -2,7 +2,7 @@ import { render, act } from '@testing-library/react';
 import { JobModal } from '../JobModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useJob } from '../../hooks/useJob';
-import { vi } from 'vitest';
+import { vi, Mock } from 'vitest';
 
 // Configuration des mocks pour les hooks
 vi.mock('../../contexts/AuthContext', () => ({
@@ -12,8 +12,8 @@ vi.mock('../../contexts/AuthContext', () => ({
 vi.mock('../../hooks/useJob', () => ({
   useJob: vi.fn()
 }));
-const mockUseAuth = useAuth as vi.Mock;
-const mockUseJob = useJob as vi.Mock;
+const mockUseAuth = useAuth as Mock;
+const mockUseJob = useJob as Mock;
 
 describe('JobModal Performance Tests', () => {
   const mockJob = {

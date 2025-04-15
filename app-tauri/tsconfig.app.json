@@ -29,7 +29,10 @@
       "components/*": ["src/components/*"],
       "hooks/*": ["src/hooks/*"],
       "contexts/*": ["src/contexts/*"]
-    }
+    },
+
+    /* Types */
+    "types": ["@tauri-apps/api"]
   },
   "include": ["src"]
 }

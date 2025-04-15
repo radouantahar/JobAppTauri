@@ -1,67 +1,66 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { useAppStore } from '../store';
+import { authService } from '../services/api';
 
 export interface AuthContextType {
-  user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  error: Error | null;
-  login: (email: string, password: string) => Promise<void>;
+  user: { id: string; email: string } | null;
+  login: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  register: (email: string, name: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { setLoading } = useAppStore();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string) => {
+    setLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      const user = await invoke<User>('login', { email });
+      const user = await authService.login(email);
+      setIsAuthenticated(true);
       setUser(user);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Erreur de connexion'));
-      throw err;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  }, [setLoading]);
 
   const logout = useCallback(async () => {
+    setLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      await invoke('logout');
+      await authService.logout();
+      setIsAuthenticated(false);
       setUser(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Erreur de déconnexion'));
-      throw err;
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  }, [setLoading]);
+
+  const register = useCallback(async (email: string, name: string) => {
+    setLoading(true);
+    try {
+      const user = await authService.register(email, name);
+      setIsAuthenticated(true);
+      setUser(user);
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        error,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
@@ -70,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth doit être utilisé à l\'intérieur d\'un AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }; 

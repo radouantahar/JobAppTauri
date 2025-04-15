@@ -1,13 +1,12 @@
 import { render, act } from '@testing-library/react';
 import { DocumentForm } from '../DocumentForm';
-import { vi, beforeEach, describe, it, expect, MockInstance } from 'vitest';
+import { vi, beforeEach, describe, it, expect } from 'vitest';
 import { useAuth } from '../../contexts/AuthContext';
-import type { AuthContextType } from '../../contexts/AuthContext';
 
 // Mock des hooks
-vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: vi.fn()
-}));
+vi.mock('../../contexts/AuthContext');
+
+const mockUseAuth = useAuth as jest.Mock;
 
 vi.mock('../../services/api', () => ({
   documentService: {
@@ -39,13 +38,12 @@ const mockSubmit = vi.fn();
 describe('DocumentForm Performance Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as unknown as MockInstance<() => AuthContextType>).mockReturnValue({
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
-      user: null,
-      isLoading: false,
-      error: null,
+      user: { id: '1', email: 'test@example.com' },
       login: vi.fn(),
-      logout: vi.fn()
+      logout: vi.fn(),
+      register: vi.fn()
     });
   });
 

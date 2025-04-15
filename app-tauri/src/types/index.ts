@@ -4,18 +4,18 @@
 
 // ==================== Core Types ====================
 export type ISODateString = string & { readonly __brand: 'ISODateString' };
-export type JobID = number & { readonly __brand: 'JobID' };
-export type UserID = number & { readonly __brand: 'UserID' };
+export type JobID = string;
+export type UserID = string;
 
 // ==================== Enums and Literals ====================
-export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'monster' | 'custom';
+export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'other';
 export type JobStatus = 'saved' | 'applied' | 'interview' | 'offer' | 'rejected';
 export type CommuteMode = 'driving' | 'transit' | 'walking' | 'bicycling';
-export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'executive';
+export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
 export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary';
 export type RemotePreference = 'office' | 'hybrid' | 'remote';
-export type DocumentType = 'cv' | 'cover_letter' | 'portfolio';
-export const DOCUMENT_TYPES: DocumentType[] = ['cv', 'cover_letter', 'portfolio'];
+export type DocumentType = 'cv' | 'cover-letter' | 'portfolio' | 'other';
+export const DOCUMENT_TYPES: DocumentType[] = ['cv', 'cover-letter', 'portfolio', 'other'];
 export type InterviewType = 'phone' | 'video' | 'onsite' | 'technical';
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'CHF';
 export type SalaryPeriod = 'hour' | 'week' | 'month' | 'year';
@@ -39,11 +39,10 @@ export interface CommuteLocation {
 
 /** Salary range with optional min/max and currency/period */
 export interface SalaryRange {
-  min?: number;
-  max?: number;
-  currency?: Currency;
-  period?: SalaryPeriod;
-  /** @assertion min <= max when both present */
+  min: number;
+  max: number;
+  currency: string;
+  period: string;
 }
 
 /** Education history entry */
@@ -75,78 +74,80 @@ export interface Job {
   url: string;
   source: JobSource;
   publishedAt: ISODateString;
-  salary?: SalaryRange;
-  matchingScore: number; // 0-1 scale
-  commuteTimes: {
-    primaryHome: CommuteLocation;
-    secondaryHome?: CommuteLocation;
-  };
-  skills?: string[];
-  experienceLevel?: ExperienceLevel;
-  appliedAt?: ISODateString;
-  status?: JobStatus;
+  jobType: JobType;
+  experienceLevel: ExperienceLevel;
+  salary: SalaryRange;
+  matchingScore: number;
+  skills: string[];
+  commuteTimes: Record<string, CommuteTime>;
+}
+
+/** Application tracking information */
+export interface Application {
+  id: string;
+  jobId: string;
+  status: 'in_progress' | 'interview' | 'offer' | 'rejected';
+  company: string;
+  position: string;
+  appliedDate: string;
+  lastUpdated: string;
+  notes?: string;
+  nextStep?: string;
+  documents?: {
+    type: DocumentType;
+    path: string;
+  }[];
+  interviews?: {
+    date: string;
+    type: InterviewType;
+    notes?: string;
+    contactPerson?: string;
+  }[];
 }
 
 /** Job search criteria */
 export interface SearchCriteria {
-  keywords: string[];
+  query?: string;
+  page?: number;
   location?: string;
-  radius?: number; // in km
   jobType?: JobType[];
-  datePosted?: '24h' | 'week' | 'last_week' | 'month' | 'any';
-  salary?: SalaryRange;
-  commuteTime?: {
-    max: number; // max minutes
-    from: 'primary' | 'secondary' | 'both';
-    mode?: CommuteMode;
-  };
   experienceLevel?: ExperienceLevel[];
-  remoteOnly?: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
+  skills?: string[];
+  remote?: boolean;
 }
 
 /** User profile information */
 export interface UserProfile {
-  id: UserID;
+  id: string;
   name: string;
   email: string;
-  phone?: string;
-  locations: {
-    primary: string;
-    secondary?: string;
-    coordinates?: {
-      primary: Coordinates;
-      secondary?: Coordinates;
-    };
-  };
-  cv: CVInfo;
-  preferences?: {
-    notifications?: boolean;
-    darkMode?: boolean;
-    language?: Language;
-    commuteMode?: CommuteMode;
-  };
-  jobPreferences?: {
-    minSalary?: number;
-    preferredJobTypes?: JobType[];
-    remotePreference?: RemotePreference;
-  };
+  location: string;
+  cv: string;
+  preferredJobTypes: string[];
+  preferredLocations: string[];
+  experienceLevel: string;
+  salaryExpectation: number;
+  availability: string;
+  noticePeriod: number;
 }
 
 /** Kanban card representing a job application */
 export interface KanbanCard {
-  id: number;
-  jobId: JobID;
-  columnId: number;
-  position: number;
-  job: Job;
+  id: string;
+  jobId: string;
+  title: string;
+  description: string;
+  status: string;
   notes?: string;
-  appliedAt?: ISODateString;
-  followUpDate?: ISODateString;
-  documents?: {
-    cv?: string;
-    coverLetter?: string;
-  };
-  interviews?: Interview[];
+  createdAt: string;
+  updatedAt: string;
+  interviews?: Array<{
+    date: string;
+    type: string;
+    notes?: string;
+  }>;
 }
 
 /** Interview details */
@@ -241,13 +242,17 @@ export interface GeneratedDocument {
 
 /** Application state */
 export interface AppState {
-  isLoading: boolean;
-  isDarkMode: boolean;
-  userProfile: UserProfile | null;
-  selectedJob: Job | null;
-  kanbanColumns: KanbanColumn[];
-  searchPreferences: SearchPreference[];
-  activeSearchPreference: SearchPreference | null;
+  isAuthenticated: boolean;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  } | null;
+  loading: boolean;
+  error: Error | null;
+  setUser: (user: AppState['user']) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: Error | null) => void;
 }
 
 /** Standard API response format */
@@ -290,8 +295,29 @@ export interface Document {
   id: string;
   title: string;
   description: string;
-  type: 'pdf' | 'doc' | 'csv';
+  type: DocumentType;
+  content?: string;
   url?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  location?: string;
+  cv?: string;
+  preferredJobTypes?: string[];
+  preferredLocations?: string[];
+  experienceLevel?: string;
+  salaryExpectation?: number;
+  availability?: string;
+  noticePeriod?: number;
+}
+
+export interface CommuteTime {
+  duration: number;
+  distance: number;
+  mode: CommuteMode;
 }

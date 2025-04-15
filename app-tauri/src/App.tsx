@@ -4,14 +4,14 @@ import { MantineProvider, AppShell, ColorSchemeScript } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore } from './store';
-import { Navigation } from './components/Navigation';
-import { Dashboard } from './pages/Dashboard';
+import Navigation from './components/Navigation';
+import Dashboard from './pages/Dashboard';
 import { userService } from './services/api';
 import { SearchPage } from './pages/Search';
-import { KanbanPage } from './pages/Kanban';
-import { ProfilePage } from './pages/Profile';
+import Kanban from './pages/Kanban';
+import { Profile } from './pages/Profile';
 import { DocumentsPage } from './pages/Documents';
-import { CommutePage } from './pages/Commute';
+import CommutePage from './pages/Commute';
 import { SettingsPage } from './pages/Settings';
 
 import '@mantine/core/styles.css';
@@ -29,7 +29,7 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const { isDarkMode, setUserProfile } = useAppStore();
+  const { isDarkMode, setUserProfile, isAuthenticated } = useAppStore();
   
   // Load user profile on component mount
   useEffect(() => {
@@ -62,14 +62,14 @@ function App() {
             padding="md"
           >
             <AppShell.Navbar p="md">
-              <Navigation />
+              <Navigation isAuthenticated={isAuthenticated} />
             </AppShell.Navbar>
             <AppShell.Main>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/search" element={<SearchPage />} />
-                <Route path="/kanban" element={<KanbanPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/kanban" element={<Kanban />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/commute" element={<CommutePage />} />
                 <Route path="/settings" element={<SettingsPage />} />

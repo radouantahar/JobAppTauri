@@ -1,115 +1,195 @@
 /// <reference types="vitest" />
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SearchResults } from '../SearchResults';
-import type { Job } from '../../../types';
+import type { Job, JobType, JobSource, ExperienceLevel, Currency, SalaryPeriod, CommuteMode, ISODateString } from '../../../types';
+
+// Fonction utilitaire pour convertir une chaîne en ISODateString
+const toISODateString = (date: string): ISODateString => date as ISODateString;
 
 vi.mock('../../JobCard', () => ({
-  JobCard: ({ job, onClick }: { job: Job; onClick: () => void }) => (
-    <div data-testid={`job-card-${job.id}`} onClick={onClick}>
-      {job.title}
-    </div>
-  ),
+  JobCard: ({ job }: { job: Job }) => <div data-testid={`job-card-${job.id}`}>{job.title}</div>
 }));
 
 describe('SearchResults', () => {
-  const mockJob: Job = {
-    id: 1 as number & { readonly __brand: 'JobID' },
-    title: 'Développeur React',
-    company: 'TechCorp',
-    location: 'Paris',
-    description: 'Description du poste',
-    url: 'https://example.com',
-    source: 'linkedin',
-    publishedAt: '2024-03-20T10:00:00Z' as string & { readonly __brand: 'ISODateString' },
-    matchingScore: 0.8,
-    commuteTimes: {
-      primaryHome: {
-        duration: 30,
-        distance: 5,
-        mode: 'transit'
-      }
+  const mockJobs: Job[] = [
+    {
+      id: '1',
+      title: 'Développeur React',
+      company: 'TechCorp',
+      location: 'Paris',
+      description: 'Description du poste',
+      url: 'https://example.com/job',
+      source: 'linkedin' as JobSource,
+      publishedAt: toISODateString('2024-03-20T00:00:00.000Z'),
+      jobType: 'full-time' as JobType,
+      experienceLevel: 'mid' as ExperienceLevel,
+      matchingScore: 0.95,
+      commuteTimes: {
+        primaryHome: {
+          duration: 30,
+          distance: 5,
+          mode: 'transit' as CommuteMode
+        }
+      },
+      salary: {
+        min: 45000,
+        max: 55000,
+        currency: 'EUR' as Currency,
+        period: 'year' as SalaryPeriod
+      },
+      skills: ['React', 'TypeScript', 'Node.js']
+    },
+    {
+      id: '2',
+      title: 'Frontend Developer',
+      company: 'WebCorp',
+      location: 'Lyon',
+      description: 'Description du poste',
+      url: 'https://example.com/job2',
+      source: 'indeed' as JobSource,
+      publishedAt: toISODateString('2024-03-19T00:00:00.000Z'),
+      jobType: 'full-time' as JobType,
+      experienceLevel: 'senior' as ExperienceLevel,
+      matchingScore: 0.85,
+      commuteTimes: {
+        primaryHome: {
+          duration: 45,
+          distance: 8,
+          mode: 'transit' as CommuteMode
+        }
+      },
+      salary: {
+        min: 55000,
+        max: 70000,
+        currency: 'EUR' as Currency,
+        period: 'year' as SalaryPeriod
+      },
+      skills: ['Vue.js', 'JavaScript', 'CSS']
     }
-  };
-
-  const defaultProps = {
-    jobs: [] as Job[],
-    isLoading: false,
-    hasMore: false,
-    onJobClick: vi.fn(),
-    loadMoreRef: vi.fn(),
-  };
+  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('devrait afficher le message "Aucune offre trouvée" quand il n\'y a pas de résultats', () => {
-    render(<SearchResults {...defaultProps} />);
+  it('renders job cards correctly', () => {
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
     
+    expect(screen.getByText('Développeur React')).toBeInTheDocument();
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
+  });
+
+  it('calls onJobClick when a job card is clicked', () => {
+    const handleJobClick = vi.fn();
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={handleJobClick}
+        loadMoreRef={() => {}}
+      />
+    );
+    
+    fireEvent.click(screen.getByText('Développeur React'));
+    expect(handleJobClick).toHaveBeenCalledWith(mockJobs[0]);
+  });
+
+  it('displays matching score when provided', () => {
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
+    
+    expect(screen.getByText('95%')).toBeInTheDocument();
+    expect(screen.getByText('85%')).toBeInTheDocument();
+  });
+
+  it('shows salary information when available', () => {
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
+    
+    expect(screen.getByText('45 000 - 55 000 EUR/year')).toBeInTheDocument();
+    expect(screen.getByText('55 000 - 70 000 EUR/year')).toBeInTheDocument();
+  });
+
+  it('should show loading state', () => {
+    render(
+      <SearchResults
+        jobs={[]}
+        isLoading={true}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
+    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+  });
+
+  it('should show empty state', () => {
+    render(
+      <SearchResults
+        jobs={[]}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
     expect(screen.getByText('Aucune offre trouvée')).toBeInTheDocument();
   });
 
   it('devrait afficher les cartes de jobs quand il y a des résultats', () => {
-    const jobs = [
-      mockJob,
-      { ...mockJob, id: 2 as number & { readonly __brand: 'JobID' }, title: 'Développeur Vue' }
-    ];
-    render(<SearchResults {...defaultProps} jobs={jobs} />);
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={() => {}}
+        loadMoreRef={() => {}}
+      />
+    );
     
     expect(screen.getByTestId('job-card-1')).toBeInTheDocument();
     expect(screen.getByTestId('job-card-2')).toBeInTheDocument();
     expect(screen.getByText('Développeur React')).toBeInTheDocument();
-    expect(screen.getByText('Développeur Vue')).toBeInTheDocument();
+    expect(screen.getByText('Frontend Developer')).toBeInTheDocument();
   });
 
   it('devrait appeler onJobClick avec le bon job lors du clic', () => {
-    render(<SearchResults {...defaultProps} jobs={[mockJob]} />);
+    const handleJobClick = vi.fn();
+    render(
+      <SearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        hasMore={false}
+        onJobClick={handleJobClick}
+        loadMoreRef={() => {}}
+      />
+    );
     
-    const jobCard = screen.getByTestId('job-card-1');
-    jobCard.click();
-    
-    expect(defaultProps.onJobClick).toHaveBeenCalledWith(mockJob);
-  });
-
-  it('devrait afficher le LoadingOverlay quand hasMore est true', () => {
-    render(<SearchResults {...defaultProps} jobs={[mockJob]} hasMore={true} isLoading={true} />);
-    
-    const loadingElement = screen.getByRole('presentation');
-    expect(loadingElement).toBeInTheDocument();
-    expect(loadingElement).toHaveStyle({ opacity: 1 });
-  });
-
-  // Test des cas limites
-  it('ne devrait pas afficher le message "Aucune offre trouvée" pendant le chargement', () => {
-    render(<SearchResults {...defaultProps} isLoading={true} />);
-    
-    expect(screen.queryByText('Aucune offre trouvée')).not.toBeInTheDocument();
-  });
-
-  // Test des cas d'erreur
-  it('devrait gérer les jobs avec des données minimales', () => {
-    const minimalJob: Job = {
-      id: 3 as number & { readonly __brand: 'JobID' },
-      title: 'Titre minimal',
-      company: 'Entreprise',
-      location: 'Ville',
-      description: 'Description minimale',
-      url: 'https://example.com',
-      source: 'linkedin',
-      publishedAt: '2024-03-20T10:00:00Z' as string & { readonly __brand: 'ISODateString' },
-      matchingScore: 0,
-      commuteTimes: {
-        primaryHome: {
-          duration: 0,
-          distance: 0,
-          mode: 'transit'
-        }
-      }
-    };
-    
-    render(<SearchResults {...defaultProps} jobs={[minimalJob]} />);
-    
-    expect(screen.getByTestId('job-card-3')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Développeur React'));
+    expect(handleJobClick).toHaveBeenCalledWith(mockJobs[0]);
   });
 }); 

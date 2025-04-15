@@ -1,17 +1,17 @@
-import React from 'react';
 import { render, act } from '@testing-library/react';
-import { ProfilePage } from '../Profile';
+import { Profile } from '../Profile';
 import { useAuth } from '../../contexts/AuthContext';
-import { useProfile } from '../../hooks/useProfile';
+import { useAppStore } from '../../store';
+import { vi } from 'vitest';
 
 // Mock des hooks
-jest.mock('../../contexts/AuthContext');
-jest.mock('../../hooks/useProfile');
+vi.mock('../../contexts/AuthContext');
+vi.mock('../../store');
 
 const mockUseAuth = useAuth as jest.Mock;
-const mockUseProfile = useProfile as jest.Mock;
+const mockUseAppStore = useAppStore as unknown as jest.Mock;
 
-describe('ProfilePage Performance Tests', () => {
+describe('Profile Performance Tests', () => {
   beforeEach(() => {
     // Configuration des mocks par défaut
     mockUseAuth.mockReturnValue({
@@ -19,21 +19,10 @@ describe('ProfilePage Performance Tests', () => {
       user: { id: '1', email: 'test@example.com' },
     });
 
-    mockUseProfile.mockReturnValue({
-      profile: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        location: 'Paris',
-        experienceLevel: 'mid',
-        skills: ['React', 'TypeScript'],
-        cv: {
-          content: 'Contenu du CV',
-          lastUpdated: new Date().toISOString(),
-        },
-      },
+    mockUseAppStore.mockReturnValue({
+      setLoading: vi.fn(),
       isLoading: false,
-      error: null,
-      updateProfile: jest.fn(),
+      error: null
     });
   });
 
@@ -41,7 +30,7 @@ describe('ProfilePage Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<ProfilePage />);
+      render(<Profile />);
     });
     
     const endTime = performance.now();
@@ -51,17 +40,16 @@ describe('ProfilePage Performance Tests', () => {
   });
 
   it('devrait gérer efficacement les états de chargement', () => {
-    mockUseProfile.mockReturnValue({
-      profile: null,
+    mockUseAppStore.mockReturnValue({
+      setLoading: vi.fn(),
       isLoading: true,
-      error: null,
-      updateProfile: jest.fn(),
+      error: null
     });
 
     const startTime = performance.now();
     
     act(() => {
-      render(<ProfilePage />);
+      render(<Profile />);
     });
     
     const endTime = performance.now();
@@ -71,17 +59,16 @@ describe('ProfilePage Performance Tests', () => {
   });
 
   it('devrait gérer efficacement les états d\'erreur', () => {
-    mockUseProfile.mockReturnValue({
-      profile: null,
+    mockUseAppStore.mockReturnValue({
+      setLoading: vi.fn(),
       isLoading: false,
-      error: new Error('Erreur de chargement'),
-      updateProfile: jest.fn(),
+      error: new Error('Erreur de chargement')
     });
 
     const startTime = performance.now();
     
     act(() => {
-      render(<ProfilePage />);
+      render(<Profile />);
     });
     
     const endTime = performance.now();
@@ -96,7 +83,7 @@ describe('ProfilePage Performance Tests', () => {
 
     for (let i = 0; i < 10; i++) {
       act(() => {
-        render(<ProfilePage />);
+        render(<Profile />);
       });
 
       if (performance.memory) {
@@ -111,27 +98,16 @@ describe('ProfilePage Performance Tests', () => {
   });
 
   it('devrait gérer efficacement les grands ensembles de données', () => {
-    mockUseProfile.mockReturnValue({
-      profile: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        location: 'Paris',
-        experienceLevel: 'mid',
-        skills: Array(100).fill('').map((_, i) => `Skill ${i}`),
-        cv: {
-          content: 'Contenu du CV'.repeat(1000),
-          lastUpdated: new Date().toISOString(),
-        },
-      },
+    mockUseAppStore.mockReturnValue({
+      setLoading: vi.fn(),
       isLoading: false,
-      error: null,
-      updateProfile: jest.fn(),
+      error: null
     });
 
     const startTime = performance.now();
     
     act(() => {
-      render(<ProfilePage />);
+      render(<Profile />);
     });
     
     const endTime = performance.now();

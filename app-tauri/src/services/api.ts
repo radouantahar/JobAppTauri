@@ -2,7 +2,6 @@
 // For Tauri 2.x:
 import { invoke } from '@tauri-apps/api/core';
 
-
 import type { 
   Job, 
   SearchCriteria, 
@@ -12,9 +11,24 @@ import type {
   LLMProvider, 
   DocumentTemplate, 
   GeneratedDocument,
-  DocumentType, // Added this import
+  DocumentType,
   Document
 } from '../types';
+
+// Service d'authentification
+export const authService = {
+  async login(email: string): Promise<{ id: string; email: string }> {
+    return await invoke<{ id: string; email: string }>('login', { email });
+  },
+
+  async logout(): Promise<void> {
+    return await invoke<void>('logout');
+  },
+
+  async register(email: string, name: string): Promise<{ id: string; email: string }> {
+    return await invoke<{ id: string; email: string }>('register', { email, name });
+  }
+};
 
 // Service pour les offres d'emploi
 export const jobService = {

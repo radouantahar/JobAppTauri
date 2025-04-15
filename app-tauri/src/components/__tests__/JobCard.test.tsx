@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { JobCard } from '../JobCard';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppStore } from '../../store';
-import type { Job, JobID, ISODateString, ExperienceLevel, JobStatus, JobSource, Currency, CommuteMode } from '../../types';
+import type { Job, ISODateString, ExperienceLevel, JobStatus, JobSource, Currency, CommuteMode, JobType, SalaryPeriod } from '../../types';
 
 // Mock des icônes
 vi.mock('@tabler/icons-react', () => ({
@@ -25,30 +25,31 @@ vi.mock('../../store', () => ({
 
 // Mock des données de test
 const mockJob: Job = {
-  id: 1 as JobID,
-  title: "Développeur Full Stack",
-  company: "Tech Company",
-  location: "Paris, France",
-  description: "Description du poste",
-  url: "https://example.com/job",
-  source: "linkedin" as JobSource,
-  publishedAt: "2024-03-20T10:00:00Z" as ISODateString,
+  id: '1',
+  title: 'Software Engineer',
+  company: 'Tech Corp',
+  location: 'Paris',
+  description: 'Looking for a skilled software engineer',
+  url: 'https://example.com/job/1',
+  source: 'linkedin' as JobSource,
+  publishedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
+  jobType: 'full-time' as JobType,
+  experienceLevel: 'mid' as ExperienceLevel,
   salary: {
-    min: 45000,
-    max: 65000,
-    currency: "EUR" as Currency
+    min: 50000,
+    max: 70000,
+    currency: 'EUR' as Currency,
+    period: 'year' as SalaryPeriod
   },
   matchingScore: 0.85,
+  skills: ['JavaScript', 'React', 'TypeScript'],
   commuteTimes: {
-    primaryHome: {
+    'home': {
       duration: 30,
-      distance: 10.5,
-      mode: "driving" as CommuteMode
+      distance: 10,
+      mode: 'driving' as CommuteMode
     }
-  },
-  experienceLevel: "mid-level" as ExperienceLevel,
-  status: "active" as JobStatus,
-  skills: ["React", "TypeScript", "Node.js"]
+  }
 };
 
 describe('JobCard', () => {
@@ -68,20 +69,32 @@ describe('JobCard', () => {
     });
   });
 
-  test('affiche les informations du job correctement', () => {
-    render(
-      <JobCard 
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
+  test('renders job information correctly', () => {
+    render(<JobCard job={mockJob} onClick={() => {}} />);
+    
+    expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+    expect(screen.getByText('Tech Corp')).toBeInTheDocument();
+    expect(screen.getByText('Paris')).toBeInTheDocument();
+  });
 
-    expect(screen.getByText(mockJob.title)).toBeInTheDocument();
-    expect(screen.getByText(mockJob.company)).toBeInTheDocument();
-    expect(screen.getByText(mockJob.location)).toBeInTheDocument();
-    expect(screen.getByText("45000 - 65000 €")).toBeInTheDocument();
+  test('calls onClick when clicked', () => {
+    const handleClick = jest.fn();
+    render(<JobCard job={mockJob} onClick={handleClick} />);
+    
+    fireEvent.click(screen.getByText('Software Engineer'));
+    expect(handleClick).toHaveBeenCalledWith(mockJob);
+  });
+
+  test('displays matching score when provided', () => {
+    render(<JobCard job={mockJob} onClick={() => {}} />);
+    
+    expect(screen.getByText('85%')).toBeInTheDocument();
+  });
+
+  test('shows salary information when available', () => {
+    render(<JobCard job={mockJob} onClick={() => {}} />);
+    
+    expect(screen.getByText('50 000 - 70 000 EUR/year')).toBeInTheDocument();
   });
 
   test('gère le clic sur le bouton favori', () => {

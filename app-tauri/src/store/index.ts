@@ -1,7 +1,7 @@
 // Store global avec Zustand
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Job, UserProfile, KanbanColumn, SearchPreference } from '../types';
+import type { Job, UserProfile, KanbanColumn, SearchPreference, Application } from '../types';
 
 interface AppState {
   // État de l'interface
@@ -29,7 +29,7 @@ interface AppState {
   // Favoris
   favorites: Job[];
   addFavorite: (job: Job) => void;
-  removeFavorite: (jobId: number) => void;
+  removeFavorite: (jobId: string) => void;
   
   // Kanban
   kanbanColumns: KanbanColumn[];
@@ -40,6 +40,12 @@ interface AppState {
   setSearchPreferences: (preferences: SearchPreference[]) => void;
   activeSearchPreference: SearchPreference | null;
   setActiveSearchPreference: (preference: SearchPreference) => void;
+  
+  // Applications
+  applications: Application[];
+  addApplication: (application: Application) => void;
+  updateApplication: (id: string, updates: Partial<Application>) => void;
+  deleteApplication: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -74,7 +80,7 @@ export const useAppStore = create<AppState>()(
       addFavorite: (job) => set((state) => ({
         favorites: [...state.favorites, job]
       })),
-      removeFavorite: (jobId) => set((state) => ({
+      removeFavorite: (jobId: string) => set((state) => ({
         favorites: state.favorites.filter(job => job.id !== jobId)
       })),
       
@@ -87,6 +93,20 @@ export const useAppStore = create<AppState>()(
       setSearchPreferences: (preferences) => set({ searchPreferences: preferences }),
       activeSearchPreference: null,
       setActiveSearchPreference: (preference) => set({ activeSearchPreference: preference }),
+      
+      // Applications
+      applications: [],
+      addApplication: (application) => set((state) => ({
+        applications: [...state.applications, application]
+      })),
+      updateApplication: (id, updates) => set((state) => ({
+        applications: state.applications.map(app => 
+          app.id === id ? { ...app, ...updates } : app
+        )
+      })),
+      deleteApplication: (id) => set((state) => ({
+        applications: state.applications.filter(app => app.id !== id)
+      })),
     }),
     {
       name: 'app-storage', // unique name for localStorage
@@ -95,6 +115,7 @@ export const useAppStore = create<AppState>()(
         isDarkMode: state.isDarkMode,
         isAuthenticated: state.isAuthenticated,
         favorites: state.favorites,
+        applications: state.applications,
       }),
     }
   )

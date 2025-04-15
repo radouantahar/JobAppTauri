@@ -1,158 +1,125 @@
-import { memo, useMemo, useCallback, useState } from 'react';
-import { Card, Stack, TextInput, Textarea, Button, Group, Text, Title, Alert } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
-import { useForm } from '@mantine/form';
+import React, { useState, useEffect } from 'react';
+import { Container, Title, TextInput, Button, Stack, Group } from '@mantine/core';
+import { useAuth } from '../contexts/AuthContext';
+import { useAppStore } from '../store';
+import { userService } from '../services/api';
+import { showNotification } from '@mantine/notifications';
 import type { UserProfile } from '../types';
 
-const DEFAULT_CV = {
-  title: 'Développeur Full Stack',
-  summary: 'Développeur passionné avec une expertise en React, Node.js et Python.',
-  skills: ['React', 'TypeScript', 'Node.js', 'Python', 'SQL'],
-  experience: [
-    {
-      company: 'TechCorp',
-      position: 'Développeur Senior',
-      period: '2020 - Présent',
-      description: 'Développement d\'applications web et mobiles.'
-    }
-  ],
-  education: [
-    {
-      school: 'Université Tech',
-      degree: 'Master en Informatique',
-      period: '2015 - 2017'
-    }
-  ]
-};
-
-const LOCATIONS = [
-  'Paris',
-  'Lyon',
-  'Marseille',
-  'Toulouse',
-  'Bordeaux',
-  'Lille',
-  'Nantes',
-  'Strasbourg'
-];
-
-export const ProfilePage = memo(function ProfilePage() {
-  const { user, updateProfile } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<UserProfile>({
-    initialValues: {
-      name: user?.name || '',
-      email: user?.email || '',
-      location: user?.location || '',
-      cv: user?.cv || DEFAULT_CV,
-      preferredJobTypes: user?.preferredJobTypes || [],
-      preferredLocations: user?.preferredLocations || [],
-      experienceLevel: user?.experienceLevel || 'mid',
-      salaryExpectation: user?.salaryExpectation || 0,
-      availability: user?.availability || 'immediate',
-      noticePeriod: user?.noticePeriod || 0,
-    },
-    validate: {
-      name: (value) => (!value ? 'Le nom est requis' : null),
-      email: (value) => (!value ? 'L\'email est requis' : /^\S+@\S+$/.test(value) ? null : 'Email invalide'),
-      location: (value) => (!value ? 'La localisation est requise' : null),
-    },
+export const Profile = () => {
+  const { user } = useAuth();
+  const { setLoading } = useAppStore();
+  const [profile, setProfile] = useState<Partial<UserProfile>>({
+    name: '',
+    email: '',
+    location: '',
+    cv: '',
+    preferredJobTypes: [],
+    preferredLocations: [],
+    experienceLevel: '',
+    salaryExpectation: 0,
+    availability: '',
+    noticePeriod: 0
   });
 
-  const handleSubmit = useCallback(async (values: UserProfile) => {
-    setIsLoading(true);
-    setError(null);
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
     try {
-      await updateProfile(values);
-    } catch (err) {
-      console.error('Erreur lors de la mise à jour du profil:', err);
-      setError('Une erreur est survenue lors de la mise à jour du profil');
+      setLoading(true);
+      const userProfile = await userService.getUserProfile();
+      setProfile(userProfile);
+    } catch (error) {
+      console.error('Erreur lors du chargement du profil:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [updateProfile]);
+  };
 
-  const handleLocationChange = useCallback((value: string) => {
-    form.setFieldValue('location', value);
-    if (!form.values.preferredLocations.includes(value)) {
-      form.setFieldValue('preferredLocations', [...form.values.preferredLocations, value]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await userService.updateUserProfile(profile);
+      showNotification({
+        title: 'Succès',
+        message: 'Profil mis à jour avec succès',
+        color: 'green',
+      });
+    } catch (error) {
+      showNotification({
+        title: 'Erreur',
+        message: 'Une erreur est survenue lors de la mise à jour du profil',
+        color: 'red',
+      });
     }
-  }, [form]);
-
-  const isFormValid = useMemo(() => 
-    form.isValid() && 
-    form.values.name && 
-    form.values.email && 
-    form.values.location
-  , [form]);
-
-  if (!user) {
-    return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Accès non autorisé" color="red">
-        Vous devez être connecté pour accéder à cette page.
-      </Alert>
-    );
-  }
+  };
 
   return (
-    <Stack gap="md">
-      <Title order={2}>Profil</Title>
-      
-      {error && (
-        <Alert icon={<IconAlertCircle size={16} />} title="Erreur" color="red">
-          {error}
-        </Alert>
-      )}
-
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+    <Container size="md" py="xl">
+      <Title order={2} mb="xl">Mon Profil</Title>
+      <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          <Card withBorder shadow="sm" radius="md">
-            <Stack gap="md">
-              <TextInput
-                label="Nom"
-                placeholder="Votre nom"
-                {...form.getInputProps('name')}
-                required
-              />
-              
-              <TextInput
-                label="Email"
-                placeholder="Votre email"
-                {...form.getInputProps('email')}
-                required
-              />
-              
-              <TextInput
-                label="Localisation"
-                placeholder="Votre ville"
-                value={form.values.location}
-                onChange={(e) => handleLocationChange(e.target.value)}
-                required
-              />
-
-              <Textarea
-                label="CV"
-                placeholder="Décrivez votre expérience et vos compétences"
-                minRows={4}
-                {...form.getInputProps('cv.summary')}
-              />
-
-              <Group justify="flex-end">
-                <Button 
-                  type="submit" 
-                  loading={isLoading}
-                  disabled={!isFormValid}
-                >
-                  Enregistrer le profil
-                </Button>
-              </Group>
-            </Stack>
-          </Card>
+          <TextInput
+            label="Nom"
+            value={profile.name || ''}
+            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+          />
+          <TextInput
+            label="Email"
+            value={profile.email || ''}
+            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+          />
+          <TextInput
+            label="Localisation"
+            value={profile.location || ''}
+            onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+          />
+          <TextInput
+            label="CV"
+            value={profile.cv || ''}
+            onChange={(e) => setProfile({ ...profile, cv: e.target.value })}
+          />
+          <TextInput
+            label="Niveau d'expérience"
+            value={profile.experienceLevel || ''}
+            onChange={(e) => setProfile({ ...profile, experienceLevel: e.target.value })}
+          />
+          <TextInput
+            label="Types de postes préférés"
+            value={profile.preferredJobTypes?.join(', ') || ''}
+            onChange={(e) => setProfile({ ...profile, preferredJobTypes: e.target.value.split(',').map(s => s.trim()) })}
+          />
+          <TextInput
+            label="Localisations préférées"
+            value={profile.preferredLocations?.join(', ') || ''}
+            onChange={(e) => setProfile({ ...profile, preferredLocations: e.target.value.split(',').map(s => s.trim()) })}
+          />
+          <TextInput
+            label="Prétentions salariales"
+            type="number"
+            value={profile.salaryExpectation || 0}
+            onChange={(e) => setProfile({ ...profile, salaryExpectation: Number(e.target.value) })}
+          />
+          <TextInput
+            label="Disponibilité"
+            value={profile.availability || ''}
+            onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
+          />
+          <TextInput
+            label="Préavis"
+            type="number"
+            value={profile.noticePeriod || 0}
+            onChange={(e) => setProfile({ ...profile, noticePeriod: Number(e.target.value) })}
+          />
+          <Group justify="flex-end">
+            <Button type="submit">Enregistrer</Button>
+          </Group>
         </Stack>
       </form>
-    </Stack>
+    </Container>
   );
-});
+};

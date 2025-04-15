@@ -1,14 +1,11 @@
-import { 
-  IconDashboard, 
-  IconSearch, 
-  IconLayoutKanban, 
-  IconUser, 
-  IconFileText, 
-  IconMap, 
-  IconSettings,
-  IconLogout,
+import {
   IconHome,
   IconBriefcase,
+  IconFileText,
+  IconUser,
+  IconSettings,
+  IconLayoutKanban,
+  IconMap,
   IconChartBar
 } from '@tabler/icons-react';
 import { ComponentType } from 'react';

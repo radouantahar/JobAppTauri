@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { AppShell, Group, UnstyledButton, Tooltip, Notification, Text } from '@mantine/core';
+import { AppShell, Group, UnstyledButton, Tooltip, Notification } from '@mantine/core';
 import { IconX, IconLogout } from '@tabler/icons-react';
 import { useMemo, memo, useState, useCallback } from 'react';
 import { useAppStore } from '../store';

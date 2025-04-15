@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import { useState, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 
 interface Card {
   id: string;
@@ -28,39 +28,20 @@ interface UseKanbanReturn {
 
 export const useKanban = (cardId: string): UseKanbanReturn => {
   const [card, setCard] = useState<Card | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchCard = async () => {
-      try {
-        setIsLoading(true);
-        const result = await invoke<Card>('get_card', { cardId });
-        setCard(result);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Erreur inconnue'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCard();
-  }, [cardId]);
-
-  const updateCard = async (cardData: Partial<Card>) => {
+  const updateCard = useCallback(async (updates: Partial<Card>) => {
     try {
       setIsLoading(true);
-      const result = await invoke<Card>('update_card', { 
-        cardId,
-        cardData 
-      });
-      setCard(result);
+      const result = await invoke('update_kanban_card', { cardId, updates });
+      setCard(result as Card);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Erreur lors de la mise à jour'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cardId]);
 
   const deleteCard = async () => {
     try {

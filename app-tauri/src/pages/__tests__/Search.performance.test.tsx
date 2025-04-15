@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SearchPage } from '../Search';
+import type { Job, ISODateString, AppState, JobType, ExperienceLevel } from '../../types';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import type { Job, JobID, ISODateString, SalaryRange, JobSource, AppState } from '../../types';
 
 // Mock des dépendances
 vi.mock('../../store', () => ({
@@ -20,28 +20,29 @@ vi.mock('../../services/api', () => ({
 // Données de test pour les tests de performance
 const generateMockJobs = (count: number): Job[] => {
   return Array.from({ length: count }, (_, i) => ({
-    id: (i + 1) as JobID,
-    title: `Développeur React ${i + 1}`,
-    company: `TechCorp ${i + 1}`,
+    id: String(i + 1),
+    title: `Job ${i + 1}`,
+    company: `Company ${i + 1}`,
     location: 'Paris',
-    description: 'Description du poste',
-    url: `https://example.com/job${i + 1}`,
-    source: 'linkedin' as JobSource,
+    description: 'Description',
+    url: 'https://example.com',
+    source: 'linkedin',
     publishedAt: new Date().toISOString() as ISODateString,
+    jobType: 'full-time' as JobType,
+    experienceLevel: 'mid' as ExperienceLevel,
+    skills: ['React', 'TypeScript'],
     salary: {
-      min: 45000,
-      max: 55000,
+      min: 40000,
+      max: 60000,
       currency: 'EUR',
       period: 'year'
-    } as SalaryRange,
+    },
     matchingScore: 0.85,
-    skills: ['React', 'TypeScript'],
-    experienceLevel: 'mid',
     commuteTimes: {
-      primaryHome: {
+      'home': {
         duration: 30,
-        distance: 5,
-        mode: 'transit'
+        distance: 10,
+        mode: 'driving'
       }
     }
   }));
@@ -74,8 +75,8 @@ describe('SearchPage - Tests de Performance', () => {
 
     // Vérification de l'affichage
     await waitFor(() => {
-      expect(screen.getByText('Développeur React 1')).toBeInTheDocument();
-      expect(screen.getByText('TechCorp 1')).toBeInTheDocument();
+      expect(screen.getByText('Job 1')).toBeInTheDocument();
+      expect(screen.getByText('Company 1')).toBeInTheDocument();
     });
   });
 
@@ -190,7 +191,7 @@ describe('SearchPage - Tests de Performance', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Développeur React 1')).toBeInTheDocument();
+      expect(screen.getByText('Job 1')).toBeInTheDocument();
     });
 
     const finalMemory = process.memoryUsage().heapUsed;
@@ -198,5 +199,43 @@ describe('SearchPage - Tests de Performance', () => {
 
     // Vérification de l'utilisation mémoire
     expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024); // Moins de 10MB d'augmentation
+  });
+
+  it('should render 100 jobs in less than 500ms', () => {
+    generateMockJobs(100);
+    const startTime = performance.now();
+    
+    render(<SearchPage />);
+    
+    const endTime = performance.now();
+    expect(endTime - startTime).toBeLessThan(500);
+  });
+
+  it('should handle search with 1000 jobs in less than 1000ms', () => {
+    generateMockJobs(1000);
+    const startTime = performance.now();
+    
+    render(<SearchPage />);
+    
+    const endTime = performance.now();
+    expect(endTime - startTime).toBeLessThan(1000);
+  });
+
+  it('should maintain stable memory usage during multiple renders', () => {
+    generateMockJobs(100);
+    const initialMemory = performance.memory?.usedJSHeapSize || 0;
+    const memorySamples: number[] = [];
+
+    for (let i = 0; i < 10; i++) {
+      render(<SearchPage />);
+      if (performance.memory) {
+        memorySamples.push(performance.memory.usedJSHeapSize);
+      }
+    }
+
+    if (memorySamples.length > 0) {
+      const maxMemoryIncrease = Math.max(...memorySamples) - initialMemory;
+      expect(maxMemoryIncrease).toBeLessThan(5 * 1024 * 1024); // Moins de 5MB d'augmentation
+    }
   });
 }); 

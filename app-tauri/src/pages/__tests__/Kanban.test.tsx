@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { KanbanPage } from '../Kanban';
+import Kanban from '../Kanban';
 import { kanbanService } from '../../services/api';
 import { useAppStore } from '../../store';
 
@@ -22,7 +22,11 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowRight: () => <span data-testid="icon-arrow-right">➡️</span>,
 }));
 
-describe('KanbanPage', () => {
+describe('Kanban', () => {
+  it('renders without crashing', () => {
+    render(<Kanban />);
+  });
+
   const mockColumns = [
     {
       id: 1,
@@ -66,7 +70,7 @@ describe('KanbanPage', () => {
   });
 
   it('devrait charger et afficher les colonnes du Kanban', async () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     // Vérifier que les colonnes sont chargées
     await waitFor(() => {
@@ -80,12 +84,12 @@ describe('KanbanPage', () => {
   });
 
   it('devrait afficher le bouton "Ajouter une offre"', () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
     expect(screen.getByText('Ajouter une offre')).toBeInTheDocument();
   });
 
   it('devrait gérer le déplacement d\'une carte vers la colonne suivante', async () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     // Attendre que les colonnes soient chargées
     await waitFor(() => {
@@ -103,7 +107,7 @@ describe('KanbanPage', () => {
   });
 
   it('devrait afficher "Non postulé" pour les cartes sans date de candidature', async () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     await waitFor(() => {
       expect(screen.getByText('Non postulé')).toBeInTheDocument();
@@ -111,7 +115,7 @@ describe('KanbanPage', () => {
   });
 
   it('devrait afficher la date de candidature au format français', async () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     await waitFor(() => {
       expect(screen.getByText('15/04/2024')).toBeInTheDocument();
@@ -121,7 +125,7 @@ describe('KanbanPage', () => {
   it('devrait gérer les erreurs lors du chargement des colonnes', async () => {
     (kanbanService.getKanbanColumns as any).mockRejectedValue(new Error('Erreur de chargement'));
 
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     // Vérifier que setLoading a été appelé correctement
     await waitFor(() => {
@@ -132,7 +136,7 @@ describe('KanbanPage', () => {
   it('devrait gérer les erreurs lors du déplacement d\'une carte', async () => {
     (kanbanService.moveCard as any).mockRejectedValue(new Error('Erreur de déplacement'));
 
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     // Attendre que les colonnes soient chargées
     await waitFor(() => {
@@ -150,7 +154,7 @@ describe('KanbanPage', () => {
   });
 
   it('devrait afficher le nombre de cartes dans chaque colonne', async () => {
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     await waitFor(() => {
       const badges = screen.getAllByText('1');
@@ -170,7 +174,7 @@ describe('KanbanPage', () => {
 
     (kanbanService.getKanbanColumns as any).mockResolvedValue(emptyColumns);
 
-    render(<KanbanPage />);
+    render(<Kanban />);
 
     await waitFor(() => {
       expect(screen.getByText('Aucune offre dans cette colonne')).toBeInTheDocument();

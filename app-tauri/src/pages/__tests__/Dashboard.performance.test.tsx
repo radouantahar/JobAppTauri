@@ -1,14 +1,14 @@
-import React from 'react';
 import { render, act } from '@testing-library/react';
-import { DashboardPage } from '../Dashboard';
+import Dashboard from '../Dashboard';
+import { vi } from 'vitest';
 import { useAuth } from '../../contexts/AuthContext';
 import { useJobStats } from '../../hooks/useJobStats';
 import { useApplicationStats } from '../../hooks/useApplicationStats';
 
 // Mock des hooks
-jest.mock('../../contexts/AuthContext');
-jest.mock('../../hooks/useJobStats');
-jest.mock('../../hooks/useApplicationStats');
+vi.mock('../../contexts/AuthContext');
+vi.mock('../../hooks/useJobStats');
+vi.mock('../../hooks/useApplicationStats');
 
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseJobStats = useJobStats as jest.Mock;
@@ -59,7 +59,7 @@ describe('DashboardPage Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<DashboardPage />);
+      render(<Dashboard />);
     });
     
     const endTime = performance.now();
@@ -84,7 +84,7 @@ describe('DashboardPage Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<DashboardPage />);
+      render(<Dashboard />);
     });
     
     const endTime = performance.now();
@@ -109,7 +109,7 @@ describe('DashboardPage Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<DashboardPage />);
+      render(<Dashboard />);
     });
     
     const endTime = performance.now();
@@ -124,7 +124,7 @@ describe('DashboardPage Performance Tests', () => {
 
     for (let i = 0; i < 10; i++) {
       act(() => {
-        render(<DashboardPage />);
+        render(<Dashboard />);
       });
 
       if (performance.memory) {
@@ -174,7 +174,7 @@ describe('DashboardPage Performance Tests', () => {
     const startTime = performance.now();
     
     act(() => {
-      render(<DashboardPage />);
+      render(<Dashboard />);
     });
     
     const endTime = performance.now();

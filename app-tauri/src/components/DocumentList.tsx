@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo, memo, useEffect } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 import { 
   Card, 
   Text, 
   Group, 
   ActionIcon, 
-  Tooltip, 
   Menu, 
   rem, 
   Notification,

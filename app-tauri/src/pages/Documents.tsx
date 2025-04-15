@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Container, Tabs, Card, Button, Group, Select, Textarea, Stack, LoadingOverlay } from '@mantine/core';
-import { IconFileText, IconFileDescription, IconMail, IconDownload } from '@tabler/icons-react';
+import { Container, Tabs, Card, Button, Group, Select, Textarea, Stack } from '@mantine/core';
+import { IconFileText, IconFileDescription, IconDownload, IconUpload } from '@tabler/icons-react';
 import { llmService } from '../services/api';
 import { useAppStore } from '../store';
 import { DOCUMENT_TYPES, type DocumentType, type DocumentTemplate } from '../types';
 
 export function DocumentsPage() {
-  // Store activeTab as DocumentType to ensure type safety
+  const { loading, setLoading } = useAppStore();
   const [activeTab, setActiveTab] = useState<DocumentType>('cv');
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState('');
-  const { isLoading, setLoading } = useAppStore();
 
   // Helper to get the current tab as a DocumentType (type-safe)
   const getCurrentDocumentType = (): DocumentType => {
@@ -60,77 +59,57 @@ export function DocumentsPage() {
     loadTemplates();
   }, [activeTab]);
 
+  const handleUpload = () => {
+    setLoading(true);
+    // TODO: Implémenter l'upload de document
+    setLoading(false);
+  };
+
   return (
-    <Container size="xl" py="xl">
+    <Container size="lg" py="xl">
       <Tabs value={activeTab} onChange={handleTabChange}>
         <Tabs.List>
-          <Tabs.Tab value="cv" leftSection={<IconFileText size={16} />}>
-            CV
-          </Tabs.Tab>
-          <Tabs.Tab value="coverLetter" leftSection={<IconFileDescription size={16} />}>
-            Cover Letter
-          </Tabs.Tab>
-          <Tabs.Tab value="email" leftSection={<IconMail size={16} />}>
-            Email
-          </Tabs.Tab>
-          <Tabs.Tab value="followUp" leftSection={<IconMail size={16} />}>
-            Follow Up
-          </Tabs.Tab>
+          <Tabs.Tab value="cv" leftSection={<IconFileText size="0.8rem" />}>CV</Tabs.Tab>
+          <Tabs.Tab value="cover_letter" leftSection={<IconFileDescription size="0.8rem" />}>Lettre de motivation</Tabs.Tab>
+          <Tabs.Tab value="portfolio" leftSection={<IconFileDescription size="0.8rem" />}>Portfolio</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="cv" pt="xl">
           <DocumentTab
-            type="cv"
             templates={templates}
             selectedTemplate={selectedTemplate}
             setSelectedTemplate={setSelectedTemplate}
             generatedContent={generatedContent}
             setGeneratedContent={setGeneratedContent}
             generateDocument={generateDocument}
-            loadTemplates={loadTemplates}
-            isLoading={isLoading}
+            isLoading={loading}
+            onUpload={handleUpload}
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="coverLetter" pt="xl">
+        <Tabs.Panel value="cover_letter" pt="xl">
           <DocumentTab
-            type="coverLetter"
             templates={templates}
             selectedTemplate={selectedTemplate}
             setSelectedTemplate={setSelectedTemplate}
             generatedContent={generatedContent}
             setGeneratedContent={setGeneratedContent}
             generateDocument={generateDocument}
-            loadTemplates={loadTemplates}
-            isLoading={isLoading}
+            isLoading={loading}
+            onUpload={handleUpload}
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="email" pt="xl">
+        <Tabs.Panel value="portfolio" pt="xl">
           <DocumentTab
-            type="email"
             templates={templates}
             selectedTemplate={selectedTemplate}
             setSelectedTemplate={setSelectedTemplate}
             generatedContent={generatedContent}
             setGeneratedContent={setGeneratedContent}
             generateDocument={generateDocument}
-            loadTemplates={loadTemplates}
-            isLoading={isLoading}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel value="followUp" pt="xl">
-          <DocumentTab
-            type="followUp"
-            templates={templates}
-            selectedTemplate={selectedTemplate}
-            setSelectedTemplate={setSelectedTemplate}
-            generatedContent={generatedContent}
-            setGeneratedContent={setGeneratedContent}
-            generateDocument={generateDocument}
-            loadTemplates={loadTemplates}
-            isLoading={isLoading}
+            isLoading={loading}
+            onUpload={handleUpload}
           />
         </Tabs.Panel>
       </Tabs>
@@ -139,60 +118,66 @@ export function DocumentsPage() {
 }
 
 interface DocumentTabProps {
-  type: DocumentType;
   templates: DocumentTemplate[];
   selectedTemplate: string | null;
   setSelectedTemplate: (value: string | null) => void;
   generatedContent: string;
   setGeneratedContent: (content: string) => void;
   generateDocument: () => Promise<void>;
-  loadTemplates: () => Promise<void>;
   isLoading: boolean;
+  onUpload: () => void;
 }
 
 function DocumentTab({
-  type,
   templates,
   selectedTemplate,
   setSelectedTemplate,
   generatedContent,
   setGeneratedContent,
   generateDocument,
-  loadTemplates,
-  isLoading
+  isLoading,
+  onUpload
 }: DocumentTabProps) {
   return (
     <Stack gap="md">
-      <Group>
-        <Select
-          placeholder="Select template"
-          data={templates.map(t => ({ value: t.id.toString(), label: t.name }))}
-          value={selectedTemplate}
-          onChange={setSelectedTemplate}
-          style={{ width: 300 }}
+      <Card withBorder>
+        <Group justify="space-between" mb="md">
+          <Select
+            label="Modèle"
+            placeholder="Sélectionnez un modèle"
+            value={selectedTemplate}
+            onChange={setSelectedTemplate}
+            data={templates.map(t => ({ value: t.id.toString(), label: t.name }))}
+            disabled={isLoading}
+          />
+          <Button
+            leftSection={<IconDownload size="1rem" />}
+            onClick={generateDocument}
+            loading={isLoading}
+            disabled={!selectedTemplate}
+          >
+            Générer
+          </Button>
+        </Group>
+
+        <Textarea
+          label="Contenu généré"
+          value={generatedContent}
+          onChange={(e) => setGeneratedContent(e.currentTarget.value)}
+          minRows={10}
+          disabled={isLoading}
         />
-        <Button onClick={loadTemplates}>Refresh Templates</Button>
-        <Button onClick={generateDocument}>
-          Generate {type === 'cv' ? 'CV' : 
-                  type === 'coverLetter' ? 'Cover Letter' : 
-                  type === 'email' ? 'Email' : 'Follow Up'}
+      </Card>
+
+      <Group justify="flex-end">
+        <Button
+          leftSection={<IconUpload size="1rem" />}
+          onClick={onUpload}
+          loading={isLoading}
+        >
+          Télécharger
         </Button>
       </Group>
-
-      {generatedContent && (
-        <Card withBorder pos="relative">
-          <LoadingOverlay visible={isLoading} />
-          <Textarea
-            value={generatedContent}
-            onChange={(e) => setGeneratedContent(e.currentTarget.value)}
-            autosize
-            minRows={10}
-          />
-          <Group justify="flex-end" mt="md">
-            <Button leftSection={<IconDownload size={16} />}>Download</Button>
-          </Group>
-        </Card>
-      )}
     </Stack>
   );
 }
