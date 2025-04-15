@@ -4,12 +4,12 @@ import { Container, TextInput, Button, Stack, Text, Notification } from '@mantin
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { useAppStore } from '../store';
 import { jobService } from '../services/api';
-import type { Job, SearchCriteria, JobType, ExperienceLevel } from '../types';
+import type { Job, JobType, ExperienceLevel } from '../types';
 import { useDebouncedValue, useInViewport } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { SearchFilters, DatePostedOption } from '../components/search/SearchFilters';
 import { SearchResults } from '../components/search/SearchResults';
-import { SearchState, SearchActions, SearchResponse, INITIAL_SEARCH_STATE } from './search/types';
+import { SearchState, SearchActions, INITIAL_SEARCH_STATE } from './search/types';
 
 /**
  * Composant d'affichage des erreurs avec possibilité de réessayer

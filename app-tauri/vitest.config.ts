@@ -20,6 +20,9 @@ export default defineConfig({
         '**/*.stories.{ts,tsx}',
       ],
     },
+    deps: {
+      inline: [/@mantine\/.*/, /@tabler\/icons-react/],
+    },
   },
   resolve: {
     alias: {

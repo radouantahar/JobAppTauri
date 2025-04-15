@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import { 
   Card, 
   Text, 
@@ -109,8 +109,12 @@ const DocumentCard = memo(function DocumentCard({
     setIsLoading(true);
     setError(null);
     try {
-      await documentService.downloadDocument(document.id);
-      onDownload?.(document);
+      if (document.url) {
+        window.open(document.url, '_blank');
+        onDownload?.(document);
+      } else {
+        setError('URL du document non disponible');
+      }
     } catch (err) {
       console.error('Error downloading:', err);
       setError('Erreur lors du téléchargement du document');
@@ -131,6 +135,7 @@ const DocumentCard = memo(function DocumentCard({
 
   return (
     <Card withBorder radius="md" className={classes.card}>
+      <LoadingOverlay visible={isLoading} />
       <Card.Section withBorder inheritPadding py="xs">
         <Group justify="space-between">
           <Group gap={4}>

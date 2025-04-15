@@ -3,24 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useJobStats } from '../hooks/useJobStats';
 import { useApplicationStats } from '../hooks/useApplicationStats';
-import { Container, Grid, Paper, Title, Text, Group, Stack, Card, useMantineTheme, Button } from '@mantine/core';
+import { Grid, Paper, Title, Text, Group, Stack, Card, Button } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { useAppStore } from '../store';
-import type { Job, JobStats, ApplicationStats } from '../types';
+import type { Job } from '../types';
 
 export default function DashboardPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { stats: jobStats, loading: jobStatsLoading, error: jobStatsError, refreshStats: refreshJobStats } = useJobStats();
   const { stats: appStats, loading: appStatsLoading, error: appStatsError, refreshStats: refreshAppStats } = useApplicationStats();
-  const theme = useMantineTheme();
-  const { setLoading, isRefreshing, setIsRefreshing } = useAppStore();
-  const [recentJobs, setRecentJobs] = useState<Job[]>([]);
-  const [retryCount, setRetryCount] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const { isRefreshing, setIsRefreshing } = useAppStore();
+  const [] = useState<Job[]>([]);
+  const [] = useState(0);
+  const [] = useState<string | null>(null);
 
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 5000; // 5 seconds
 
   useEffect(() => {
     if (!isAuthenticated) {
