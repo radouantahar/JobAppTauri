@@ -3,28 +3,30 @@ import { TextInput, Textarea, Select, Button, Stack, LoadingOverlay, Alert } fro
 import { useForm } from '@mantine/form';
 import { DocumentType } from '../types';
 
+interface FormValues {
+  title: string;
+  content: string;
+  type: DocumentType;
+}
+
 interface DocumentFormProps {
-  initialData?: {
-    title: string;
-    content: string;
-    type: DocumentType;
-  };
+  initialData?: FormValues;
   isLoading?: boolean;
-  error?: string;
-  onSubmit?: (values: { title: string; content: string; type: DocumentType }) => void;
+  error?: string | null;
+  onSubmit?: (values: FormValues) => void;
 }
 
 export const DocumentForm: React.FC<DocumentFormProps> = ({
   initialData,
   isLoading = false,
-  error,
+  error = null,
   onSubmit,
 }) => {
-  const form = useForm({
+  const form = useForm<FormValues>({
     initialValues: {
       title: initialData?.title || '',
       content: initialData?.content || '',
-      type: initialData?.type || 'cv' as DocumentType,
+      type: initialData?.type || 'cv',
     },
     validate: {
       title: (value) => (value.length < 1 ? 'Le titre est requis' : null),
@@ -32,8 +34,10 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    onSubmit?.(values);
+  const handleSubmit = (values: FormValues) => {
+    if (onSubmit) {
+      onSubmit(values);
+    }
   };
 
   return (
@@ -67,8 +71,9 @@ export const DocumentForm: React.FC<DocumentFormProps> = ({
           placeholder="Sélectionnez le type de document"
           data={[
             { value: 'cv', label: 'CV' },
-            { value: 'cover_letter', label: 'Lettre de motivation' },
+            { value: 'cover-letter', label: 'Lettre de motivation' },
             { value: 'portfolio', label: 'Portfolio' },
+            { value: 'other', label: 'Autre' },
           ]}
           {...form.getInputProps('type')}
         />

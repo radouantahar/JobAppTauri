@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
 import { jobService } from '../api';
 import type { Job, SearchCriteria, ISODateString, ExperienceLevel, JobType } from '../../types';

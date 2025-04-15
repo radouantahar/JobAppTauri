@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SearchPage } from '../Search';
 import type { Job, ISODateString, AppState, JobType, ExperienceLevel } from '../../types';
 import { useAppStore } from '../../store';

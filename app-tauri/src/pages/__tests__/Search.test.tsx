@@ -1,10 +1,34 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SearchPage } from '../Search';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
 import type { Job, JobID, ISODateString, AppState } from '../../types';
+
+jest.mock('../../store');
+
+const mockAppState: AppState = {
+  isAuthenticated: false,
+  user: null,
+  loading: false,
+  error: null,
+  setUser: jest.fn(),
+  setLoading: jest.fn(),
+  setError: jest.fn(),
+  searchQuery: '',
+  filters: {
+    location: '',
+    jobType: [],
+    experienceLevel: [],
+    salaryRange: {
+      min: 0,
+      max: 100000
+    }
+  },
+  isLoading: false,
+  setSearchQuery: jest.fn(),
+  setFilters: jest.fn()
+};
 
 // Mock des dépendances
 vi.mock('../../store', () => ({
@@ -18,16 +42,6 @@ vi.mock('../../services/api', () => ({
 }));
 
 describe('SearchPage', () => {
-  const mockAppState: AppState = {
-    isAuthenticated: false,
-    user: null,
-    loading: false,
-    error: null,
-    setUser: vi.fn(),
-    setLoading: vi.fn(),
-    setError: vi.fn()
-  };
-
   beforeEach(() => {
     vi.mocked(useAppStore).mockReturnValue(mockAppState);
   });

@@ -7,6 +7,8 @@ interface SearchResultsProps {
   isLoading?: boolean;
   error?: string | null;
   onJobClick?: (job: Job) => void;
+  hasMore?: boolean;
+  loadMoreRef?: (node: HTMLDivElement | null) => void;
 }
 
 export const SearchResults = ({ jobs, isLoading, error, onJobClick }: SearchResultsProps) => {

@@ -1,247 +1,104 @@
-import { memo, useMemo, useCallback, useState } from 'react';
-import { 
-  Card, 
-  Stack, 
-  Text, 
-  Title, 
-  Group, 
-  Button, 
-  Badge, 
-  Divider, 
-  Alert,
-  Modal,
-  Textarea,
-  ActionIcon,
-  Tooltip
-} from '@mantine/core';
-import { 
-  IconHeart, 
-  IconHeartFilled, 
-  IconShare, 
-  IconMapPin,
-  IconBuildingSkyscraper,
-  IconCalendar,
-  IconX,
-  IconCheck
-} from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
+import { memo, useCallback, useMemo } from 'react';
+import { Card, Text, Group, Badge, Button, Stack, ActionIcon } from '@mantine/core';
+import { IconHeart, IconShare } from '@tabler/icons-react';
 import { useAppStore } from '../store';
 import type { Job } from '../types';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import classes from './JobDetails.module.css';
 
 interface JobDetailsProps {
   job: Job;
-  onClose: () => void;
+  onApply?: (job: Job) => void;
+  onShare?: (job: Job) => void;
 }
 
-export const JobDetails = memo(function JobDetails({ job, onClose }: JobDetailsProps) {
-  const { user } = useAuth();
+export const JobDetails = memo(function JobDetails({ job, onApply, onShare }: JobDetailsProps) {
   const { addFavorite, removeFavorite, favorites } = useAppStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareMessage, setShareMessage] = useState('');
 
-  const isFavorite = useMemo(() => 
-    favorites.some(fav => fav.id === job.id)
-  , [favorites, job.id]);
+  const isFavorite = useMemo(() => favorites.includes(job.id), [favorites, job.id]);
 
-  const formattedDate = useMemo(() => 
-    formatDistanceToNow(new Date(job.publishedAt), { 
-      addSuffix: true,
-      locale: fr 
-    })
-  , [job.publishedAt]);
-
-  const handleFavoriteToggle = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const handleFavoriteClick = async () => {
     try {
       if (isFavorite) {
-        await removeFavorite(job.id);
+        removeFavorite(job.id);
       } else {
-        await addFavorite(job);
+        addFavorite(job.id);
       }
-    } catch (err) {
-      console.error('Erreur lors de la mise à jour des favoris:', err);
-      setError('Une erreur est survenue lors de la mise à jour des favoris');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
-  }, [isFavorite, job, addFavorite, removeFavorite]);
+  };
 
-  const handleShare = useCallback(async () => {
-    if (!navigator.share) {
-      setIsShareModalOpen(true);
-      return;
-    }
+  const handleShareClick = useCallback(() => {
+    onShare?.(job);
+  }, [job, onShare]);
 
-    try {
-      await navigator.share({
-        title: job.title,
-        text: `${job.title} chez ${job.company}\n${job.description}`,
-        url: job.url
-      });
-    } catch (err) {
-      console.error('Erreur lors du partage:', err);
-      setError('Une erreur est survenue lors du partage');
-    }
-  }, [job]);
-
-  const handleShareSubmit = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // TODO: Implémenter l'envoi du message via l'API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsShareModalOpen(false);
-      setShareMessage('');
-    } catch (err) {
-      console.error('Erreur lors de l\'envoi du message:', err);
-      setError('Une erreur est survenue lors de l\'envoi du message');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const jobTypeBadge = useMemo(() => {
-    const types = {
-      'full-time': 'Temps plein',
-      'part-time': 'Temps partiel',
-      'contract': 'Contrat',
-      'internship': 'Stage',
-      'temporary': 'Temporaire'
-    };
-    return types[job.jobType] || job.jobType;
-  }, [job.jobType]);
-
-  const experienceBadge = useMemo(() => {
-    const levels = {
-      'entry': 'Débutant',
-      'mid': 'Intermédiaire',
-      'senior': 'Senior',
-      'lead': 'Lead',
-      'executive': 'Directeur'
-    };
-    return levels[job.experienceLevel] || job.experienceLevel;
-  }, [job.experienceLevel]);
+  const handleApplyClick = useCallback(() => {
+    onApply?.(job);
+  }, [job, onApply]);
 
   return (
-    <Card withBorder shadow="sm" radius="md">
+    <Card className={classes.card}>
       <Stack gap="md">
-        <Group justify="space-between">
-          <Title order={2}>{job.title}</Title>
-          <Group>
-            <Tooltip label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
-              <ActionIcon
-                variant="light"
-                color={isFavorite ? "red" : "gray"}
-                onClick={handleFavoriteToggle}
-                loading={isLoading}
-                disabled={!user}
-              >
-                {isFavorite ? <IconHeartFilled size={18} /> : <IconHeart size={18} />}
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Partager">
-              <ActionIcon
-                variant="light"
-                color="blue"
-                onClick={handleShare}
-              >
-                <IconShare size={18} />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Fermer">
-              <ActionIcon
-                variant="light"
-                color="gray"
-                onClick={onClose}
-              >
-                <IconX size={18} />
-              </ActionIcon>
-            </Tooltip>
+        <Group justify="space-between" wrap="nowrap">
+          <Stack gap="xs">
+            <Text size="xl" fw={700}>
+              {job.title}
+            </Text>
+            <Text size="lg" c="dimmed">
+              {job.company}
+            </Text>
+          </Stack>
+          <Group gap="xs">
+            <ActionIcon
+              variant="subtle"
+              color={isFavorite ? 'red' : 'gray'}
+              onClick={handleFavoriteClick}
+              size="lg"
+            >
+              <IconHeart size={24} />
+            </ActionIcon>
+            <ActionIcon variant="subtle" onClick={handleShareClick} size="lg">
+              <IconShare size={24} />
+            </ActionIcon>
           </Group>
         </Group>
 
-        {error && (
-          <Alert icon={<IconX size={16} />} title="Erreur" color="red">
-            {error}
-          </Alert>
+        <Group gap="xs">
+          <Badge size="lg">{job.jobType}</Badge>
+          <Badge size="lg">{job.experienceLevel}</Badge>
+          <Badge size="lg">{job.location}</Badge>
+        </Group>
+
+        {job.salary && (
+          <Text size="lg" fw={500}>
+            {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()} {job.salary.currency}/{job.salary.period}
+          </Text>
         )}
 
-        <Group justify="space-between">
-          <Badge leftSection={<IconBuildingSkyscraper size={12} />}>
-            {job.company}
-          </Badge>
-          <Badge leftSection={<IconMapPin size={12} />}>
-            {job.location}
-          </Badge>
-          <Badge leftSection={<IconCalendar size={12} />}>
-            {formattedDate}
-          </Badge>
-          {job.salary && (
-            <Text>
-              {`${job.salary.min}-${job.salary.max} ${job.salary.currency}/${job.salary.period}`}
-            </Text>
-          )}
-        </Group>
+        <Text className={classes.description}>{job.description}</Text>
 
-        <Group>
-          <Badge color="blue">{jobTypeBadge}</Badge>
-          <Badge color="green">{experienceBadge}</Badge>
-        </Group>
+        {job.skills && job.skills.length > 0 && (
+          <Stack gap="xs">
+            <Text fw={500}>Compétences requises</Text>
+            <Group gap="xs">
+              {job.skills.map((skill) => (
+                <Badge key={skill} variant="outline">
+                  {skill}
+                </Badge>
+              ))}
+            </Group>
+          </Stack>
+        )}
 
-        <Divider />
-
-        <Text size="sm" color="dimmed">
-          {job.description}
-        </Text>
-
-        <Group justify="right">
-          <Button 
-            component="a" 
-            href={job.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            variant="light"
-          >
-            Voir l'offre
-          </Button>
-        </Group>
+        <Button
+          size="lg"
+          fullWidth
+          onClick={handleApplyClick}
+          className={classes.applyButton}
+        >
+          Postuler maintenant
+        </Button>
       </Stack>
-
-      <Modal
-        opened={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        title="Partager l'offre"
-      >
-        <Stack>
-          <Textarea
-            label="Message (optionnel)"
-            placeholder="Ajoutez un message personnel..."
-            value={shareMessage}
-            onChange={(e) => setShareMessage(e.target.value)}
-            minRows={3}
-          />
-          <Group justify="flex-end">
-            <Button
-              variant="light"
-              onClick={() => setIsShareModalOpen(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleShareSubmit}
-              loading={isLoading}
-              leftSection={<IconCheck size={16} />}
-            >
-              Partager
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </Card>
   );
 }); 

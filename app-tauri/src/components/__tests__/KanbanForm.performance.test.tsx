@@ -2,7 +2,6 @@ import { render, act } from '@testing-library/react';
 import { KanbanForm } from '../KanbanForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { useKanban } from '../../hooks/useKanban';
-import { vi } from 'vitest';
 
 // Mock des hooks
 jest.mock('../../contexts/AuthContext');

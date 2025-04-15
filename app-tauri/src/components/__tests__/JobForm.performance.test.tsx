@@ -1,7 +1,6 @@
 import { render, act } from '@testing-library/react';
-import { vi } from 'vitest';
 import { JobForm } from '@/components/JobForm';
-import type { Job, JobType, ExperienceLevel, SalaryRange } from '@/types';
+import type { Job, JobType, ExperienceLevel, JobSource, ISODateString, CommuteMode } from '@/types';
 
 vi.mock('@mantine/core', () => ({
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -14,11 +13,14 @@ vi.mock('@mantine/core', () => ({
 }));
 
 const mockJob: Partial<Job> = {
+  id: '1',
   title: 'Développeur React',
   company: 'TechCorp',
   location: 'Paris',
   description: 'Description du poste',
   url: 'https://example.com/job',
+  source: 'linkedin' as JobSource,
+  publishedAt: new Date().toISOString() as ISODateString,
   jobType: 'full-time' as JobType,
   experienceLevel: 'mid' as ExperienceLevel,
   salary: {
@@ -26,8 +28,16 @@ const mockJob: Partial<Job> = {
     max: 55000,
     currency: 'EUR',
     period: 'year'
-  } as SalaryRange,
-  skills: ['React', 'TypeScript']
+  },
+  matchingScore: 0.85,
+  skills: ['React', 'TypeScript'],
+  commuteTimes: {
+    primaryHome: {
+      duration: 30,
+      distance: 5,
+      mode: 'transit' as CommuteMode
+    }
+  }
 };
 
 const mockSubmit = vi.fn();
@@ -84,7 +94,7 @@ describe('JobForm Performance Tests', () => {
   });
 
   it('devrait gérer efficacement les formulaires avec beaucoup de champs', () => {
-    const jobWithManyFields = {
+    const jobWithManyFields: Partial<Job> = {
       ...mockJob,
       description: 'Description très longue'.repeat(100),
       skills: Array(50).fill('').map((_, i) => `Skill ${i}`)

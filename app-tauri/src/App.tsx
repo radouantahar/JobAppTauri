@@ -10,7 +10,7 @@ import { userService } from './services/api';
 import { SearchPage } from './pages/Search';
 import Kanban from './pages/Kanban';
 import { Profile } from './pages/Profile';
-import { DocumentsPage } from './pages/Documents';
+import { Documents } from './pages/Documents';
 import CommutePage from './pages/Commute';
 import { SettingsPage } from './pages/Settings';
 
@@ -70,7 +70,7 @@ function App() {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/kanban" element={<Kanban />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/documents" element={<DocumentsPage />} />
+                <Route path="/documents" element={<Documents />} />
                 <Route path="/commute" element={<CommutePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Dashboard />} />

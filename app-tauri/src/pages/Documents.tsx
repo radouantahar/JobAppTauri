@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { Container, Tabs, Card, Button, Group, Select, Textarea, Stack } from '@mantine/core';
 import { IconFileText, IconFileDescription, IconDownload, IconUpload } from '@tabler/icons-react';
@@ -5,8 +6,8 @@ import { llmService } from '../services/api';
 import { useAppStore } from '../store';
 import { DOCUMENT_TYPES, type DocumentType, type DocumentTemplate } from '../types';
 
-export function DocumentsPage() {
-  const { loading, setLoading } = useAppStore();
+export const Documents: React.FC = () => {
+  const { isLoading: loading, setLoading } = useAppStore();
   const [activeTab, setActiveTab] = useState<DocumentType>('cv');
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

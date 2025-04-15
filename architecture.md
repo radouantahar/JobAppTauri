@@ -213,3 +213,42 @@ L'application est conçue comme une application desktop locale utilisant Tauri, 
 - Messagerie professionnelle
 - Réseaux sociaux
 - Plateformes de formation
+
+## Système de Préchargement
+
+### Architecture
+Le système de préchargement suit une architecture en couches :
+
+1. **Couche Présentation**
+   - Composant PreloadProgress
+   - Indicateurs visuels
+   - Gestion des erreurs UI
+
+2. **Couche Logique**
+   - Hook usePreloadData
+   - Gestion des états
+   - Logique de retry
+   - Gestion de la progression
+
+3. **Couche Données**
+   - Appels Tauri
+   - Gestion du cache
+   - Mise à jour du store
+
+### Flux de Données
+1. Initialisation du préchargement
+2. Chargement par lots
+3. Mise à jour du store
+4. Mise à jour de la progression
+5. Gestion des erreurs
+
+### Optimisations
+- Chargement par lots
+- Délais entre les lots
+- Retry automatique
+- Nettoyage des ressources
+
+### Intégration
+- Intégration avec le store global
+- Intégration avec les composants UI
+- Intégration avec les tests

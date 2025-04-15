@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from './SearchResults';
 import { Job, JobType, ExperienceLevel, ISODateString } from '../types';
-import { vi } from 'vitest';
 
 const mockJobs: Job[] = [
   {

@@ -2,7 +2,6 @@ import { render, act } from '@testing-library/react';
 import { Profile } from '../Profile';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppStore } from '../../store';
-import { vi } from 'vitest';
 
 // Mock des hooks
 vi.mock('../../contexts/AuthContext');

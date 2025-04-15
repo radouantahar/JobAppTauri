@@ -241,6 +241,37 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **mutation-testing** - Pour les tests de mutation
 - **property-based-testing** - Pour les tests basés sur les propriétés
 
+## Système de Préchargement
+
+### Dépendances
+- @tauri-apps/api/core
+- react
+- zustand (pour le store global)
+
+### Configuration
+```typescript
+const PRELOAD_BATCH_SIZE = 10;
+const PRELOAD_DELAY = 100; // ms
+const MAX_RETRIES = 3;
+```
+
+### Tests
+- Vitest pour les tests unitaires
+- @testing-library/react pour les tests d'intégration
+- Tests de performance avec performance.now()
+
+### Métriques
+- Temps de préchargement
+- Utilisation mémoire
+- Nombre de retries
+- Taux de succès
+
+### Bonnes Pratiques
+- Chargement progressif
+- Gestion des erreurs
+- Nettoyage des ressources
+- Tests de performance
+
 ## Compatibilité et Prérequis
 
 ### Système d'Exploitation

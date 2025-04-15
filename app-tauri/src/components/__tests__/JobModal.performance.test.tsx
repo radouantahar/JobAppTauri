@@ -2,9 +2,9 @@ import { render, act } from '@testing-library/react';
 import { JobModal } from '../JobModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useJob } from '../../hooks/useJob';
-import { vi, Mock } from 'vitest';
+import type { Job, JobSource, JobType, ExperienceLevel, ISODateString, CommuteMode } from '../../types';
 
-// Configuration des mocks pour les hooks
+// Mock des hooks
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: vi.fn()
 }));
@@ -12,19 +12,22 @@ vi.mock('../../contexts/AuthContext', () => ({
 vi.mock('../../hooks/useJob', () => ({
   useJob: vi.fn()
 }));
-const mockUseAuth = useAuth as Mock;
-const mockUseJob = useJob as Mock;
+
+const mockUseAuth = vi.mocked(useAuth);
+const mockUseJob = vi.mocked(useJob);
 
 describe('JobModal Performance Tests', () => {
-  const mockJob = {
+  const mockJob: Job = {
     id: '1',
     title: 'Développeur React',
     company: 'TechCorp',
     location: 'Paris',
     description: 'Description du poste',
     url: 'https://example.com/job',
-    source: 'linkedin',
-    publishedAt: new Date().toISOString(),
+    source: 'linkedin' as JobSource,
+    publishedAt: new Date().toISOString() as ISODateString,
+    jobType: 'full-time' as JobType,
+    experienceLevel: 'mid' as ExperienceLevel,
     salary: {
       min: 45000,
       max: 55000,
@@ -33,12 +36,11 @@ describe('JobModal Performance Tests', () => {
     },
     matchingScore: 0.85,
     skills: ['React', 'TypeScript'],
-    experienceLevel: 'mid',
     commuteTimes: {
       primaryHome: {
         duration: 30,
         distance: 5,
-        mode: 'transit'
+        mode: 'transit' as CommuteMode
       }
     }
   };
@@ -77,8 +79,8 @@ describe('JobModal Performance Tests', () => {
       job: null,
       isLoading: true,
       error: null,
-      applyToJob: jest.fn(),
-      saveJob: jest.fn(),
+      applyToJob: vi.fn(),
+      saveJob: vi.fn(),
     });
 
     const startTime = performance.now();
@@ -98,8 +100,8 @@ describe('JobModal Performance Tests', () => {
       job: null,
       isLoading: false,
       error: new Error('Erreur de chargement'),
-      applyToJob: jest.fn(),
-      saveJob: jest.fn(),
+      applyToJob: vi.fn(),
+      saveJob: vi.fn(),
     });
 
     const startTime = performance.now();
@@ -113,17 +115,18 @@ describe('JobModal Performance Tests', () => {
     
     expect(renderTime).toBeLessThan(200);
   });
+
   it('devrait maintenir une utilisation mémoire stable lors de multiples ouvertures/fermetures', () => {
-    // Utilisation de window.performance.memory qui est disponible dans Chrome
-    const initialMemory = (window.performance as any).memory?.usedJSHeapSize || 0;
+    const initialMemory = performance.memory?.usedJSHeapSize || 0;
     const memorySamples: number[] = [];
 
     for (let i = 0; i < 10; i++) {
       act(() => {
         render(<JobModal jobId="1" onClose={() => {}} />);
       });
-      if ((window.performance as any).memory) {
-        memorySamples.push((window.performance as any).memory.usedJSHeapSize);
+
+      if (performance.memory) {
+        memorySamples.push(performance.memory.usedJSHeapSize);
       }
     }
 
@@ -134,7 +137,7 @@ describe('JobModal Performance Tests', () => {
   });
 
   it('devrait gérer efficacement les descriptions longues', () => {
-    const longDescriptionJob = {
+    const longDescriptionJob: Job = {
       ...mockJob,
       description: 'Description très longue'.repeat(1000),
     };
@@ -143,8 +146,8 @@ describe('JobModal Performance Tests', () => {
       job: longDescriptionJob,
       isLoading: false,
       error: null,
-      applyToJob: jest.fn(),
-      saveJob: jest.fn(),
+      applyToJob: vi.fn(),
+      saveJob: vi.fn(),
     });
 
     const startTime = performance.now();

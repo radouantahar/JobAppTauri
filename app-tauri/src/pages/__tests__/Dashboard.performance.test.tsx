@@ -1,6 +1,5 @@
 import { render, act } from '@testing-library/react';
 import Dashboard from '../Dashboard';
-import { vi } from 'vitest';
 import { useAuth } from '../../contexts/AuthContext';
 import { useJobStats } from '../../hooks/useJobStats';
 import { useApplicationStats } from '../../hooks/useApplicationStats';

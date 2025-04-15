@@ -59,7 +59,7 @@ const ErrorNotification = memo(function ErrorNotification({
 // Composant principal de navigation
 const Navigation = memo(function Navigation({ isAuthenticated }: NavigationProps) {
   const [error, setError] = useState<string | null>(null);
-  const { setIsAuthenticated } = useAppStore();
+  const { setUser } = useAppStore();
   const location = useLocation();
 
   // Filtrage des liens en fonction de l'authentification
@@ -70,15 +70,9 @@ const Navigation = memo(function Navigation({ isAuthenticated }: NavigationProps
   }, [isAuthenticated]);
 
   // Gestionnaire de déconnexion
-  const handleLogout = useCallback(async () => {
-    try {
-      setIsAuthenticated(false);
-      // TODO: Implémenter la déconnexion côté serveur
-    } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err);
-      setError('Erreur lors de la déconnexion');
-    }
-  }, [setIsAuthenticated]);
+  const handleLogout = useCallback(() => {
+    setUser(null);
+  }, [setUser]);
 
   // Gestionnaire de fermeture des notifications
   const handleCloseError = useCallback(() => {

@@ -1,12 +1,14 @@
 import { render, act } from '@testing-library/react';
 import { DocumentForm } from '../DocumentForm';
-import { vi, beforeEach, describe, it, expect } from 'vitest';
 import { useAuth } from '../../contexts/AuthContext';
+import type { DocumentType } from '../../types';
 
 // Mock des hooks
-vi.mock('../../contexts/AuthContext');
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: vi.fn()
+}));
 
-const mockUseAuth = useAuth as jest.Mock;
+const mockUseAuth = vi.mocked(useAuth);
 
 vi.mock('../../services/api', () => ({
   documentService: {
@@ -15,22 +17,16 @@ vi.mock('../../services/api', () => ({
   }
 }));
 
-
 interface MockPerformance {
   memory: {
     usedJSHeapSize: number;
   };
 }
 
-const mockDocument = {
-  id: '1',
+const mockInitialData = {
   title: 'Test Document',
-  description: 'Test Description',
-  type: 'cv' as const,
   content: 'Test Content',
-  url: 'http://test.com',
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01'
+  type: 'cv' as DocumentType
 };
 
 const mockSubmit = vi.fn();
@@ -47,57 +43,68 @@ describe('DocumentForm Performance Tests', () => {
     });
   });
 
-  it('should render in less than 300ms', async () => {
+  it('devrait rendre le formulaire en moins de 300ms', async () => {
     const startTime = performance.now();
     
     await act(async () => {
-      render(<DocumentForm initialData={mockDocument} onSubmit={mockSubmit} />);
+      render(<DocumentForm initialData={mockInitialData} onSubmit={mockSubmit} />);
     });
     
     const endTime = performance.now();
     expect(endTime - startTime).toBeLessThan(300);
   });
 
-  it('should handle loading state efficiently (< 200ms)', async () => {
+  it('devrait gérer efficacement les états de chargement', async () => {
     const startTime = performance.now();
     
     await act(async () => {
-      render(<DocumentForm initialData={mockDocument} isLoading={true} onSubmit={mockSubmit} />);
+      render(<DocumentForm initialData={mockInitialData} isLoading={true} onSubmit={mockSubmit} />);
     });
     
     const endTime = performance.now();
     expect(endTime - startTime).toBeLessThan(200);
   });
 
-  it('should maintain stable memory usage during multiple renders', async () => {
+  it('devrait maintenir une utilisation mémoire stable lors de multiples rendus', async () => {
     const initialMemory = (performance as unknown as MockPerformance).memory.usedJSHeapSize;
     
     for (let i = 0; i < 10; i++) {
       await act(async () => {
-        render(<DocumentForm initialData={mockDocument} onSubmit={mockSubmit} />);
+        render(<DocumentForm initialData={mockInitialData} onSubmit={mockSubmit} />);
       });
     }
     
     const finalMemory = (performance as unknown as MockPerformance).memory.usedJSHeapSize;
     const memoryIncrease = finalMemory - initialMemory;
     
-    // L'augmentation de mémoire ne devrait pas dépasser 5MB
-    expect(memoryIncrease).toBeLessThan(5 * 1024 * 1024);
+    // L'augmentation de mémoire ne devrait pas dépasser 3MB (cohérent avec les autres tests)
+    expect(memoryIncrease).toBeLessThan(3 * 1024 * 1024);
   });
 
-  it('should handle large documents efficiently (< 1000ms)', async () => {
-    const largeDocument = {
-      ...mockDocument,
+  it('devrait gérer efficacement les documents volumineux', async () => {
+    const largeInitialData = {
+      ...mockInitialData,
       content: 'A'.repeat(10000)
     };
     
     const startTime = performance.now();
     
     await act(async () => {
-      render(<DocumentForm initialData={largeDocument} onSubmit={mockSubmit} />);
+      render(<DocumentForm initialData={largeInitialData} onSubmit={mockSubmit} />);
     });
     
     const endTime = performance.now();
-    expect(endTime - startTime).toBeLessThan(1000);
+    expect(endTime - startTime).toBeLessThan(500); // Aligné avec les autres tests de données volumineuses
+  });
+
+  it('devrait gérer efficacement les états d\'erreur', async () => {
+    const startTime = performance.now();
+    
+    await act(async () => {
+      render(<DocumentForm initialData={mockInitialData} error="Erreur de test" onSubmit={mockSubmit} />);
+    });
+    
+    const endTime = performance.now();
+    expect(endTime - startTime).toBeLessThan(200);
   });
 }); 

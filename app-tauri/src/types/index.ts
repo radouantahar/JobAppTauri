@@ -253,6 +253,11 @@ export interface AppState {
   setUser: (user: AppState['user']) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: Error | null) => void;
+  searchQuery: string;
+  filters: SearchFilters;
+  isLoading: boolean;
+  setSearchQuery: (query: string) => void;
+  setFilters: (filters: SearchFilters) => void;
 }
 
 /** Standard API response format */
@@ -291,15 +296,16 @@ export interface DocumentGenerationRequest {
   variables?: Record<string, string>;
 }
 
+/** Document interface */
 export interface Document {
   id: string;
   title: string;
   description: string;
+  content: string;
   type: DocumentType;
-  content?: string;
   url?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
 }
 
 export interface User {
@@ -320,4 +326,38 @@ export interface CommuteTime {
   duration: number;
   distance: number;
   mode: CommuteMode;
+}
+
+export interface SearchFilters {
+  location: string;
+  jobType: JobType[];
+  experienceLevel: ExperienceLevel[];
+  salaryRange: {
+    min: number;
+    max: number;
+  };
+}
+
+/** Search error information */
+export interface SearchError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+/** Search filters state */
+export interface Filters {
+  location: string;
+  jobType: JobType[];
+  experienceLevel: ExperienceLevel[];
+  salaryRange: {
+    min: number;
+    max: number;
+  };
+}
+
+/** Utility function to create an ISODateString */
+export function createISODateString(date: string | Date): ISODateString {
+  const isoString = typeof date === 'string' ? date : date.toISOString();
+  return isoString as ISODateString;
 }

@@ -8,8 +8,10 @@
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -21,6 +23,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "noImplicitAny": true,
 
     /* Paths */
     "baseUrl": ".",
@@ -32,7 +35,7 @@
     },
 
     /* Types */
-    "types": ["@tauri-apps/api"]
+    "types": ["@tauri-apps/api", "vitest", "@testing-library/jest-dom"]
   },
-  "include": ["src"]
+  "include": ["src", "src/test/global.d.ts"]
 }

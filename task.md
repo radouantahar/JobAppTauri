@@ -52,6 +52,14 @@
    - [x] Optimisation de Navigation avec React.memo
    - [x] Optimisation de DocumentList avec virtualisation
    - [x] Tests des composants optimisés
+   - [x] Optimisation de useJobSearch avec retry automatique
+   - [x] Tests de performance pour useJobSearch
+   - [x] Optimisation des composants modaux
+   - [x] Tests de performance pour les formulaires
+   - [x] Documentation des patterns de performance
+   - [x] Optimisation du chargement initial des données
+   - [x] Implémentation de la précharge des données
+   - [x] Tests de performance pour usePreloadData
 
 ## Tâches en Cours 🚧
 
@@ -84,18 +92,18 @@
        - [x] Optimisation des performances
        - [x] Gestion des états
        - [x] Gestion des événements
-       - [ ] Améliorer la gestion des erreurs
-       - [ ] Renforcer les types
-       - [ ] Optimiser la pagination
-       - [ ] Améliorer la gestion des états de chargement
+       - [x] Améliorer la gestion des erreurs
+       - [x] Renforcer les types
+       - [x] Optimiser la pagination
+       - [x] Améliorer la gestion des états de chargement
    - [x] Revue des services
      - [x] API Service
        - [x] Organisation des services
        - [x] Utilisation des types
        - [x] Intégration avec Tauri
-       - [ ] Uniformiser la gestion des erreurs
-       - [ ] Améliorer les types de retour
-       - [ ] Ajouter de la documentation
+       - [x] Uniformiser la gestion des erreurs
+       - [x] Améliorer les types de retour
+       - [x] Ajouter de la documentation
        - [ ] Ajouter la validation des paramètres
      - [ ] Auth Service
        - [ ] Créer le service d'authentification
@@ -107,12 +115,12 @@
        - [x] Tests unitaires
        - [x] Tests d'intégration
        - [x] Tests des cas limites
-       - [ ] Tests de performance
+       - [x] Tests de performance
        - [ ] Tests d'accessibilité
      - [x] Tests des services
        - [x] Tests unitaires
        - [x] Tests d'intégration
-       - [ ] Tests de charge
+       - [x] Tests de charge
        - [ ] Tests de sécurité
    - [x] Revue de la documentation
      - [x] PLANNING.md
@@ -120,11 +128,11 @@
        - [x] Objectifs et scope
        - [x] Planning de développement
        - [x] Risques et mitigations
-     - [ ] README.md
-       - [ ] Description du projet
-       - [ ] Guide d'installation
-       - [ ] Guide d'utilisation
-       - [ ] Guide de contribution
+     - [x] README.md
+       - [x] Description du projet
+       - [x] Guide d'installation
+       - [x] Guide d'utilisation
+       - [x] Guide de contribution
      - [ ] Documentation API
        - [ ] Guide d'utilisation de l'API
        - [ ] Exemples d'intégration
@@ -141,28 +149,55 @@
    - [x] Optimiser les requêtes SQL
    - [x] Mettre en cache les données fréquemment utilisées
    - [x] Implémenter la pagination côté serveur
-   - [ ] Optimiser la gestion des états avec Zustand
-   - [ ] Améliorer la gestion des erreurs réseau
-   - [ ] Ajouter des tests de performance pour les composants modaux
-   - [ ] Documenter les patterns de performance utilisés
+   - [x] Optimiser la gestion des états avec Zustand
+   - [x] Améliorer la gestion des erreurs réseau
+   - [x] Ajouter des tests de performance pour les composants modaux
+   - [x] Documenter les patterns de performance utilisés
+   - [x] Optimiser le chargement initial des données
+   - [x] Implémenter la précharge des données
+   - [x] Ajouter des tests de performance pour usePreloadData
+   - [ ] Ajouter des indicateurs de performance en production
+   - [ ] Optimiser le rendu des listes longues
+   - [ ] Améliorer la gestion de la mémoire
+   - [ ] Implémenter le lazy loading des composants
 
 2. Gestion des erreurs
    - [x] Améliorer la gestion des erreurs réseau
    - [x] Ajouter des retry automatiques
    - [x] Améliorer les messages d'erreur
    - [x] Ajouter des logs détaillés
+   - [ ] Centraliser la gestion des erreurs
+   - [ ] Ajouter des alertes pour les erreurs critiques
+   - [ ] Implémenter un système de reporting d'erreurs
+   - [ ] Améliorer la traçabilité des erreurs
+   - [ ] Ajouter des métriques d'erreur
 
 3. Tests supplémentaires
    - [x] Tests de sécurité
    - [x] Tests d'accessibilité
    - [x] Tests de compatibilité
    - [x] Tests de localisation
+   - [ ] Tests de résilience
+   - [ ] Tests de récupération d'erreurs
+   - [ ] Tests de performance en production
 
 4. Documentation
    - [ ] Guide d'utilisation
    - [ ] Guide de contribution
    - [ ] Guide de déploiement
    - [ ] Guide de maintenance
+   - [ ] Documentation des patterns de performance
+   - [ ] Documentation des bonnes pratiques
+   - [ ] Documentation des tests
+
+5. Gestion des fichiers volumineux (2024-03-21)
+   - [x] Créer un fichier .gitignore approprié
+   - [x] Configurer Git LFS pour les fichiers binaires
+   - [x] Nettoyer l'historique Git des fichiers volumineux
+   - [x] Mettre à jour la documentation sur la gestion des fichiers volumineux
+   - [ ] Automatiser la détection des fichiers volumineux
+   - [ ] Ajouter des tests pour la gestion des fichiers volumineux
+   - [ ] Documenter les bonnes pratiques pour les fichiers volumineux
 
 ## Notes Additionnelles 📝
 
@@ -176,6 +211,11 @@
 - Documenter les décisions importantes
 - Suivre les bonnes pratiques de développement
 - Rester à jour avec les dernières technologies
+- Optimiser le temps de chargement initial
+- Améliorer l'expérience utilisateur
+- Renforcer la sécurité des données
+- Automatiser les déploiements
+- Surveiller les métriques de performance
 
 ## Tests de Performance
 - [x] Ajouter des tests de performance pour le DashboardPage (2024-03-21)

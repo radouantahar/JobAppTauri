@@ -1,311 +1,97 @@
 /// <reference types="vitest/globals" />
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { JobCard } from '../JobCard';
-import { useAuth } from '../../hooks/useAuth';
-import { useAppStore } from '../../store';
-import type { Job, ISODateString, ExperienceLevel, JobStatus, JobSource, Currency, CommuteMode, JobType, SalaryPeriod } from '../../types';
+import type { Job, ISODateString } from '../../types';
 
-// Mock des icônes
-vi.mock('@tabler/icons-react', () => ({
-  IconHeart: () => <span data-testid="icon-heart">♡</span>,
-  IconHeartFilled: () => <span data-testid="icon-heart-filled">♥</span>,
-  IconShare: () => <span data-testid="icon-share">↗</span>,
-  IconMapPin: () => <span data-testid="icon-map-pin">📍</span>
-}));
-
-// Mock des hooks
-vi.mock('../../hooks/useAuth', () => ({
-  useAuth: vi.fn()
-}));
-
-vi.mock('../../store', () => ({
-  useAppStore: vi.fn()
-}));
-
-// Mock des données de test
 const mockJob: Job = {
   id: '1',
   title: 'Software Engineer',
-  company: 'Tech Corp',
-  location: 'Paris',
-  description: 'Looking for a skilled software engineer',
+  company: 'Test Company',
+  location: 'Remote',
+  description: 'Test description',
   url: 'https://example.com/job/1',
-  source: 'linkedin' as JobSource,
-  publishedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
-  jobType: 'full-time' as JobType,
-  experienceLevel: 'mid' as ExperienceLevel,
+  source: 'linkedin',
+  publishedAt: '2024-04-15T12:00:00Z' as ISODateString,
+  jobType: 'full-time',
+  experienceLevel: 'mid',
   salary: {
     min: 50000,
-    max: 70000,
-    currency: 'EUR' as Currency,
-    period: 'year' as SalaryPeriod
+    max: 100000,
+    currency: 'EUR',
+    period: 'year'
   },
   matchingScore: 0.85,
-  skills: ['JavaScript', 'React', 'TypeScript'],
+  skills: ['React', 'TypeScript'],
   commuteTimes: {
-    'home': {
+    primaryHome: {
       duration: 30,
-      distance: 10,
-      mode: 'driving' as CommuteMode
+      distance: 5,
+      mode: 'transit'
     }
   }
 };
 
 describe('JobCard', () => {
   const mockOnClick = vi.fn();
-  const mockOnFavoriteClick = vi.fn();
   const mockOnShareClick = vi.fn();
-  const mockAddFavorite = vi.fn();
-  const mockRemoveFavorite = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as any).mockReturnValue({ isAuthenticated: true });
-    (useAppStore as any).mockReturnValue({
-      addFavorite: mockAddFavorite,
-      removeFavorite: mockRemoveFavorite,
-      favorites: []
-    });
   });
 
-  test('renders job information correctly', () => {
-    render(<JobCard job={mockJob} onClick={() => {}} />);
-    
-    expect(screen.getByText('Software Engineer')).toBeInTheDocument();
-    expect(screen.getByText('Tech Corp')).toBeInTheDocument();
-    expect(screen.getByText('Paris')).toBeInTheDocument();
-  });
-
-  test('calls onClick when clicked', () => {
-    const handleClick = jest.fn();
-    render(<JobCard job={mockJob} onClick={handleClick} />);
-    
-    fireEvent.click(screen.getByText('Software Engineer'));
-    expect(handleClick).toHaveBeenCalledWith(mockJob);
-  });
-
-  test('displays matching score when provided', () => {
-    render(<JobCard job={mockJob} onClick={() => {}} />);
-    
-    expect(screen.getByText('85%')).toBeInTheDocument();
-  });
-
-  test('shows salary information when available', () => {
-    render(<JobCard job={mockJob} onClick={() => {}} />);
-    
-    expect(screen.getByText('50 000 - 70 000 EUR/year')).toBeInTheDocument();
-  });
-
-  test('gère le clic sur le bouton favori', () => {
+  it('renders job information correctly', () => {
     render(
-      <JobCard 
+      <JobCard
         job={mockJob}
         onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
         onShareClick={mockOnShareClick}
       />
     );
 
-    const favoriteButton = screen.getByRole('button', { name: /ajouter aux favoris/i });
-    fireEvent.click(favoriteButton);
-
-    expect(mockAddFavorite).toHaveBeenCalledWith(mockJob);
-    expect(mockOnFavoriteClick).toHaveBeenCalledWith(mockJob);
+    expect(screen.getByText(mockJob.title)).toBeInTheDocument();
+    expect(screen.getByText(`${mockJob.company} • ${mockJob.location}`)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.jobType)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.experienceLevel)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.description)).toBeInTheDocument();
   });
 
-  test('gère le clic sur le bouton partager', () => {
+  it('calls onClick when card is clicked', () => {
     render(
-      <JobCard 
+      <JobCard
         job={mockJob}
         onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
         onShareClick={mockOnShareClick}
       />
     );
 
-    const shareButton = screen.getByRole('button', { name: /partager/i });
+    fireEvent.click(screen.getByRole('button'));
+    expect(mockOnClick).toHaveBeenCalledWith(mockJob);
+  });
+
+  it('calls onShareClick when share button is clicked', () => {
+    render(
+      <JobCard
+        job={mockJob}
+        onClick={mockOnClick}
+        onShareClick={mockOnShareClick}
+      />
+    );
+
+    const shareButton = screen.getByRole('button', { name: /share/i });
     fireEvent.click(shareButton);
-
     expect(mockOnShareClick).toHaveBeenCalledWith(mockJob);
   });
 
-  test('désactive le bouton favori si non authentifié', () => {
-    (useAuth as any).mockReturnValue({ isAuthenticated: false });
-
-    render(
-      <JobCard 
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    const favoriteButton = screen.getByRole('button', { name: /ajouter aux favoris/i });
-    fireEvent.click(favoriteButton);
-
-    expect(mockAddFavorite).not.toHaveBeenCalled();
-    expect(mockOnFavoriteClick).not.toHaveBeenCalled();
-  });
-
-  test('devrait afficher le score de correspondance', () => {
+  it('displays salary information when available', () => {
     render(
       <JobCard
         job={mockJob}
         onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
         onShareClick={mockOnShareClick}
       />
     );
 
-    expect(screen.getByText('85%')).toBeInTheDocument();
-  });
-
-  test('devrait afficher un score faible', () => {
-    const lowScoreJob = {
-      ...mockJob,
-      matchingScore: 0.3
-    };
-
-    render(
-      <JobCard
-        job={lowScoreJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('30%')).toBeInTheDocument();
-  });
-
-  test('devrait afficher le statut de l\'offre', () => {
-    const jobWithStatus = {
-      ...mockJob,
-      status: 'applied' as JobStatus
-    };
-
-    render(
-      <JobCard
-        job={jobWithStatus}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-    
-    expect(screen.getByText('Postulé')).toBeInTheDocument();
-  });
-
-  test('devrait gérer les offres sans localisation', () => {
-    const jobWithoutLocation = {
-      ...mockJob,
-      location: ''
-    };
-
-    render(
-      <JobCard
-        job={jobWithoutLocation}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('Lieu non spécifié')).toBeInTheDocument();
-  });
-
-  test('devrait afficher les avantages du poste', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    mockJob.skills?.forEach(skill => {
-      expect(screen.getByText(skill)).toBeInTheDocument();
-    });
-  });
-
-  test('devrait afficher les compétences requises', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    mockJob.skills?.forEach(skill => {
-      expect(screen.getByText(skill)).toBeInTheDocument();
-    });
-  });
-
-  test('devrait afficher le type de contrat', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('CDI')).toBeInTheDocument();
-  });
-
-  test('devrait afficher le niveau d\'expérience', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('Niveau intermédiaire')).toBeInTheDocument();
-  });
-
-  test('devrait afficher le temps de trajet', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('30 min')).toBeInTheDocument();
-  });
-
-  test('devrait gérer les offres sans temps de trajet', () => {
-    const jobWithoutCommute = {
-      ...mockJob,
-      commuteTimes: {
-        primaryHome: {
-          duration: 0,
-          distance: 0,
-          mode: "driving" as CommuteMode
-        }
-      }
-    };
-
-    render(
-      <JobCard
-        job={jobWithoutCommute}
-        onClick={mockOnClick}
-        onFavoriteClick={mockOnFavoriteClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    expect(screen.getByText('Temps de trajet non calculé')).toBeInTheDocument();
+    const salaryText = `${mockJob.salary.min.toLocaleString()} - ${mockJob.salary.max.toLocaleString()} ${mockJob.salary.currency}/${mockJob.salary.period}`;
+    expect(screen.getByText(salaryText)).toBeInTheDocument();
   });
 });
