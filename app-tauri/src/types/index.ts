@@ -285,3 +285,13 @@ export interface DocumentGenerationRequest {
   type: DocumentType;
   variables?: Record<string, string>;
 }
+
+export interface Document {
+  id: string;
+  title: string;
+  description: string;
+  type: 'pdf' | 'doc' | 'csv';
+  url?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

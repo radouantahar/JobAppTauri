@@ -3,19 +3,18 @@
     windows_subsystem = "windows"
 )]
 
-
-
 use tauri::{command, State};
 use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::path::Path;
-
+use rusqlite::Connection;
+use dotenv::dotenv;
 
 mod commands;
 mod models;
 
-use commands::search_jobs;
+use commands::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct UserProfile {
@@ -47,6 +46,7 @@ fn get_db_connection() -> Result<Connection, String> {
 struct AppState {
     python_path: Mutex<String>,
     app_path: Mutex<String>,
+    db_connection: Mutex<Connection>,
 }
 
 // Fonction pour exécuter une commande Python
@@ -192,20 +192,34 @@ fn init_app(state: State<AppState>, python_path: String, app_path: String) -> Re
 }
 
 fn main() {
-    dotenv::dotenv().ok();
+    dotenv().ok();
+
+    // Initialiser la connexion à la base de données
+    let db_path = std::env::var("DB_PATH").expect("DB_PATH must be set");
+    let conn = Connection::open(&db_path).expect("Failed to connect to database");
+
     tauri::Builder::default()
         .manage(AppState {
             python_path: Mutex::new(String::from("python3")),
             app_path: Mutex::new(String::from(".")),
+            db_connection: Mutex::new(conn),
         })
         .invoke_handler(tauri::generate_handler![
             search_jobs,
             get_user_profile,
             update_user_profile,
+            get_kanban_columns,
+            move_kanban_card,
+            get_search_preferences,
+            update_search_preferences,
             get_llm_providers,
+            update_llm_provider,
+            generate_search_suggestions,
+            get_document_templates,
+            generate_document,
             get_job_stats,
-            init_app,
+            get_application_stats,
         ])
         .run(tauri::generate_context!())
-        .expect("Erreur lors de l'exécution de l'application Tauri");
+        .expect("error while running tauri application");
 }

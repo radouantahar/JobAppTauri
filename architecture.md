@@ -1,209 +1,215 @@
-# Schéma d'Architecture - Application d'Automatisation de Recherche d'Emploi
+# Architecture de l'Application d'Automatisation de Recherche d'Emploi
 
-## Vue d'ensemble
+## Vue d'Ensemble
 
-L'application est conçue comme une solution desktop locale qui automatise le processus de recherche d'emploi, depuis le scraping des offres jusqu'à la génération de documents personnalisés. Tous les traitements sont effectués localement, sans appel à des API externes, en utilisant des outils open source.
-
-## Architecture Globale
+L'application est conçue comme une application desktop locale utilisant Tauri, avec une interface utilisateur moderne et des fonctionnalités avancées d'automatisation. L'architecture est modulaire et extensible, permettant une maintenance et des mises à jour faciles.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                       Application Desktop (Tauri)                        │
-├─────────────┬─────────────┬────────────────┬────────────┬───────────────┤
-│  Interface  │  Scraping   │   Matching &   │ Génération │  Scheduler    │
-│   Kanban    │   Module    │    Scoring     │ Documents  │   (cron)      │
-│  (NocoDB)   │             │                │            │               │
-├─────────────┼─────────────┼────────────────┼────────────┼───────────────┤
-│             │             │                │            │               │
-│  SQLite DB  │  JobSpy     │  LLM Local     │  Ollama    │  Docker       │
-│             │  Selenium   │  (Embeddings)  │            │  Containers   │
-└─────────────┴─────────────┴────────────────┴────────────┴───────────────┘
+│                              Interface Tauri                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │  Dashboard  │  │  Kanban     │  │  Profil     │  │  Paramètres │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              Backend Python                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │  Scraping   │  │  Matching   │  │  Génération │  │  Analyse    │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              Stockage Local                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │  SQLite     │  │  Cache      │  │  Fichiers   │  │  NocoDB     │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Composants Principaux
 
-### 1. Interface Utilisateur
-- **Framework**: Tauri (Rust + React/TypeScript)
-- **Interface Kanban**: Intégration avec NocoDB existant (Docker)
-- **Fonctionnalités**:
-  - Affichage des offres dans une interface Kanban
-  - Gestion des colonnes (Backlog, To Be Reviewed, For Application, etc.)
-  - Visualisation des scores de matching et des détails des offres
-  - Interface de configuration du profil utilisateur
-  - Gestion des préférences de recherche
-  - Visualisation des temps de trajet
+### 1. Interface Utilisateur (Tauri + React)
+
+#### Dashboard
+- Vue d'ensemble des candidatures en cours
+- Statistiques et métriques clés
+- Alertes et notifications
+- Accès rapide aux fonctionnalités principales
+
+#### Interface Kanban
+- Intégration avec NocoDB pour la gestion visuelle
+- Colonnes personnalisables (À postuler, En cours, etc.)
+- Filtres et recherches avancées
+- Drag-and-drop pour la gestion des candidatures
+
+#### Gestion des Profils
+- Gestion des CV et lettres de motivation
+- Configuration des préférences de recherche
+- Gestion des adresses et trajets
+- Historique des candidatures
+
+#### Paramètres
+- Configuration des sources de scraping
+- Paramètres de matching et scoring
+- Préférences de notification
+- Gestion des API externes
 
 ### 2. Module de Scraping
-- **Scraping d'Offres d'Emploi**:
-  - Utilisation de JobSpy pour scraper LinkedIn, Indeed, Glassdoor, etc.
-  - Extraction des offres d'emploi avec leurs détails (titre, entreprise, lieu, description, etc.)
-  - Stockage des résultats dans la base SQLite
-  - Détection des doublons avec difflib et fuzzywuzzy
 
-- **Scraping de Temps de Transport**:
-  - Utilisation de Selenium/Playwright pour scraper Google Maps
-  - Construction d'URL du type: `https://www.google.com/maps/dir/{Domicile}/{Job city}/`
-  - Extraction des temps de trajet multimodaux (train, métro, tram)
-  - Intégration des résultats dans le processus de filtrage des offres
-  - Support de plusieurs adresses de domicile
+#### Scraping d'Offres
+- Support multi-sources (LinkedIn, Indeed, etc.)
+- Détection automatique des doublons
+- Filtrage intelligent basé sur les préférences
+- Mise en cache des résultats
+
+#### Scraping de Transport
+- Calcul des temps de trajet multi-domiciles
+- Support multi-modes de transport
+- Visualisation des itinéraires
+- Mise à jour périodique des données
 
 ### 3. Module de Matching et Scoring
-- **Extraction du Profil**:
-  - Parsing du CV au format PDF (utilisation de PyPDF2 ou pdfminer)
-  - Extraction des compétences, expériences, formations, etc.
-  - Lecture du fichier de configuration YAML/JSON pour les préférences
 
-- **Scoring des Offres**:
-  - Utilisation d'embeddings via LLM local (Ollama)
-  - Calcul de similarité sémantique entre le profil et les offres
-  - Pondération basée sur les critères de préférence utilisateur
-  - Filtrage des offres selon les critères (temps de transport, salaire)
-  - Analyse des doublons et fusion des informations
+#### Analyse Sémantique
+- Embeddings locaux avec Sentence-Transformers
+- Similarité cosinus pour le matching
+- Pondération des critères
+- Détection des doublons avancée
+
+#### Intégration LLM
+- Utilisation d'Ollama en local
+- Génération de suggestions personnalisées
+- Analyse des feedbacks
+- Amélioration continue des scores
 
 ### 4. Module de Génération de Documents
-- **Génération de Contenu**:
-  - Utilisation d'Ollama (LLM local) pour générer des lettres de motivation et CV personnalisés
-  - Templates de prompts prédéfinis pour la génération
-  - Création de fichiers .docx via python-docx
-  - Support de plusieurs formats de sortie (PDF, DOCX, TXT)
+
+#### Templates
+- Système de templates modulaire
+- Support multi-formats (Word, PDF)
+- Variables dynamiques
+- Validation des documents
+
+#### Génération
+- Utilisation de LLM local
+- Personnalisation contextuelle
+- Vérification automatique
+- Historique des versions
 
 ### 5. Modules à Implémenter
 
-#### 5.1 Modules de Base
-- **Détection des Doublons** (`duplicate_detector.py`):
-  - Analyse de similarité textuelle avec difflib et fuzzywuzzy
-  - Détection par URL et contenu
-  - Fusion des informations complémentaires
-  - Historique des doublons
-  - Interface de gestion des doublons
+#### Détection des Doublons
+- Analyse de similarité textuelle
+- Comparaison des métadonnées
+- Fusion intelligente des informations
+- Historique des doublons détectés
 
-- **Gestion des Domiciles** (`location_manager.py`):
-  - Stockage de plusieurs adresses de domicile
-  - Géocodage des adresses avec geopy
-  - Validation des adresses
-  - Préférences de transport par domicile
-  - Visualisation des trajets avec folium
+#### Gestion des Domiciles
+- Stockage des adresses multiples
+- Calcul des temps de trajet
+- Visualisation des itinéraires
+- Optimisation des trajets
 
-#### 5.2 Modules d'Analyse
-- **Préférences de Recherche** (`search_preferences.py`):
-  - Gestion des catégories de mots-clés
-  - Pondération personnalisable avec numpy
-  - Ensembles de préférences multiples
-  - Historique des recherches
-  - Analyse des résultats avec pandas
+#### Préférences de Recherche
+- Configuration des critères
+- Pondération des éléments
+- Historique des recherches
+- Suggestions d'optimisation
 
-- **Suggestions IA** (`ai_suggestions.py`):
-  - Analyse du CV avec LLM
-  - Suggestions de mots-clés pertinents
-  - Identification des postes adaptés
-  - Recommandations d'entreprises
-  - Calcul de similarité avec scikit-learn
+#### Suggestions IA
+- Analyse des tendances
+- Recommandations personnalisées
+- Optimisation des candidatures
+- Feedback continu
 
-#### 5.3 Modules Avancés
-- **Analyse du Feedback Kanban** (`kanban_feedback.py`):
-  - Analyse des offres acceptées/refusées
-  - Extraction de patterns avec scikit-learn
-  - Ajustement automatique des pondérations
-  - Optimisation des mots-clés
-  - Visualisation des tendances avec matplotlib
+#### Analyse du Feedback Kanban
+- Tracking des mouvements
+- Analyse des patterns
+- Suggestions d'amélioration
+- Métriques de performance
 
-- **Gestion des API LLM** (`llm_api_manager.py`):
-  - Support d'Ollama local
-  - Intégration d'API alternatives
-  - Gestion des coûts et quotas
-  - Basculement automatique
-  - Gestion des retries avec tenacity
-
-### 6. Scheduler et Automatisation
-- **Scheduler Local**:
-  - Utilisation de cron pour planifier les tâches de scraping
-  - Exécution périodique (quotidienne ou hebdomadaire) des tâches de scraping
-  - Notification des nouvelles offres correspondant au profil
-  - Gestion des erreurs et des retries
+#### Gestion des API LLM
+- Configuration des modèles
+- Gestion des quotas
+- Fallback automatique
+- Monitoring des performances
 
 ## Flux de Données
 
-1. **Configuration Initiale**:
-   - L'utilisateur configure son profil via l'interface Tauri
-   - Le système extrait les données du CV au format PDF
-   - Configuration des préférences de recherche et des domiciles
+1. **Collecte Initiale**
+   - Scraping des offres d'emploi
+   - Calcul des temps de trajet
+   - Détection des doublons
+   - Stockage en SQLite
 
-2. **Scraping et Collecte**:
-   - Le module de scraping collecte les offres d'emploi via JobSpy
-   - Les offres sont stockées dans la base SQLite
-   - Détection et gestion des doublons
-   - Calcul des temps de trajet pour chaque offre
+2. **Traitement**
+   - Matching avec le profil
+   - Scoring des offres
+   - Génération de suggestions
+   - Mise à jour du Kanban
 
-3. **Enrichissement et Filtrage**:
-   - Pour chaque offre, le système scrape Google Maps pour obtenir le temps de transport
-   - Les offres sont filtrées selon les critères (temps > 1h, salaire < 50K€)
-   - Analyse des doublons et fusion des informations
-   - Génération de suggestions basées sur le profil
+3. **Feedback**
+   - Analyse des actions utilisateur
+   - Amélioration des scores
+   - Optimisation des suggestions
+   - Mise à jour des préférences
 
-4. **Scoring et Matching**:
-   - Le système calcule un score de matching pour chaque offre
-   - Les offres sont classées selon leur score et affichées dans l'interface Kanban
-   - Analyse du feedback Kanban pour améliorer les suggestions
-   - Ajustement des pondérations en fonction des préférences
-
-5. **Génération de Documents**:
-   - Lorsqu'une offre est déplacée vers "For Application", le système génère:
-     - Une lettre de motivation personnalisée
-     - Un CV adapté à l'offre
-   - Support de plusieurs formats de sortie
-   - Intégration avec l'interface Tauri
-
-## Stockage de Données
+## Stockage des Données
 
 ### Base de Données SQLite
-- **Tables Principales**:
-  - `jobs`: Stockage des offres d'emploi scrapées
-  - `companies`: Informations sur les entreprises
-  - `user_profile`: Profil de l'utilisateur
-  - `applications`: Suivi des candidatures
-  - `transport_data`: Données de temps de transport
-  - `duplicate_jobs`: Gestion des doublons
-  - `user_locations`: Adresses de domicile
-  - `search_preferences`: Préférences de recherche
-  - `ai_suggestions`: Suggestions générées
-  - `kanban_feedback`: Analyse du feedback
+- Schéma relationnel optimisé
+- Index pour les recherches fréquentes
+- Triggers pour l'intégrité
+- Vues pour l'analyse
+
+### Cache Local
+- Redis pour les données temporaires
+- Mise en cache des résultats de scraping
+- Stockage des embeddings
+- Gestion des sessions
+
+### Fichiers Locaux
+- CV et lettres de motivation
+- Templates personnalisés
+- Logs et métriques
+- Configurations utilisateur
 
 ### NocoDB
-- Utilisation de l'instance NocoDB existante pour l'interface Kanban
-- Configuration des vues et des colonnes selon les besoins du projet
-- Synchronisation avec la base SQLite
+- Interface Kanban
+- Collaboration en temps réel
+- Historique des modifications
+- Export des données
 
-## Déploiement et Conteneurisation
+## Sécurité
 
-- **Docker**:
-  - Utilisation des conteneurs Docker existants pour NocoDB et Ollama
-  - Possibilité d'ajouter des conteneurs supplémentaires pour d'autres services
+### Protection des Données
+- Chiffrement des données sensibles
+- Gestion sécurisée des mots de passe
+- Validation des entrées
+- Audit des accès
 
-- **Installation Locale**:
-  - Scripts d'installation pour les dépendances Python
-  - Configuration de l'environnement de développement
-  - Packaging avec Tauri CLI
-
-## Sécurité et Confidentialité
-
-- Toutes les données sont stockées localement
-- Aucune information n'est envoyée à des serveurs externes
-- Les données sensibles (CV, lettres de motivation) restent sur la machine de l'utilisateur
-- Sécurité renforcée avec Tauri (sandboxing, permissions explicites)
+### Isolation
+- Sandboxing avec Tauri
+- Conteneurisation des services
+- Séparation des privilèges
+- Gestion des permissions
 
 ## Extensions Futures
 
-- **Boucle de Feedback**:
-  - Apprentissage à partir des offres rejetées pour améliorer le scoring
-  - Ajustement automatique des critères de matching
+### Analyse de Marché
+- Tracking des tendances
+- Analyse des salaires
+- Benchmark des compétences
+- Prédictions de marché
 
-- **Recherche Sémantique Avancée**:
-  - Intégration possible de Haystack + Qdrant pour des recherches plus précises
-
-- **Plugin de Scraping Configurable**:
-  - Système de configuration YAML pour ajouter facilement de nouveaux sites à scraper
-
-- **Analyse de Marché**:
-  - Visualisation des tendances du marché de l'emploi
-  - Analyse des salaires par secteur et région
-  - Prédiction des opportunités futures
+### Intégrations
+- Calendriers (Google, Outlook)
+- Messagerie professionnelle
+- Réseaux sociaux
+- Plateformes de formation

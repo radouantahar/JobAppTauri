@@ -1,66 +1,134 @@
 import { Link, useLocation } from 'react-router-dom';
-import { AppShell, Group, UnstyledButton, Tooltip } from '@mantine/core';
-import { 
-  IconDashboard, 
-  IconSearch, 
-  IconLayoutKanban, 
-  IconUser, 
-  IconFileText, 
-  IconMap, 
-  IconSettings 
-} from '@tabler/icons-react';
-// import { useAppStore } from '../store';
-import classes from './Navigation.module.css'; // Create this CSS module file
+import { AppShell, Group, UnstyledButton, Tooltip, Notification, Text } from '@mantine/core';
+import { IconX, IconLogout } from '@tabler/icons-react';
+import { useMemo, memo, useState, useCallback } from 'react';
+import { useAppStore } from '../store';
+import { NavbarLinkProps, NavigationProps, NAV_LINKS } from './navigation/types';
+import classes from './Navigation.module.css';
 
-interface NavbarLinkProps {
-  icon: React.FC<any>;
-  label: string;
-  active?: boolean;
-  to: string;
-}
-
-function NavbarLink({ icon: Icon, label, active, to }: NavbarLinkProps) {
+// Composant pour les liens de navigation
+const NavbarLink = memo(function NavbarLink({ 
+  icon: Icon, 
+  label, 
+  active, 
+  to, 
+  onClick 
+}: NavbarLinkProps) {
   return (
-    <Tooltip label={label} position="right" transitionProps={{ duration: 0 }}>
+    <Tooltip 
+      label={label} 
+      position="right" 
+      transitionProps={{ duration: 0 }}
+    >
       <UnstyledButton 
         component={Link} 
         to={to} 
         className={`${classes.link} ${active ? classes.active : ''}`}
+        onClick={onClick}
+        aria-label={label}
+        role="navigation"
       >
-        <Icon size="1.5rem" stroke={1.5} />
+        <Icon size="1.5rem" stroke={1.5} aria-hidden="true" />
       </UnstyledButton>
     </Tooltip>
   );
-}
+});
 
-const navLinks = [
-  { icon: IconDashboard, label: 'Tableau de bord', to: '/' },
-  { icon: IconSearch, label: 'Recherche', to: '/search' },
-  { icon: IconLayoutKanban, label: 'Kanban', to: '/kanban' },
-  { icon: IconUser, label: 'Profil', to: '/profile' },
-  { icon: IconFileText, label: 'Documents', to: '/documents' },
-  { icon: IconMap, label: 'Trajets', to: '/commute' },
-  { icon: IconSettings, label: 'Paramètres', to: '/settings' },
-];
+// Composant pour la gestion des erreurs
+const ErrorNotification = memo(function ErrorNotification({ 
+  error, 
+  onClose 
+}: { 
+  error: string; 
+  onClose: () => void; 
+}) {
+  return (
+    <Notification
+      icon={<IconX size={18} />}
+      color="red"
+      title="Erreur"
+      mt="sm"
+      withCloseButton
+      onClose={onClose}
+    >
+      {error}
+    </Notification>
+  );
+});
 
-export function Navigation() {
+// Composant principal de navigation
+const Navigation = memo(function Navigation({ isAuthenticated }: NavigationProps) {
+  const [error, setError] = useState<string | null>(null);
+  const { setIsAuthenticated } = useAppStore();
   const location = useLocation();
+
+  // Filtrage des liens en fonction de l'authentification
+  const filteredNavLinks = useMemo(() => {
+    return NAV_LINKS.filter(link => 
+      !link.requiresAuth || isAuthenticated
+    );
+  }, [isAuthenticated]);
+
+  // Gestionnaire de déconnexion
+  const handleLogout = useCallback(async () => {
+    try {
+      setIsAuthenticated(false);
+      // TODO: Implémenter la déconnexion côté serveur
+    } catch (err) {
+      console.error('Erreur lors de la déconnexion:', err);
+      setError('Erreur lors de la déconnexion');
+    }
+  }, [setIsAuthenticated]);
+
+  // Gestionnaire de fermeture des notifications
+  const handleCloseError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  const isActive = useCallback((path: string) => {
+    if (path === '/') {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  }, [location.pathname]);
 
   return (
     <AppShell.Navbar className={classes.navbar}>
       <AppShell.Section grow className={classes.navbarMain}>
         <Group gap={0} justify="center">
-          {navLinks.map((link) => (
+          {filteredNavLinks.map((link) => (
             <NavbarLink
-              key={link.label}
+              key={link.to}
               icon={link.icon}
               label={link.label}
               to={link.to}
-              active={location.pathname === link.to}
+              active={isActive(link.to)}
             />
           ))}
         </Group>
       </AppShell.Section>
+
+      {isAuthenticated && (
+        <AppShell.Section className={classes.footer}>
+          <Group gap={0} justify="center">
+            <NavbarLink
+              icon={IconLogout}
+              label="Déconnexion"
+              to="/"
+              onClick={handleLogout}
+            />
+          </Group>
+        </AppShell.Section>
+      )}
+
+      {error && (
+        <ErrorNotification
+          error={error}
+          onClose={handleCloseError}
+        />
+      )}
     </AppShell.Navbar>
   );
-}
+});
+
+export default Navigation;

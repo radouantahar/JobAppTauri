@@ -1,11 +1,10 @@
 .navbar {
     background-color: var(--mantine-color-body);
-    width: rem(80);
-    height: 100vh;
+    border-right: 1px solid var(--mantine-color-gray-3);
     padding: var(--mantine-spacing-md);
     display: flex;
     flex-direction: column;
-    border-right: rem(1) solid var(--mantine-color-gray-3);
+    height: 100%;
   }
   
   [data-mantine-color-scheme="dark"] .navbar {
@@ -15,17 +14,25 @@
   
   .navbarMain {
     flex: 1;
-    margin-top: rem(50);
+    margin-top: var(--mantine-spacing-md);
+  }
+  
+  .footer {
+    padding-top: var(--mantine-spacing-md);
+    margin-top: var(--mantine-spacing-md);
+    border-top: 1px solid var(--mantine-color-gray-3);
   }
   
   .link {
-    width: rem(50);
-    height: rem(50);
+    width: 50px;
+    height: 50px;
     border-radius: var(--mantine-radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--mantine-color-gray-7);
+    opacity: 0.85;
+    transition: all 150ms ease;
   }
   
   [data-mantine-color-scheme="dark"] .link {
@@ -33,7 +40,9 @@
   }
   
   .link:hover {
+    opacity: 1;
     background-color: var(--mantine-color-gray-0);
+    color: var(--mantine-color-blue-6);
   }
   
   [data-mantine-color-scheme="dark"] .link:hover {
@@ -48,3 +57,46 @@
   .active:hover {
     background-color: var(--mantine-primary-color-light);
   }
+  
+  /* Styles pour les notifications d'erreur */
+  .error {
+    margin-top: var(--mantine-spacing-md);
+    padding: var(--mantine-spacing-sm);
+    background-color: var(--mantine-color-red-0);
+    border: 1px solid var(--mantine-color-red-3);
+    border-radius: var(--mantine-radius-md);
+  }
+  
+  /* Styles pour le bouton de déconnexion */
+  .logoutButton {
+    color: var(--mantine-color-red-6);
+  }
+  
+  .logoutButton:hover {
+    background-color: var(--mantine-color-red-0);
+  }
+
+.nav {
+  padding: var(--mantine-spacing-md);
+  background-color: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.navItem {
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-gray-7);
+  transition: all 150ms ease;
+  text-decoration: none;
+
+  &:hover {
+    background-color: var(--mantine-color-gray-0);
+    color: var(--mantine-color-blue-7);
+  }
+
+  &[data-active="true"] {
+    background-color: var(--mantine-color-blue-0);
+    color: var(--mantine-color-blue-7);
+    font-weight: 500;
+  }
+}

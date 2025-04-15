@@ -1,10 +1,10 @@
 [package]
-name = "app"
+name = "my-job-app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+description = "Application d'automatisation de recherche d'emploi"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT"
+repository = "https://github.com/yourusername/my-job-app"
 edition = "2021"
 rust-version = "1.71"
 
@@ -15,14 +15,75 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-rc.13", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-rusqlite = "0.31.0"
-dotenv = "0.15.0"
 serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5", features = ["sqlite"] }
+rusqlite = { version = "0.29", features = ["bundled"] }
+dotenv = "0.15"
+tokio = { version = "1.0", features = ["full"] }
+thiserror = "1.0"
+anyhow = "1.0"
+async-trait = "0.1"
+futures = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
 log = "0.4"
-tauri = { version = "2.0.0-rc.17", features = [] }
-tauri-plugin-log = "2.0.0-rc"
+env_logger = "0.10"
+pretty_env_logger = "0.5"
+sysinfo = "0.29"
+percent-encoding = "2.3"
+url = "2.4"
+reqwest = { version = "0.11", features = ["json"] }
+base64 = "0.21"
+ring = "0.17"
+rand = "0.8"
+aes = "0.8"
+block-modes = "0.9"
+hex = "0.4"
+sha2 = "0.10"
+hmac = "0.12"
+pbkdf2 = "0.12"
+scrypt = "0.11"
+argon2 = "0.5"
+bcrypt = "0.15"
+jsonwebtoken = "9.1"
+oauth2 = "4.3"
+jwt = "0.16"
+openssl = { version = "0.10", features = ["vendored"] }
+native-tls = "0.2"
+rustls = { version = "0.21", features = ["dangerous_configuration"] }
+webpki = "0.22"
+webpki-roots = "0.25"
+rustls-pemfile = "1.0"
+rustls-native-certs = "0.6"
+mime = "0.3"
+mime_guess = "2.0"
+multipart = "0.18"
+tempfile = "3.8"
+walkdir = "2.4"
+glob = "0.3"
+pathdiff = "0.2"
+relative-path = "1.8"
+path-absolutize = "3.1"
+path-dedot = "3.1"
+path-slash = "0.2"
+path-clean = "0.1"
+path-abs = "0.1"
+path-normalize = "0.1"
+path-std = "0.1"
+path-ext = "0.1"
+path-tree = "0.1"
+path-dedot = "3.1"
+path-slash = "0.2"
+path-clean = "0.1"
+path-abs = "0.1"
+path-normalize = "0.1"
+path-std = "0.1"
+path-ext = "0.1"
+path-tree = "0.1"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

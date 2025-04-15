@@ -1,120 +1,148 @@
-import { Card, Text, Badge, Group, Button } from '@mantine/core';
-import { IconMapPin, IconBriefcase, IconClock, IconExternalLink } from '@tabler/icons-react';
-import { Job } from '../types';
-import classes from './JobCard.module.css'; // Create this CSS module file
+import { memo, useCallback, useMemo } from 'react';
+import { Card, Text, Group, Badge, ActionIcon, Tooltip } from '@mantine/core';
+import { IconHeart, IconHeartFilled, IconShare, IconMapPin } from '@tabler/icons-react';
+import { useAuth } from '../hooks/useAuth';
+import { useAppStore } from '../store';
+import type { Job } from '../types';
+import styles from './JobCard.module.css';
 
 interface JobCardProps {
   job: Job;
-  onClick: (job: Job) => void;
+  onClick: () => void;
+  onFavoriteClick?: (job: Job) => void;
+  onShareClick?: (job: Job) => void;
 }
 
-export function JobCard({ job, onClick }: JobCardProps) {
-  // Formater le temps de trajet
-  const formatCommuteTime = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
-  };
-  
-  // Déterminer la couleur du score de correspondance
-  const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'green';
-    if (score >= 0.6) return 'lime';
-    if (score >= 0.4) return 'yellow';
-    if (score >= 0.2) return 'orange';
-    return 'red';
-  };
+// Sous-composant pour l'en-tête de la carte
+const JobCardHeader = memo(function JobCardHeader({ 
+  title, 
+  company, 
+  isFavorite, 
+  onFavoriteClick, 
+  onShareClick 
+}: { 
+  title: string; 
+  company: string; 
+  isFavorite: boolean; 
+  onFavoriteClick: (e: React.MouseEvent) => void; 
+  onShareClick: (e: React.MouseEvent) => void; 
+}) {
+  return (
+    <Group justify="space-between" mb="xs">
+      <div>
+        <Text fw={500} size="lg" mb={5}>{title}</Text>
+        <Text c="dimmed" size="sm">{company}</Text>
+      </div>
+      <Group gap={5}>
+        <Tooltip label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}>
+          <ActionIcon onClick={onFavoriteClick} color="red" variant={isFavorite ? 'filled' : 'light'}>
+            {isFavorite ? <IconHeartFilled size={18} /> : <IconHeart size={18} />}
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label="Partager">
+          <ActionIcon onClick={onShareClick} variant="light">
+            <IconShare size={18} />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
+    </Group>
+  );
+});
 
-  // Format salary to string if it's an object
-  const formatSalary = (salary: Job['salary']) => {
-    if (!salary) return '';
+// Sous-composant pour les informations de localisation et salaire
+const JobCardInfo = memo(function JobCardInfo({ 
+  location, 
+  salary 
+}: { 
+  location: string; 
+  salary?: { min?: number; max?: number; currency?: string }; 
+}) {
+  const formattedSalary = useMemo(() => {
+    if (!salary) return 'Salaire non spécifié';
     
-    const { min, max, currency = 'USD', period = 'year' } = salary;
-    const currencySymbol = currency === 'USD' ? '$' : 
-                          currency === 'EUR' ? '€' : 
-                          currency === 'GBP' ? '£' : 
-                          currency === 'CHF' ? 'CHF' : currency;
+    const min = salary.min;
+    const max = salary.max;
+    const currency = salary.currency || '€';
     
-    let salaryText = '';
-    if (min && max) {
-      salaryText = `${currencySymbol}${min} - ${currencySymbol}${max}`;
-    } else if (min) {
-      salaryText = `${currencySymbol}${min}+`;
-    } else if (max) {
-      salaryText = `Up to ${currencySymbol}${max}`;
+    if (typeof min !== 'number' && typeof max !== 'number') {
+      return 'Salaire non spécifié';
     }
     
-    if (salaryText) {
-      salaryText += period === 'hour' ? '/hr' : 
-                   period === 'week' ? '/week' : 
-                   period === 'month' ? '/month' : '/year';
+    if (typeof min === 'number' && typeof max === 'number') {
+      return `${min} - ${max} ${currency}`;
     }
     
-    return salaryText;
-  };
+    if (typeof min === 'number') {
+      return `À partir de ${min} ${currency}`;
+    }
+    
+    if (typeof max === 'number') {
+      return `Jusqu'à ${max} ${currency}`;
+    }
+    
+    return 'Salaire non spécifié';
+  }, [salary]);
 
   return (
-    <Card shadow="sm" padding={0} radius="md" className={classes.card}>
-      <Card.Section className={classes.body}>
-        <Group justify="space-between" mb="xs">
-          <Text className={classes.title} lineClamp={2}>{job.title}</Text>
-          <Badge color={getScoreColor(job.matchingScore)} variant="filled">
-            {Math.round(job.matchingScore * 100)}%
-          </Badge>
-        </Group>
-        
-        <Text size="sm" c="dimmed" mb="md">{job.company}</Text>
-        
-        <Group gap="xs" mb="xs">
-          <IconMapPin size={16} />
-          <Text size="sm">{job.location}</Text>
-        </Group>
-        
-        {job.salary && (
-          <Group gap="xs" mb="xs">
-            <IconBriefcase size={16} />
-            <Text size="sm">{formatSalary(job.salary)}</Text>
-          </Group>
-        )}
-        
-        <Group justify="space-between" mt="md">
-          <Group gap="xs">
-            <IconClock size={16} />
-            <Badge 
-              className={classes.commuteBadge} 
-              color="blue" 
-              variant="outline"
-              title="Temps de trajet depuis le domicile principal"
-            >
-              P: {formatCommuteTime(job.commuteTimes.primaryHome.duration)}
-            </Badge>
-            
-            {job.commuteTimes.secondaryHome && (
-              <Badge 
-                className={classes.commuteBadge} 
-                color="violet" 
-                variant="outline"
-                title="Temps de trajet depuis le domicile secondaire"
-              >
-                S: {formatCommuteTime(job.commuteTimes.secondaryHome.duration)}
-              </Badge>
-            )}
-          </Group>
-          
-          <Button 
-            variant="light" 
-            color="blue" 
-            size="compact-md"
-            rightSection={<IconExternalLink size={16} />}
-            onClick={() => onClick(job)}
-          >
-            Détails
-          </Button>
-        </Group>
-      </Card.Section>
+    <Group justify="space-between" mt="md">
+      <Group gap="xs">
+        <IconMapPin size={16} />
+        <Text size="sm">{location}</Text>
+      </Group>
+      {salary && (
+        <Text size="sm" fw={500}>
+          {formattedSalary}
+        </Text>
+      )}
+    </Group>
+  );
+});
+
+export const JobCard = memo(function JobCard({ job, onClick, onFavoriteClick, onShareClick }: JobCardProps) {
+  const { isAuthenticated } = useAuth();
+  const { addFavorite, removeFavorite, favorites } = useAppStore();
+  const isFavorite = useMemo(() => favorites.some(fav => fav.id === job.id), [favorites, job.id]);
+
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      // TODO: Show login modal
+      return;
+    }
+
+    if (isFavorite) {
+      removeFavorite(job.id);
+    } else {
+      addFavorite(job);
+    }
+    onFavoriteClick?.(job);
+  }, [isAuthenticated, isFavorite, job, addFavorite, removeFavorite, onFavoriteClick]);
+
+  const handleShareClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onShareClick?.(job);
+  }, [job, onShareClick]);
+
+  return (
+    <Card onClick={onClick} className={styles.card}>
+      <JobCardHeader
+        title={job.title}
+        company={job.company}
+        isFavorite={isFavorite}
+        onFavoriteClick={handleFavoriteClick}
+        onShareClick={handleShareClick}
+      />
+
+      <JobCardInfo
+        location={job.location}
+        salary={job.salary}
+      />
+
+      {job.experienceLevel && (
+        <Badge color="blue" mt="sm">
+          {job.experienceLevel}
+        </Badge>
+      )}
     </Card>
   );
-}
+});

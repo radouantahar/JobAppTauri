@@ -5,8 +5,14 @@ import type { Job, UserProfile, KanbanColumn, SearchPreference } from '../types'
 
 interface AppState {
   // État de l'interface
-  isLoading: boolean;
-  setLoading: (isLoading: boolean) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  isRefreshing: boolean;
+  setIsRefreshing: (isRefreshing: boolean) => void;
+  
+  // Authentification
+  isAuthenticated: boolean;
+  setIsAuthenticated: (isAuthenticated: boolean) => void;
   
   // Thème
   isDarkMode: boolean;
@@ -19,6 +25,11 @@ interface AppState {
   // Offres d'emploi
   selectedJob: Job | null;
   setSelectedJob: (job: Job | null) => void;
+  
+  // Favoris
+  favorites: Job[];
+  addFavorite: (job: Job) => void;
+  removeFavorite: (jobId: number) => void;
   
   // Kanban
   kanbanColumns: KanbanColumn[];
@@ -35,8 +46,14 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       // État de l'interface
-      isLoading: false,
-      setLoading: (isLoading) => set({ isLoading }),
+      loading: false,
+      setLoading: (loading) => set({ loading }),
+      isRefreshing: false,
+      setIsRefreshing: (isRefreshing) => set({ isRefreshing }),
+      
+      // Authentification
+      isAuthenticated: false,
+      setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
       
       // Thème (persisted)
       isDarkMode: typeof window !== 'undefined' 
@@ -51,6 +68,15 @@ export const useAppStore = create<AppState>()(
       // Offres d'emploi
       selectedJob: null,
       setSelectedJob: (job) => set({ selectedJob: job }),
+      
+      // Favoris
+      favorites: [],
+      addFavorite: (job) => set((state) => ({
+        favorites: [...state.favorites, job]
+      })),
+      removeFavorite: (jobId) => set((state) => ({
+        favorites: state.favorites.filter(job => job.id !== jobId)
+      })),
       
       // Kanban
       kanbanColumns: [],
@@ -67,7 +93,8 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage), // or sessionStorage
       partialize: (state) => ({ 
         isDarkMode: state.isDarkMode,
-        // Add other states you want to persist
+        isAuthenticated: state.isAuthenticated,
+        favorites: state.favorites,
       }),
     }
   )

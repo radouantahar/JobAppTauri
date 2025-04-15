@@ -1,198 +1,157 @@
 import { useEffect, useState } from 'react';
-import { Container, Grid, Paper, Title, Text, Group, RingProgress, SimpleGrid, Card, useMantineTheme } from '@mantine/core';
-import { IconBriefcase, IconCheck, IconClock, IconX } from '@tabler/icons-react';
-import { Line, Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title as ChartTitle, Tooltip, Legend, ArcElement } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useJobStats } from '../hooks/useJobStats';
+import { useApplicationStats } from '../hooks/useApplicationStats';
+import { Container, Grid, Paper, Title, Text, Group, Stack, Card, useMantineTheme, Button } from '@mantine/core';
+import { IconRefresh } from '@tabler/icons-react';
 import { useAppStore } from '../store';
-import { statsService, jobService } from '../services/api';
-import { Job } from '../types';
+import type { Job, JobStats, ApplicationStats } from '../types';
 
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTitle, Tooltip, Legend, ArcElement);
-
-export function Dashboard() {
+export default function DashboardPage() {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { stats: jobStats, loading: jobStatsLoading, error: jobStatsError, refreshStats: refreshJobStats } = useJobStats();
+  const { stats: appStats, loading: appStatsLoading, error: appStatsError, refreshStats: refreshAppStats } = useApplicationStats();
   const theme = useMantineTheme();
-  const { setLoading } = useAppStore();
-  const [jobStats, setJobStats] = useState<any>(null);
-  const [applicationStats, setApplicationStats] = useState<any>(null);
+  const { setLoading, isRefreshing, setIsRefreshing } = useAppStore();
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
+  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 5000; // 5 seconds
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [jobStatsData, applicationStatsData, recentJobsData] = await Promise.all([
-          statsService.getJobStats(),
-          statsService.getApplicationStats(),
-          jobService.searchJobs({ keywords: [], datePosted: 'last_week' })
-        ]);
-        
-        setJobStats(jobStatsData);
-        setApplicationStats(applicationStatsData);
-        setRecentJobs(recentJobsData.slice(0, 5));
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [setLoading]);
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
-  // Chart data
-  const jobTrendData = {
-    labels: jobStats?.trendData?.labels || [],
-    datasets: [
-      {
-        label: 'Offres trouvées',
-        data: jobStats?.trendData?.values || [],
-        borderColor: theme.colors.blue[6],
-        backgroundColor: theme.colors.blue[2],
-        tension: 0.3,
-      },
-    ],
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    refreshJobStats();
+    refreshAppStats();
+    setIsRefreshing(false);
   };
 
-  const sourceDistributionData = {
-    labels: jobStats?.sourceDistribution?.labels || [],
-    datasets: [
-      {
-        data: jobStats?.sourceDistribution?.values || [],
-        backgroundColor: [
-          theme.colors.blue[6],
-          theme.colors.green[6],
-          theme.colors.yellow[6],
-          theme.colors.orange[6],
-          theme.colors.red[6],
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  const isLoading = jobStatsLoading || appStatsLoading;
+  const hasError = jobStatsError || appStatsError;
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+  if (isLoading) {
+    return (
+      <Stack gap="md" align="center" justify="center" h="100vh">
+        <Text>Chargement des statistiques...</Text>
+      </Stack>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <Stack gap="md" align="center" justify="center" h="100vh">
+        <Text color="red">Erreur lors du chargement des statistiques</Text>
+        <Button onClick={handleRefresh} leftSection={<IconRefresh size={16} />}>
+          Réessayer
+        </Button>
+      </Stack>
+    );
+  }
 
   return (
-    <Container size="xl" py="xl">
-      <Title order={1} mb="xl">Tableau de bord</Title>
-      
-      {/* Main stats */}
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md" mb="xl">
-        <Card shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <div>
-              <Text size="xs" c="dimmed">Total des offres</Text>
-              <Text fw={700} size="xl">{jobStats?.totalJobs || 0}</Text>
-            </div>
-            <IconBriefcase size={32} color={theme.colors.blue[6]} />
-          </Group>
-        </Card>
-        
-        <Card shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <div>
-              <Text size="xs" c="dimmed">Candidatures envoyées</Text>
-              <Text fw={700} size="xl">{applicationStats?.totalApplications || 0}</Text>
-            </div>
-            <IconCheck size={32} color={theme.colors.green[6]} />
-          </Group>
-        </Card>
-        
-        <Card shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <div>
-              <Text size="xs" c="dimmed">Entretiens</Text>
-              <Text fw={700} size="xl">{applicationStats?.totalInterviews || 0}</Text>
-            </div>
-            <IconClock size={32} color={theme.colors.yellow[6]} />
-          </Group>
-        </Card>
-        
-        <Card shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between">
-            <div>
-              <Text size="xs" c="dimmed">Offres reçues</Text>
-              <Text fw={700} size="xl">{applicationStats?.totalOffers || 0}</Text>
-            </div>
-            <IconX size={32} color={theme.colors.red[6]} />
-          </Group>
-        </Card>
-      </SimpleGrid>
-      
-      <Grid gutter="md">
-        {/* Job trend chart */}
-        <Grid.Col span={{ base: 12, md: 8 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Title order={3} mb="md">Évolution des offres</Title>
-            <Line data={jobTrendData} options={chartOptions} />
-          </Paper>
-        </Grid.Col>
-        
-        {/* Success rate */}
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Title order={3} mb="md">Taux de réussite</Title>
-            <Group justify="center">
-              <RingProgress
-                size={180}
-                thickness={16}
-                sections={[
-                  { value: applicationStats?.successRate || 0, color: theme.colors.green[6] },
-                ]}
-                label={
-                  <Text size="xl" ta="center" fw={700}>
-                    {applicationStats?.successRate || 0}%
-                  </Text>
-                }
-              />
+    <Stack gap="xl">
+      <Group justify="space-between">
+        <Title order={2}>Tableau de bord</Title>
+        <Button
+          variant="light"
+          leftSection={<IconRefresh size={16} />}
+          onClick={handleRefresh}
+          loading={isRefreshing}
+        >
+          Actualiser
+        </Button>
+      </Group>
+
+      <Grid>
+        {/* Statistiques des offres */}
+        <Grid.Col span={12}>
+          <Card withBorder>
+            <Group justify="space-between" mb="md">
+              <Title order={3}>Statistiques des offres</Title>
             </Group>
-            <Text ta="center" size="sm" c="dimmed" mt="sm">
-              Taux de réponses positives
-            </Text>
-          </Paper>
+            <Grid>
+              <Grid.Col span={4}>
+                <Paper p="md" withBorder>
+                  <Text size="sm" c="dimmed">Total des offres</Text>
+                  <Title order={2}>{jobStats?.totalJobs || 0}</Title>
+                </Paper>
+              </Grid.Col>
+              <Grid.Col span={8}>
+                <Paper p="md" withBorder>
+                  <Text size="sm" c="dimmed" mb="md">Évolution des offres</Text>
+                  <Group justify="space-between">
+                    {jobStats?.trendData.labels.map((label, index) => (
+                      <Stack key={label} gap={0} align="center">
+                        <Text size="xs">{label}</Text>
+                        <Text fw={500}>{jobStats.trendData.values[index]}</Text>
+                      </Stack>
+                    ))}
+                  </Group>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          </Card>
         </Grid.Col>
-        
-        {/* Source distribution */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Title order={3} mb="md">Répartition par source</Title>
-            <Pie data={sourceDistributionData} />
-          </Paper>
+
+        {/* Statistiques des candidatures */}
+        <Grid.Col span={12}>
+          <Card withBorder>
+            <Group justify="space-between" mb="md">
+              <Title order={3}>Statistiques des candidatures</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={4}>
+                <Paper p="md" withBorder>
+                  <Text size="sm" c="dimmed">Total des candidatures</Text>
+                  <Title order={2}>{appStats?.totalApplications || 0}</Title>
+                </Paper>
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Paper p="md" withBorder>
+                  <Text size="sm" c="dimmed">Taux de réponse</Text>
+                  <Title order={2}>{appStats?.responseRate || 0}%</Title>
+                </Paper>
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Paper p="md" withBorder>
+                  <Text size="sm" c="dimmed">Temps moyen de réponse</Text>
+                  <Title order={2}>{appStats?.averageResponseTime || 0}j</Title>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          </Card>
         </Grid.Col>
-        
-        {/* Recent jobs */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Title order={3} mb="md">Offres récentes</Title>
-            {recentJobs.length > 0 ? (
-              recentJobs.map((job) => (
-                <Group key={job.id} justify="space-between" mb="xs">
-                  <div>
-                    <Text fw={500}>{job.title}</Text>
-                    <Text size="xs" c="dimmed">{job.company}</Text>
-                  </div>
-                  <Text size="sm">{new Date(job.publishedAt).toLocaleDateString()}</Text>
-                </Group>
-              ))
-            ) : (
-              <Text c="dimmed">Aucune offre récente</Text>
-            )}
-          </Paper>
+
+        {/* Distribution des sources */}
+        <Grid.Col span={12}>
+          <Card withBorder>
+            <Title order={3} mb="md">Distribution des sources</Title>
+            <Grid>
+              {jobStats?.sourceDistribution.labels.map((label, index) => (
+                <Grid.Col key={label} span={3}>
+                  <Paper p="md" withBorder>
+                    <Text size="sm" c="dimmed">{label}</Text>
+                    <Title order={2}>{jobStats.sourceDistribution.values[index]}%</Title>
+                  </Paper>
+                </Grid.Col>
+              ))}
+            </Grid>
+          </Card>
         </Grid.Col>
       </Grid>
-    </Container>
+    </Stack>
   );
 }

@@ -12,7 +12,8 @@ import type {
   LLMProvider, 
   DocumentTemplate, 
   GeneratedDocument,
-  DocumentType // Added this import
+  DocumentType, // Added this import
+  Document
 } from '../types';
 
 // Service pour les offres d'emploi
@@ -127,5 +128,55 @@ export const statsService = {
   
   async getAPIUsageStats(): Promise<unknown> {
     return await invoke('get_api_usage_stats');
+  }
+};
+
+export const documentService = {
+  async getDocuments(page: number = 1, limit: number = 10): Promise<Document[]> {
+    try {
+      const response = await invoke<Document[]>('get_documents', { page, limit });
+      return response;
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      throw error;
+    }
+  },
+
+  async createDocument(document: Omit<Document, 'id'>): Promise<Document> {
+    try {
+      const response = await invoke<Document>('create_document', { document });
+      return response;
+    } catch (error) {
+      console.error('Error creating document:', error);
+      throw error;
+    }
+  },
+
+  async updateDocument(id: string, document: Partial<Document>): Promise<Document> {
+    try {
+      const response = await invoke<Document>('update_document', { id, document });
+      return response;
+    } catch (error) {
+      console.error('Error updating document:', error);
+      throw error;
+    }
+  },
+
+  async deleteDocument(id: string): Promise<void> {
+    try {
+      await invoke('delete_document', { id });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      throw error;
+    }
+  },
+
+  async shareDocument(id: string, email: string): Promise<void> {
+    try {
+      await invoke('share_document', { id, email });
+    } catch (error) {
+      console.error('Error sharing document:', error);
+      throw error;
+    }
   }
 };
