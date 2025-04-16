@@ -1,33 +1,29 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SearchPage } from '../Search';
+import Search from '../Search';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import type { Job, JobID, ISODateString, AppState } from '../../types';
+import type { Job, AppState, JobType, CommuteMode, SearchFilters } from '../../types';
 
 jest.mock('../../store');
 
 const mockAppState: AppState = {
   isAuthenticated: false,
-  user: null,
-  loading: false,
-  error: null,
-  setUser: jest.fn(),
-  setLoading: jest.fn(),
-  setError: jest.fn(),
-  searchQuery: '',
-  filters: {
+  userProfile: null,
+  searchFilters: {
+    keywords: '',
     location: '',
-    jobType: [],
-    experienceLevel: [],
-    salaryRange: {
-      min: 0,
-      max: 100000
-    }
+    salaryMin: null,
+    salaryMax: null,
+    contractTypes: [],
+    experienceLevels: [],
+    remote: undefined,
+    skills: [],
+    datePosted: null,
+    sortBy: 'relevance'
   },
-  isLoading: false,
-  setSearchQuery: jest.fn(),
-  setFilters: jest.fn()
+  applications: [],
+  kanbanColumns: []
 };
 
 // Mock des dépendances
@@ -50,7 +46,7 @@ describe('SearchPage', () => {
   it('devrait afficher les offres d\'emploi correctement', async () => {
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -68,7 +64,7 @@ describe('SearchPage', () => {
   it('devrait mettre à jour les résultats lors d\'une recherche', async () => {
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -91,7 +87,7 @@ describe('SearchPage', () => {
 
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -114,7 +110,7 @@ describe('SearchPage', () => {
 
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -127,7 +123,7 @@ describe('SearchPage', () => {
   it('devrait charger plus d\'offres lors du scroll', async () => {
     const { container } = render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -167,7 +163,7 @@ describe('SearchPage', () => {
   it('devrait rediriger vers la page de login si non authentifié', async () => {
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -181,31 +177,31 @@ describe('SearchPage', () => {
   it('should display search results when jobs are found', async () => {
     const mockJobs: Job[] = [
       {
-        id: '1' as JobID,
-        title: 'Développeur React',
-        company: 'Tech Corp',
-        description: 'Description du poste',
-        location: 'Paris',
+        id: '1',
+        title: 'Software Engineer',
+        company: 'Test Company',
+        location: 'Remote',
+        type: 'CDI',
+        postedAt: '2024-04-15T12:00:00Z',
+        experience: 'mid',
+        description: 'Test description',
         url: 'https://example.com/job/1',
         source: 'linkedin',
-        publishedAt: new Date().toISOString() as ISODateString,
-        jobType: 'full-time',
+        jobType: 'CDI' as JobType,
+        experienceLevel: 'mid',
         salary: {
-          min: 40000,
-          max: 50000,
+          min: 50000,
+          max: 100000,
           currency: 'EUR',
           period: 'year'
         },
-        matchingScore: 0.85,
         skills: ['React', 'TypeScript'],
-        experienceLevel: 'mid',
-        commuteTimes: {
-          primaryHome: {
-            duration: 30,
-            distance: 5,
-            mode: 'transit'
-          }
-        }
+        commuteTimes: [{
+          mode: 'transit' as CommuteMode,
+          duration: 30,
+          distance: 5
+        }],
+        remote: true
       }
     ];
 
@@ -213,7 +209,7 @@ describe('SearchPage', () => {
 
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -230,7 +226,7 @@ describe('SearchPage', () => {
 
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 

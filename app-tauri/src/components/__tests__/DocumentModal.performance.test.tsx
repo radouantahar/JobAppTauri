@@ -2,8 +2,7 @@ import { render, act } from '@testing-library/react';
 import { DocumentModal } from '../DocumentModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocument } from '../../hooks/useDocument';
-import type { Document } from '../../types';
-import { createISODateString } from '../../types';
+import type { Document, DocumentType, ISODateString } from '../../types';
 
 // Mock des hooks
 vi.mock('../../contexts/AuthContext', () => ({
@@ -21,10 +20,10 @@ const mockDocument: Document = {
   id: '1',
   title: 'Test Document',
   description: 'Test Description',
-  content: 'Test Content',
-  type: 'cv',
-  createdAt: createISODateString('2024-04-15T00:00:00.000Z'),
-  updatedAt: createISODateString('2024-04-15T00:00:00.000Z'),
+  content: 'Test content',
+  type: 'CV' as DocumentType,
+  createdAt: new Date().toISOString() as ISODateString,
+  updatedAt: new Date().toISOString() as ISODateString
 };
 
 describe('DocumentModal Performance Tests', () => {

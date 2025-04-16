@@ -27,13 +27,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def search_jobs(self, keywords: List[str], location: str, job_type: List[str], 
-               is_remote: bool = False, hours_old: int = 72) -> Dict[str, Any]:
+               is_remote: bool = False, skills: List[str] = None,
+               date_posted: str = None, sort_by: str = 'relevance',
+               page: int = 1, hours_old: int = 72) -> Dict[str, Any]:
     """Search jobs in database with filters"""
     try:
         query = """
         SELECT j.id, j.title, c.name as company_name, j.location, j.description,
                j.url, j.date_posted, j.salary_min, j.salary_max, j.salary_currency,
-               j.matching_score 
+               j.matching_score, j.skills, j.job_type, j.experience_level, j.is_remote
         FROM jobs j
         LEFT JOIN companies c ON j.company_id = c.id
         WHERE 1=1
@@ -57,14 +59,31 @@ def search_jobs(self, keywords: List[str], location: str, job_type: List[str],
         if is_remote:
             conditions.append("j.is_remote = 1")
             
-        if hours_old:
+        if skills:
+            conditions.append("(" + " OR ".join(["j.skills LIKE ?" for _ in skills]) + ")")
+            params.extend([f"%{skill}%" for skill in skills])
+            
+        if date_posted:
+            conditions.append("j.date_posted >= ?")
+            params.append(date_posted)
+        elif hours_old:
             conditions.append("j.date_posted >= datetime('now', ?)")
             params.append(f"-{hours_old} hours")
             
         if conditions:
             query += " AND " + " AND ".join(conditions)
             
-        query += " ORDER BY j.matching_score DESC, j.date_posted DESC"
+        # Ajouter le tri
+        if sort_by == 'date':
+            query += " ORDER BY j.date_posted DESC"
+        elif sort_by == 'salary':
+            query += " ORDER BY j.salary_max DESC"
+        else:  # relevance
+            query += " ORDER BY j.matching_score DESC, j.date_posted DESC"
+            
+        # Ajouter la pagination
+        query += " LIMIT 10 OFFSET ?"
+        params.append((page - 1) * 10)
         
         self.cursor.execute(query, params)
         jobs = self.cursor.fetchall()
@@ -85,7 +104,11 @@ def search_jobs(self, keywords: List[str], location: str, job_type: List[str],
                 "url": job[5],
                 "date_posted": job[6],
                 "salary": salary,
-                "matching_score": job[10]
+                "matching_score": job[10],
+                "skills": job[11] or [],
+                "job_type": job[12],
+                "experience_level": job[13],
+                "is_remote": job[14]
             })
             
         return {
@@ -503,6 +526,6 @@ class JobScraper:
             search_term: Terme de recherche
             location: Localisation
             sites: Liste des sites à scraper (par défaut tous les sites supportés)
-            results_wanted: Nombre de rés
+            results_wanted: Nombre de résultats
 (Content truncated due to size limit. Use line ranges to read in chunks)
 """

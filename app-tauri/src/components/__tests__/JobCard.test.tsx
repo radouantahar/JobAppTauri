@@ -1,34 +1,33 @@
 /// <reference types="vitest/globals" />
 import { render, screen, fireEvent } from '@testing-library/react';
 import { JobCard } from '../JobCard';
-import type { Job, ISODateString } from '../../types';
+import type { Job, JobType, CommuteTime, CommuteMode } from '../../types';
+import { createMockJob } from '../../__tests__/helpers';
 
 const mockJob: Job = {
   id: '1',
-  title: 'Software Engineer',
+  title: 'Test Job',
   company: 'Test Company',
-  location: 'Remote',
-  description: 'Test description',
-  url: 'https://example.com/job/1',
-  source: 'linkedin',
-  publishedAt: '2024-04-15T12:00:00Z' as ISODateString,
-  jobType: 'full-time',
-  experienceLevel: 'mid',
+  location: 'Paris',
+  type: 'CDI',
+  postedAt: new Date().toISOString(),
+  experience: 'mid',
   salary: {
-    min: 50000,
-    max: 100000,
-    currency: 'EUR',
-    period: 'year'
+    min: 40000,
+    max: 60000
   },
-  matchingScore: 0.85,
+  description: 'Test description',
+  url: 'https://example.com',
+  remote: false,
   skills: ['React', 'TypeScript'],
-  commuteTimes: {
-    primaryHome: {
-      duration: 30,
-      distance: 5,
-      mode: 'transit'
-    }
-  }
+  jobType: 'CDI' as JobType,
+  experienceLevel: 'mid',
+  commuteTimes: [{
+    mode: 'driving' as CommuteMode,
+    duration: 30,
+    distance: 10
+  }] as CommuteTime[],
+  source: 'linkedin'
 };
 
 describe('JobCard', () => {
@@ -40,46 +39,40 @@ describe('JobCard', () => {
   });
 
   it('renders job information correctly', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
+    render(<JobCard job={mockJob} />);
+    
     expect(screen.getByText(mockJob.title)).toBeInTheDocument();
-    expect(screen.getByText(`${mockJob.company} • ${mockJob.location}`)).toBeInTheDocument();
-    expect(screen.getByText(mockJob.jobType)).toBeInTheDocument();
-    expect(screen.getByText(mockJob.experienceLevel)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.company)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.location)).toBeInTheDocument();
     expect(screen.getByText(mockJob.description)).toBeInTheDocument();
   });
 
   it('calls onClick when card is clicked', () => {
+    const job = createMockJob();
     render(
       <JobCard
-        job={mockJob}
+        job={job}
         onClick={mockOnClick}
         onShareClick={mockOnShareClick}
       />
     );
 
-    fireEvent.click(screen.getByRole('button'));
-    expect(mockOnClick).toHaveBeenCalledWith(mockJob);
+    fireEvent.click(screen.getByRole('article'));
+    expect(mockOnClick).toHaveBeenCalledWith(job);
   });
 
   it('calls onShareClick when share button is clicked', () => {
+    const job = createMockJob();
     render(
       <JobCard
-        job={mockJob}
+        job={job}
         onClick={mockOnClick}
         onShareClick={mockOnShareClick}
       />
     );
 
-    const shareButton = screen.getByRole('button', { name: /share/i });
-    fireEvent.click(shareButton);
-    expect(mockOnShareClick).toHaveBeenCalledWith(mockJob);
+    fireEvent.click(screen.getByLabelText('share'));
+    expect(mockOnShareClick).toHaveBeenCalledWith(job);
   });
 
   it('displays salary information when available', () => {

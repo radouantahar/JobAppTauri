@@ -1,126 +1,101 @@
-import { useState } from 'react';
-import { Stack, TextInput, Textarea, Button, Group, NumberInput, Select } from '@mantine/core';
-import type { Job, JobType, ExperienceLevel, SalaryRange } from '../types';
+import React from 'react';
+import { useForm } from '@mantine/form';
+import { TextInput, Select, NumberInput, Textarea, Button, Group, Stack } from '@mantine/core';
+import type { Job, JobType, ExperienceLevel } from '../types';
 
 interface JobFormProps {
-  jobId?: string;
-  initialData?: Partial<Job>;
-  onSubmit: (data: Partial<Job>) => Promise<void>;
-  onClose?: () => void;
-  isLoading?: boolean;
+  onSubmit: (values: Partial<Job>) => void;
+  initialValues?: Partial<Job>;
 }
 
-const JOB_TYPES: JobType[] = ['full-time', 'part-time', 'contract', 'internship', 'temporary'];
-const EXPERIENCE_LEVELS: ExperienceLevel[] = ['entry', 'mid', 'senior', 'lead', 'executive'];
+const jobTypes: { value: JobType; label: string }[] = [
+  { value: 'CDI', label: 'CDI' },
+  { value: 'CDD', label: 'CDD' },
+  { value: 'Stage', label: 'Stage' },
+  { value: 'Alternance', label: 'Alternance' },
+  { value: 'Freelance', label: 'Freelance' },
+];
 
-const DEFAULT_SALARY: SalaryRange = {
-  min: 0,
-  max: 0,
-  currency: 'EUR',
-  period: 'year'
-};
+const experienceLevels: { value: ExperienceLevel; label: string }[] = [
+  { value: 'junior', label: 'Junior' },
+  { value: 'mid', label: 'Confirmé' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'lead', label: 'Expert' },
+];
 
-export const JobForm = ({ initialData, onSubmit, onClose, isLoading }: JobFormProps) => {
-  const [formData, setFormData] = useState<Partial<Job>>({
-    title: initialData?.title || '',
-    company: initialData?.company || '',
-    location: initialData?.location || '',
-    description: initialData?.description || '',
-    url: initialData?.url || '',
-    jobType: initialData?.jobType || 'full-time',
-    experienceLevel: initialData?.experienceLevel || 'mid',
-    salary: initialData?.salary || DEFAULT_SALARY,
-    skills: initialData?.skills || []
+export const JobForm: React.FC<JobFormProps> = ({ onSubmit, initialValues }) => {
+  const form = useForm<Partial<Job>>({
+    initialValues: {
+      title: '',
+      company: '',
+      location: '',
+      type: '',
+      description: '',
+      salary: {
+        min: 0,
+        max: 0,
+      },
+      experience: '',
+      ...initialValues,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
-
-  const handleSalaryChange = (field: keyof SalaryRange) => (value: number | string | null) => {
-    const numValue = typeof value === 'number' ? value : 0;
-    setFormData({
-      ...formData,
-      salary: {
-        ...formData.salary,
-        [field]: numValue
-      } as SalaryRange
-    });
-  };
-
   return (
-    <form onSubmit={handleSubmit}>
-      <Stack gap="md">
+    <form onSubmit={form.onSubmit(onSubmit)}>
+      <Stack>
         <TextInput
           label="Titre"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          required
+          placeholder="Développeur Full Stack"
+          {...form.getInputProps('title')}
         />
+
         <TextInput
           label="Entreprise"
-          value={formData.company}
-          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-          required
+          placeholder="Nom de l'entreprise"
+          {...form.getInputProps('company')}
         />
+
         <TextInput
           label="Localisation"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          required
+          placeholder="Paris, Lyon, Remote..."
+          {...form.getInputProps('location')}
         />
-        <Textarea
-          label="Description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          minRows={3}
-          required
-        />
-        <TextInput
-          label="URL"
-          value={formData.url}
-          onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-          required
-        />
+
         <Select
           label="Type de contrat"
-          value={formData.jobType}
-          onChange={(value) => value && setFormData({ ...formData, jobType: value as JobType })}
-          data={JOB_TYPES.map(type => ({ value: type, label: type }))}
-          required
+          data={jobTypes}
+          {...form.getInputProps('type')}
         />
+
         <Select
           label="Niveau d'expérience"
-          value={formData.experienceLevel}
-          onChange={(value) => value && setFormData({ ...formData, experienceLevel: value as ExperienceLevel })}
-          data={EXPERIENCE_LEVELS.map(level => ({ value: level, label: level }))}
-          required
+          data={experienceLevels}
+          {...form.getInputProps('experience')}
         />
+
         <Group grow>
           <NumberInput
             label="Salaire minimum"
-            value={formData.salary?.min}
-            onChange={handleSalaryChange('min')}
-            min={0}
+            placeholder="30000"
+            {...form.getInputProps('salary.min')}
           />
           <NumberInput
             label="Salaire maximum"
-            value={formData.salary?.max}
-            onChange={handleSalaryChange('max')}
-            min={0}
+            placeholder="60000"
+            {...form.getInputProps('salary.max')}
           />
         </Group>
-        <Group justify="flex-end">
-          {onClose && (
-            <Button variant="light" onClick={onClose}>
-              Annuler
-            </Button>
-          )}
-          <Button type="submit" loading={isLoading}>
-            Enregistrer
-          </Button>
-        </Group>
+
+        <Textarea
+          label="Description"
+          placeholder="Description du poste..."
+          minRows={4}
+          {...form.getInputProps('description')}
+        />
+
+        <Button type="submit" mt="md">
+          Enregistrer
+        </Button>
       </Stack>
     </form>
   );

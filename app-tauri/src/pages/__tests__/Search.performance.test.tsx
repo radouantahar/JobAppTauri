@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SearchPage } from '../Search';
+import Search from '../Search';
 import type { Job, ISODateString, AppState, JobType, ExperienceLevel } from '../../types';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
@@ -23,10 +23,12 @@ const generateMockJobs = (count: number): Job[] => {
     title: `Job ${i + 1}`,
     company: `Company ${i + 1}`,
     location: 'Paris',
+    type: 'CDI',
+    postedAt: new Date().toISOString() as ISODateString,
+    experience: 'mid',
     description: 'Description',
     url: 'https://example.com',
     source: 'linkedin',
-    publishedAt: new Date().toISOString() as ISODateString,
     jobType: 'full-time' as JobType,
     experienceLevel: 'mid' as ExperienceLevel,
     skills: ['React', 'TypeScript'],
@@ -37,13 +39,16 @@ const generateMockJobs = (count: number): Job[] => {
       period: 'year'
     },
     matchingScore: 0.85,
-    commuteTimes: {
-      'home': {
+    commuteTimes: [
+      {
+        mode: 'driving',
         duration: 30,
-        distance: 10,
-        mode: 'driving'
+        distance: 10
       }
-    }
+    ],
+    remote: true,
+    contractType: 'CDI',
+    createdAt: new Date().toISOString() as ISODateString
   }));
 };
 
@@ -64,7 +69,7 @@ describe('SearchPage - Tests de Performance', () => {
     const startTime = performance.now();
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
     const endTime = performance.now();
@@ -86,7 +91,7 @@ describe('SearchPage - Tests de Performance', () => {
 
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -117,7 +122,7 @@ describe('SearchPage - Tests de Performance', () => {
 
     const { container } = render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -164,7 +169,7 @@ describe('SearchPage - Tests de Performance', () => {
     const startTime = performance.now();
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
     const endTime = performance.now();
@@ -185,7 +190,7 @@ describe('SearchPage - Tests de Performance', () => {
     const initialMemory = process.memoryUsage().heapUsed;
     render(
       <MemoryRouter>
-        <SearchPage />
+        <Search />
       </MemoryRouter>
     );
 
@@ -204,7 +209,7 @@ describe('SearchPage - Tests de Performance', () => {
     generateMockJobs(100);
     const startTime = performance.now();
     
-    render(<SearchPage />);
+    render(<Search />);
     
     const endTime = performance.now();
     expect(endTime - startTime).toBeLessThan(500);
@@ -214,7 +219,7 @@ describe('SearchPage - Tests de Performance', () => {
     generateMockJobs(1000);
     const startTime = performance.now();
     
-    render(<SearchPage />);
+    render(<Search />);
     
     const endTime = performance.now();
     expect(endTime - startTime).toBeLessThan(1000);
@@ -226,7 +231,7 @@ describe('SearchPage - Tests de Performance', () => {
     const memorySamples: number[] = [];
 
     for (let i = 0; i < 10; i++) {
-      render(<SearchPage />);
+      render(<Search />);
       if (performance.memory) {
         memorySamples.push(performance.memory.usedJSHeapSize);
       }

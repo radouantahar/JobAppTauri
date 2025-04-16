@@ -1,6 +1,5 @@
 // Service pour les appels API via Tauri
-// For Tauri 2.x:
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api';
 
 import type { 
   Job, 

@@ -245,4 +245,53 @@ pub struct ApplicationStats {
     pub total_interviews: i64,
     pub total_offers: i64,
     pub success_rate: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Application {
+    pub id: i64,
+    pub user_id: i64,
+    pub job_id: i64,
+    pub status: String,
+    pub applied_at: Option<String>,
+    pub response_received: bool,
+    pub notes: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub stages: Option<Vec<ApplicationStage>>,
+    pub documents: Option<Vec<ApplicationDocument>>,
+    pub application_notes: Option<Vec<ApplicationNote>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApplicationStage {
+    pub id: i64,
+    pub application_id: i64,
+    pub stage_type: String,
+    pub scheduled_at: Option<String>,
+    pub completed_at: Option<String>,
+    pub notes: Option<String>,
+    pub outcome: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApplicationDocument {
+    pub id: i64,
+    pub application_id: i64,
+    pub document_type: String,
+    pub file_path: Option<String>,
+    pub content: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApplicationNote {
+    pub id: i64,
+    pub application_id: i64,
+    pub content: String,
+    pub created_at: String,
+    pub updated_at: String,
 } 

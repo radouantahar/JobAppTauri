@@ -1,24 +1,29 @@
 // pages/Commute.tsx
 import { useState } from 'react';
 import { Container, Title, TextInput, Button, Stack } from '@mantine/core';
-import type { SearchCriteria } from '../types';
+import type { SearchFilters } from '../types';
 import { useJobSearch } from '../hooks/useJobSearch';
 
+const defaultFilters: SearchFilters = {
+  keywords: '',
+  location: '',
+  salaryMin: null,
+  salaryMax: null,
+  contractTypes: [],
+  experienceLevels: [],
+  remote: undefined,
+  skills: [],
+  datePosted: null,
+  sortBy: 'relevance'
+};
+
 const CommutePage: React.FC = () => {
-  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
-    location: '',
-    jobType: [],
-    experienceLevel: [],
-    salaryMin: 0,
-    salaryMax: 0,
-    skills: [],
-    remote: false
-  });
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>(defaultFilters);
 
   const { search } = useJobSearch();
 
   const handleSearch = () => {
-    search(searchCriteria);
+    search(searchFilters);
   };
 
   return (
@@ -27,8 +32,8 @@ const CommutePage: React.FC = () => {
       <Stack gap="md">
         <TextInput
           label="Localisation"
-          value={searchCriteria.location}
-          onChange={(e) => setSearchCriteria({ ...searchCriteria, location: e.target.value })}
+          value={searchFilters.location}
+          onChange={(e) => setSearchFilters({ ...searchFilters, location: e.target.value })}
         />
         <Button onClick={handleSearch}>Rechercher</Button>
       </Stack>

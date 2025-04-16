@@ -1,14 +1,27 @@
 // pages/Search.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Container, Stack, Text, Loader, Center, Alert, Button } from '@mantine/core';
 import { IconAlertCircle, IconRefresh } from '@tabler/icons-react';
 import { SearchBar } from '../components/search/SearchBar';
 import { SearchResults } from '../components/SearchResults';
 import { useJobSearch } from '../hooks/useJobSearch';
-import type { Job } from '../types';
+import type { Job, SearchFilters } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
-export const SearchPage = () => {
+const initialFilters: SearchFilters = {
+  keywords: '',
+  location: '',
+  salaryMin: null,
+  salaryMax: null,
+  contractTypes: [],
+  experienceLevels: [],
+  remote: undefined,
+  skills: [],
+  datePosted: null,
+  sortBy: 'relevance'
+};
+
+const Search: React.FC = () => {
   const { user } = useAuth();
   const { jobs, isLoading, error, hasMore, search, loadMore } = useJobSearch();
   const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
@@ -22,7 +35,19 @@ export const SearchPage = () => {
 
     // Définir un nouveau délai de 500ms
     searchTimeoutRef.current = setTimeout(() => {
-      search({ query, page: 1 });
+      const filters: SearchFilters = {
+        keywords: query,
+        location: '',
+        salaryMin: null,
+        salaryMax: null,
+        contractTypes: [],
+        experienceLevels: [],
+        remote: undefined,
+        skills: [],
+        datePosted: null,
+        sortBy: 'relevance'
+      };
+      search(filters);
     }, 500);
   }, [search]);
 
@@ -32,7 +57,19 @@ export const SearchPage = () => {
   }, []);
 
   const handleRetry = React.useCallback(() => {
-    search({ page: 1 });
+    const filters: SearchFilters = {
+      keywords: '',
+      location: '',
+      salaryMin: null,
+      salaryMax: null,
+      contractTypes: [],
+      experienceLevels: [],
+      remote: undefined,
+      skills: [],
+      datePosted: null,
+      sortBy: 'relevance'
+    };
+    search(filters);
   }, [search]);
 
   // Nettoyer le délai lors du démontage du composant
@@ -104,3 +141,5 @@ export const SearchPage = () => {
     </Container>
   );
 };
+
+export default Search;

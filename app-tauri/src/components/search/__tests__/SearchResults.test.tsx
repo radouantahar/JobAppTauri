@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from '../SearchResults';
-import type { Job, JobType, JobSource, ExperienceLevel, Currency, SalaryPeriod, CommuteMode, ISODateString } from '../../../types';
+import type { Job, JobType, JobSource, ExperienceLevel, ISODateString } from '../../../types';
 
 // Fonction utilitaire pour convertir une chaîne en ISODateString
 const toISODateString = (date: string): ISODateString => date as ISODateString;
@@ -17,54 +17,64 @@ describe('SearchResults', () => {
       title: 'Développeur React',
       company: 'TechCorp',
       location: 'Paris',
+      type: 'CDI',
+      postedAt: toISODateString('2024-03-20T00:00:00.000Z'),
+      experience: 'mid',
       description: 'Description du poste',
       url: 'https://example.com/job',
       source: 'linkedin' as JobSource,
-      publishedAt: toISODateString('2024-03-20T00:00:00.000Z'),
       jobType: 'full-time' as JobType,
       experienceLevel: 'mid' as ExperienceLevel,
-      matchingScore: 0.95,
-      commuteTimes: {
-        primaryHome: {
-          duration: 30,
-          distance: 5,
-          mode: 'transit' as CommuteMode
-        }
-      },
       salary: {
         min: 45000,
         max: 55000,
-        currency: 'EUR' as Currency,
-        period: 'year' as SalaryPeriod
+        currency: 'EUR',
+        period: 'year'
       },
-      skills: ['React', 'TypeScript', 'Node.js']
+      matchingScore: 0.95,
+      skills: ['React', 'TypeScript', 'Node.js'],
+      commuteTimes: [
+        {
+          mode: 'transit',
+          duration: 30,
+          distance: 5
+        }
+      ],
+      remote: true,
+      contractType: 'CDI',
+      createdAt: '2024-03-20T00:00:00.000Z'
     },
     {
       id: '2',
       title: 'Frontend Developer',
       company: 'WebCorp',
       location: 'Lyon',
+      type: 'CDI',
+      postedAt: toISODateString('2024-03-19T00:00:00.000Z'),
+      experience: 'senior',
       description: 'Description du poste',
       url: 'https://example.com/job2',
       source: 'indeed' as JobSource,
-      publishedAt: toISODateString('2024-03-19T00:00:00.000Z'),
       jobType: 'full-time' as JobType,
       experienceLevel: 'senior' as ExperienceLevel,
-      matchingScore: 0.85,
-      commuteTimes: {
-        primaryHome: {
-          duration: 45,
-          distance: 8,
-          mode: 'transit' as CommuteMode
-        }
-      },
       salary: {
-        min: 55000,
-        max: 70000,
-        currency: 'EUR' as Currency,
-        period: 'year' as SalaryPeriod
+        min: 50000,
+        max: 65000,
+        currency: 'EUR',
+        period: 'year'
       },
-      skills: ['Vue.js', 'JavaScript', 'CSS']
+      matchingScore: 0.85,
+      skills: ['React', 'TypeScript', 'CSS'],
+      commuteTimes: [
+        {
+          mode: 'driving',
+          duration: 45,
+          distance: 8
+        }
+      ],
+      remote: false,
+      contractType: 'CDI',
+      createdAt: '2024-03-19T00:00:00.000Z'
     }
   ];
 
@@ -130,7 +140,7 @@ describe('SearchResults', () => {
     );
     
     expect(screen.getByText('45 000 - 55 000 EUR/year')).toBeInTheDocument();
-    expect(screen.getByText('55 000 - 70 000 EUR/year')).toBeInTheDocument();
+    expect(screen.getByText('50 000 - 65 000 EUR/year')).toBeInTheDocument();
   });
 
   it('should show loading state', () => {

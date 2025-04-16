@@ -1,4 +1,99 @@
-# Planning du Projet d'Application de Recherche d'Emploi
+# Planning de l'Application de Recherche d'Emploi
+
+## Architecture Technique
+
+### Frontend (React + TypeScript + Tauri)
+- **Framework**: React avec TypeScript
+- **UI Components**: Mantine UI
+- **State Management**: React Context + Hooks
+- **Desktop Integration**: Tauri v1.5.6
+- **Base de données**: SQLite via rusqlite
+
+### Backend (Python)
+- **Framework**: FastAPI
+- **ORM**: SQLModel
+- **Validation**: Pydantic
+- **Base de données**: SQLite
+
+## Structure des Dossiers
+
+```
+MyJobApplicationApp/
+├── app-tauri/                 # Application Tauri
+│   ├── src/                  # Code source React
+│   │   ├── components/       # Composants React
+│   │   ├── contexts/         # Contextes React
+│   │   ├── hooks/           # Hooks personnalisés
+│   │   └── pages/           # Pages de l'application
+│   └── src-tauri/           # Code Rust
+│       ├── src/             # Code source Rust
+│       │   ├── commands/    # Commandes Tauri
+│       │   ├── models/      # Modèles de données
+│       │   └── db.rs        # Gestion de la base de données
+│       └── migrations/      # Migrations SQLite
+├── backend/                  # Backend Python
+│   ├── app/                 # Code source Python
+│   │   ├── api/            # Points d'API
+│   │   ├── core/           # Logique métier
+│   │   ├── models/         # Modèles de données
+│   │   └── services/       # Services
+│   └── tests/              # Tests Python
+└── docs/                    # Documentation
+```
+
+## Fonctionnalités Implémentées
+
+### Frontend
+- ✅ Interface utilisateur de base avec Mantine UI
+- ✅ Composant Modal pour les offres d'emploi
+- ✅ Gestion de l'authentification
+- ✅ Affichage des offres d'emploi
+- ✅ Système de sauvegarde des offres
+
+### Backend
+- ✅ Configuration de la base de données SQLite
+- ✅ Structure de base pour les commandes Tauri
+- ✅ Modèles de données de base
+
+## Prochaines Étapes
+
+### Frontend
+- [ ] Implémentation du tableau Kanban
+- [ ] Système de recherche avancée
+- [ ] Gestion des documents (CV, lettres de motivation)
+- [ ] Tableau de bord statistiques
+
+### Backend
+- [ ] API de recherche d'emploi
+- [ ] Système de gestion des documents
+- [ ] API de statistiques
+- [ ] Intégration avec les fournisseurs LLM
+
+## Conventions de Code
+
+### Frontend
+- Utiliser des composants fonctionnels avec Hooks
+- Suivre les conventions de nommage React
+- Utiliser TypeScript pour le typage strict
+- Documenter les composants avec JSDoc
+
+### Backend
+- Suivre PEP8
+- Utiliser des docstrings Google style
+- Implémenter des tests unitaires
+- Utiliser Pydantic pour la validation
+
+## Sécurité
+- Validation des entrées utilisateur
+- Gestion sécurisée des tokens
+- Protection CSRF
+- Chiffrement des données sensibles
+
+## Performance
+- Optimisation des requêtes SQL
+- Mise en cache des résultats
+- Chargement paresseux des composants
+- Optimisation des assets
 
 ## État Actuel du Projet
 

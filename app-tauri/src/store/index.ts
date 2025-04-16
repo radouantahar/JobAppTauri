@@ -30,15 +30,15 @@ interface StoreState {
   columns: KanbanColumn[];
   setColumns: (columns: KanbanColumn[]) => void;
   addColumn: (column: KanbanColumn) => void;
-  updateColumn: (id: number, updates: Partial<KanbanColumn>) => void;
-  deleteColumn: (id: number) => void;
+  updateColumn: (id: string, updates: Partial<KanbanColumn>) => void;
+  deleteColumn: (id: string) => void;
 
   // Search Preferences
   searchPreferences: SearchPreference[];
   setSearchPreferences: (preferences: SearchPreference[]) => void;
   addSearchPreference: (preference: SearchPreference) => void;
-  updateSearchPreference: (id: number, updates: Partial<SearchPreference>) => void;
-  deleteSearchPreference: (id: number) => void;
+  updateSearchPreference: (id: string, updates: Partial<SearchPreference>) => void;
+  deleteSearchPreference: (id: string) => void;
 
   // Applications
   applications: Application[];
@@ -63,14 +63,17 @@ interface StoreState {
   resetSearch: () => void;
 }
 
-const initialFilters: SearchFilters = {
+const defaultFilters: SearchFilters = {
+  keywords: '',
   location: '',
-  jobType: [],
-  experienceLevel: [],
-  salaryRange: {
-    min: 0,
-    max: 100000
-  }
+  salaryMin: null,
+  salaryMax: null,
+  contractTypes: [],
+  experienceLevels: [],
+  remote: undefined,
+  skills: [],
+  datePosted: null,
+  sortBy: 'relevance'
 };
 
 export const useAppStore = create<StoreState>()(
@@ -134,18 +137,18 @@ export const useAppStore = create<StoreState>()(
       addApplication: (application) => set((state) => ({
         applications: [...state.applications, application]
       })),
-      updateApplication: (id, updates) => set((state) => ({
+      updateApplication: (id: string, updates: Partial<Application>) => set((state) => ({
         applications: state.applications.map(app =>
-          app.id === id ? { ...app, ...updates } : app
+          typeof app.id === 'string' && app.id === id ? { ...app, ...updates } : app
         )
       })),
-      deleteApplication: (id) => set((state) => ({
-        applications: state.applications.filter(app => app.id !== id)
+      deleteApplication: (id: string) => set((state) => ({
+        applications: state.applications.filter(app => typeof app.id === 'string' && app.id !== id)
       })),
 
       // Search
       searchQuery: '',
-      filters: initialFilters,
+      filters: defaultFilters,
       isLoading: false,
       error: null,
 
@@ -158,7 +161,7 @@ export const useAppStore = create<StoreState>()(
       // Reset
       resetSearch: () => set({
         searchQuery: '',
-        filters: initialFilters,
+        filters: defaultFilters,
         error: null
       })
     }),

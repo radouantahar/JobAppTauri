@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Title, TextInput, Button, Stack, Group } from '@mantine/core';
+import { Container, Title, TextInput, Button, Stack, Group, Select, NumberInput } from '@mantine/core';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store';
 import { userService } from '../services/api';
 import { showNotification } from '@mantine/notifications';
-import type { UserProfile } from '../types';
+import type { UserProfile, ExperienceLevel } from '../types';
+
+const experienceLevels: { value: ExperienceLevel; label: string }[] = [
+  { value: 'junior', label: 'Junior' },
+  { value: 'mid', label: 'Confirmé' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'lead', label: 'Expert' },
+];
 
 export const Profile = () => {
   const { user } = useAuth();
@@ -16,10 +23,13 @@ export const Profile = () => {
     cv: '',
     preferredJobTypes: [],
     preferredLocations: [],
-    experienceLevel: '',
-    salaryExpectation: 0,
+    experienceLevel: undefined,
+    salaryExpectation: {
+      min: 0,
+      max: 0
+    },
     availability: '',
-    noticePeriod: 0
+    noticePeriod: ''
   });
 
   useEffect(() => {
@@ -83,10 +93,11 @@ export const Profile = () => {
             value={profile.cv || ''}
             onChange={(e) => setProfile({ ...profile, cv: e.target.value })}
           />
-          <TextInput
+          <Select
             label="Niveau d'expérience"
-            value={profile.experienceLevel || ''}
-            onChange={(e) => setProfile({ ...profile, experienceLevel: e.target.value })}
+            value={profile.experienceLevel}
+            onChange={(value) => setProfile({ ...profile, experienceLevel: value as ExperienceLevel })}
+            data={experienceLevels}
           />
           <TextInput
             label="Types de postes préférés"
@@ -98,12 +109,30 @@ export const Profile = () => {
             value={profile.preferredLocations?.join(', ') || ''}
             onChange={(e) => setProfile({ ...profile, preferredLocations: e.target.value.split(',').map(s => s.trim()) })}
           />
-          <TextInput
-            label="Prétentions salariales"
-            type="number"
-            value={profile.salaryExpectation || 0}
-            onChange={(e) => setProfile({ ...profile, salaryExpectation: Number(e.target.value) })}
-          />
+          <Group grow>
+            <NumberInput
+              label="Salaire minimum"
+              value={profile.salaryExpectation?.min || 0}
+              onChange={(value) => setProfile({
+                ...profile,
+                salaryExpectation: {
+                  min: typeof value === 'number' ? value : 0,
+                  max: profile.salaryExpectation?.max || 0
+                }
+              })}
+            />
+            <NumberInput
+              label="Salaire maximum"
+              value={profile.salaryExpectation?.max || 0}
+              onChange={(value) => setProfile({
+                ...profile,
+                salaryExpectation: {
+                  min: profile.salaryExpectation?.min || 0,
+                  max: typeof value === 'number' ? value : 0
+                }
+              })}
+            />
+          </Group>
           <TextInput
             label="Disponibilité"
             value={profile.availability || ''}
@@ -111,9 +140,8 @@ export const Profile = () => {
           />
           <TextInput
             label="Préavis"
-            type="number"
-            value={profile.noticePeriod || 0}
-            onChange={(e) => setProfile({ ...profile, noticePeriod: Number(e.target.value) })}
+            value={profile.noticePeriod || ''}
+            onChange={(e) => setProfile({ ...profile, noticePeriod: e.target.value })}
           />
           <Group justify="flex-end">
             <Button type="submit">Enregistrer</Button>

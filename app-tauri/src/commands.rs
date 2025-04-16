@@ -31,6 +31,7 @@ pub async fn search_jobs(criteria: SearchCriteria) -> Result<JobSearchResult, St
         r#"
 from modules.job_scraper import JobScraper
 import json
+from datetime import datetime
 
 scraper = JobScraper('jobs.db')
 results = scraper.search_jobs(
@@ -38,6 +39,10 @@ results = scraper.search_jobs(
     location='{location}',
     job_type={job_type},
     is_remote={is_remote},
+    skills={skills},
+    date_posted={date_posted},
+    sort_by='{sort_by}',
+    page={page},
     hours_old=72
 )
 
@@ -51,7 +56,11 @@ print(json.dumps({{
         'url': job.url,
         'date_posted': job.date_posted.isoformat() if job.date_posted else '',
         'salary': f"{job.salary_min}-{job.salary_max} {job.salary_currency}" if job.salary_min else None,
-        'matching_score': job.matching_score
+        'matching_score': job.matching_score,
+        'skills': job.skills,
+        'job_type': job.job_type,
+        'experience_level': job.experience_level,
+        'remote': job.is_remote
     }} for job in results['jobs']],
     'stats': {{
         'total': results['stats']['total'],
@@ -62,8 +71,12 @@ print(json.dumps({{
 "#,
         keywords = criteria.keywords,
         location = criteria.location,
-        job_type = criteria.job_type.unwrap_or_default(),
-        is_remote = criteria.remote_only
+        job_type = criteria.contract_types.unwrap_or_default(),
+        is_remote = criteria.remote.unwrap_or(false),
+        skills = criteria.skills.unwrap_or_default(),
+        date_posted = criteria.date_posted.map(|d| d.to_string()).unwrap_or_default(),
+        sort_by = criteria.sort_by.unwrap_or("relevance".to_string()),
+        page = criteria.page.unwrap_or(1)
     );
 
     let output = AsyncCommand::new("python3")

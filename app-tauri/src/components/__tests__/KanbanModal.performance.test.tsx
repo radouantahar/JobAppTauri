@@ -1,6 +1,6 @@
 import { render, act } from '@testing-library/react';
 import { KanbanModal } from '../KanbanModal';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { useKanban } from '../../hooks/useKanban';
 import type { KanbanCard } from '../../types';
 
@@ -30,6 +30,7 @@ describe('KanbanModal Performance Tests', () => {
     updatedAt: new Date().toISOString(),
     interviews: [
       {
+        id: '1',
         date: new Date().toISOString(),
         type: 'phone',
         notes: 'Notes sur l\'entretien'
@@ -161,6 +162,7 @@ describe('KanbanModal Performance Tests', () => {
       description: 'Description très longue '.repeat(100),
       notes: 'Notes très longues '.repeat(200),
       interviews: Array(50).fill(null).map((_, index) => ({
+        id: `interview-${index}`,
         date: new Date(Date.now() + index * 86400000).toISOString(),
         type: ['phone', 'technical', 'onsite'][index % 3],
         notes: `Notes détaillées sur l'entretien ${index + 1} `.repeat(20)

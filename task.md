@@ -1,4 +1,97 @@
-# MyJobApplicationApp - Plan de Développement
+# Tâches du Projet
+
+## Tâches Complétées
+
+### Configuration Initiale
+- [x] Mise en place de l'environnement de développement (2024-04-14)
+- [x] Configuration de Tauri avec React et TypeScript (2024-04-14)
+- [x] Configuration de la base de données SQLite (2024-04-14)
+- [x] Mise en place de la structure de base du projet (2024-04-14)
+
+### Frontend
+- [x] Configuration de Mantine UI (2024-04-14)
+- [x] Création du composant JobModal (2024-04-14)
+- [x] Mise en place du système d'authentification (2024-04-14)
+- [x] Configuration du contexte d'authentification (2024-04-14)
+- [x] Amélioration du composant JobModal (2024-04-14)
+  - [x] Ajout de la gestion des états d'action
+  - [x] Amélioration des retours visuels
+  - [x] Ajout de l'accessibilité
+  - [x] Gestion des erreurs détaillée
+  - [x] Indicateurs de chargement améliorés
+- [x] Système de recherche avancée (2024-04-14)
+  - [x] Création du composant SearchFilters
+  - [x] Création du composant JobSearchResults
+  - [x] Implémentation du hook useJobSearch
+  - [x] Création de la page SearchPage
+  - [x] Intégration avec l'API Tauri
+- [x] Implémentation du tableau Kanban (2024-04-16)
+  - [x] Création des colonnes
+  - [x] Gestion du drag & drop
+  - [x] Sauvegarde de l'état
+  - [x] Intégration avec la base de données
+  - [x] Gestion des erreurs
+  - [x] Indicateurs de chargement
+  - [x] Tests unitaires
+    - [x] Tests du composant KanbanBoard
+    - [x] Tests du hook useKanbanBoard
+    - [x] Tests d'intégration
+
+### Backend
+- [x] Configuration de la base de données SQLite (2024-04-14)
+- [x] Création des modèles de données de base (2024-04-14)
+- [x] Mise en place des commandes Tauri de base (2024-04-14)
+- [x] API de gestion du Kanban (2024-04-16)
+  - [x] Commandes pour la gestion des cartes
+  - [x] Commandes pour le déplacement des cartes
+  - [x] Synchronisation avec la base de données
+  - [x] Tests des commandes Tauri
+
+## Tâches en Cours
+
+### Frontend
+- [ ] Système de recherche avancée
+  - [ ] Interface de filtres
+  - [ ] Gestion des critères de recherche
+  - [ ] Affichage des résultats
+
+### Backend
+- [ ] API de recherche d'emploi
+  - [ ] Intégration avec les APIs externes
+  - [ ] Filtrage des résultats
+  - [ ] Mise en cache des requêtes
+
+## Tâches à Venir
+
+### Frontend
+- [ ] Gestion des documents
+  - [ ] Upload de CV
+  - [ ] Gestion des lettres de motivation
+  - [ ] Templates de documents
+- [ ] Tableau de bord statistiques
+  - [ ] Graphiques d'évolution
+  - [ ] Statistiques de candidatures
+  - [ ] Suivi des offres
+
+### Backend
+- [ ] Système de gestion des documents
+  - [ ] Stockage sécurisé
+  - [ ] Génération de documents
+  - [ ] Gestion des versions
+- [ ] API de statistiques
+  - [ ] Calcul des métriques
+  - [ ] Génération de rapports
+  - [ ] Export des données
+
+## Découvertes Pendant le Travail
+- [ ] Mise à jour des dépendances obsolètes
+  - [ ] buf_redux
+  - [ ] multipart
+  - [ ] typemap
+- [ ] Optimisation des performances
+  - [ ] Mise en cache des requêtes
+  - [ ] Chargement paresseux
+  - [ ] Optimisation des assets
 
 ## Tâches Complétées ✅
 

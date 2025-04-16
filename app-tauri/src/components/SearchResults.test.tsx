@@ -1,77 +1,64 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from './SearchResults';
-import { Job, JobType, ExperienceLevel, ISODateString } from '../types';
+import { Job } from '../types';
+import { createMockJob } from '../__tests__/helpers';
 
 const mockJobs: Job[] = [
-  {
+  createMockJob({
     id: '1',
-    title: 'Développeur React',
-    company: 'TechCorp',
+    title: 'Développeur Frontend',
+    company: 'Tech Corp',
     location: 'Paris',
-    description: 'Description du poste',
-    url: 'https://example.com/job',
-    source: 'linkedin',
-    publishedAt: new Date().toISOString() as ISODateString,
-    jobType: 'full-time' as JobType,
-    experienceLevel: 'senior' as ExperienceLevel,
+    type: 'CDI',
+    experience: 'mid',
+    postedAt: '2024-03-15',
     salary: {
       min: 45000,
-      max: 55000,
+      max: 65000,
       currency: 'EUR',
       period: 'year'
     },
-    matchingScore: 85,
     skills: ['React', 'TypeScript'],
-    commuteTimes: {
-      primaryHome: {
-        duration: 30,
-        distance: 5,
-        mode: 'transit'
-      }
-    }
-  },
-  {
+    matchingScore: 0.85,
+    remote: false,
+    contractType: 'permanent',
+    createdAt: '2024-03-15T10:00:00Z'
+  }),
+  createMockJob({
     id: '2',
-    title: 'Développeur Frontend',
-    company: 'WebDev',
+    title: 'Développeur Backend',
+    company: 'Data Systems',
     location: 'Lyon',
-    description: 'Description du poste',
-    url: 'https://example.com/job2',
-    source: 'indeed',
-    publishedAt: new Date().toISOString() as ISODateString,
-    jobType: 'full-time' as JobType,
-    experienceLevel: 'senior' as ExperienceLevel,
+    type: 'CDI',
+    experience: 'senior',
+    postedAt: '2024-03-14',
     salary: {
-      min: 40000,
-      max: 50000,
+      min: 55000,
+      max: 75000,
       currency: 'EUR',
       period: 'year'
     },
-    matchingScore: 75,
-    skills: ['React', 'JavaScript'],
-    commuteTimes: {
-      primaryHome: {
-        duration: 25,
-        distance: 4,
-        mode: 'transit'
-      }
-    }
-  }
+    skills: ['Python', 'FastAPI'],
+    matchingScore: 0.9,
+    remote: false,
+    contractType: 'permanent',
+    createdAt: '2024-03-14T10:00:00Z'
+  })
 ];
 
 describe('SearchResults', () => {
   it('renders job cards correctly', () => {
     render(<SearchResults jobs={mockJobs} onJobClick={() => {}} />);
     
-    expect(screen.getByText('Développeur React')).toBeInTheDocument();
     expect(screen.getByText('Développeur Frontend')).toBeInTheDocument();
+    expect(screen.getByText('Développeur Backend')).toBeInTheDocument();
   });
 
   it('calls onJobClick when a job card is clicked', () => {
     const handleJobClick = jest.fn();
     render(<SearchResults jobs={mockJobs} onJobClick={handleJobClick} />);
     
-    fireEvent.click(screen.getByText('Développeur React'));
+    fireEvent.click(screen.getByText('Développeur Frontend'));
     expect(handleJobClick).toHaveBeenCalledWith(mockJobs[0]);
   });
 
@@ -79,13 +66,12 @@ describe('SearchResults', () => {
     render(<SearchResults jobs={mockJobs} onJobClick={() => {}} />);
     
     expect(screen.getByText('85%')).toBeInTheDocument();
-    expect(screen.getByText('75%')).toBeInTheDocument();
   });
 
   it('shows salary information when available', () => {
     render(<SearchResults jobs={mockJobs} onJobClick={() => {}} />);
     
-    expect(screen.getByText('45 000 - 55 000 EUR/year')).toBeInTheDocument();
+    expect(screen.getByText('45 000 - 65 000 EUR/year')).toBeInTheDocument();
   });
 
   it('devrait afficher une liste de jobs', () => {

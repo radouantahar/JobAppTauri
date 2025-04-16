@@ -6,6 +6,7 @@
 export type ISODateString = string & { readonly __brand: 'ISODateString' };
 export type JobID = string;
 export type UserID = string;
+// CommuteTime is defined as an interface below
 
 // ==================== Enums and Literals ====================
 export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'other';
@@ -80,6 +81,9 @@ export interface Job {
   matchingScore: number;
   skills: string[];
   commuteTimes: Record<string, CommuteTime>;
+  remote: boolean;
+  contractType: string;
+  createdAt: string;
 }
 
 /** Application tracking information */
@@ -328,14 +332,15 @@ export interface CommuteTime {
   mode: CommuteMode;
 }
 
+/** Search filters */
 export interface SearchFilters {
+  keywords: string;
   location: string;
-  jobType: JobType[];
-  experienceLevel: ExperienceLevel[];
-  salaryRange: {
-    min: number;
-    max: number;
-  };
+  salaryMin: number | null;
+  salaryMax: number | null;
+  contractTypes: string[];
+  experienceLevels: string[];
+  remote: boolean | null;
 }
 
 /** Search error information */

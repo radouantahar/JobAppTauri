@@ -62,13 +62,108 @@ pub fn get_migrations() -> Vec<Migration> {
         },
         Migration {
             version: 4,
-            description: "Ajout de l'index sur le score de correspondance des jobs",
+            description: "Ajout des tables pour le suivi des candidatures",
             up: "
-                CREATE INDEX IF NOT EXISTS idx_jobs_matching_score ON jobs(matching_score);
+                -- Table des candidatures
+                CREATE TABLE IF NOT EXISTS applications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    job_id INTEGER NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    applied_at TIMESTAMP,
+                    response_received BOOLEAN DEFAULT FALSE,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id),
+                    FOREIGN KEY (job_id) REFERENCES jobs(id)
+                );
+
+                -- Table des étapes de candidature
+                CREATE TABLE IF NOT EXISTS application_stages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    application_id INTEGER NOT NULL,
+                    stage_type TEXT NOT NULL,
+                    scheduled_at TIMESTAMP,
+                    completed_at TIMESTAMP,
+                    notes TEXT,
+                    outcome TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (application_id) REFERENCES applications(id)
+                );
+
+                -- Table des documents de candidature
+                CREATE TABLE IF NOT EXISTS application_documents (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    application_id INTEGER NOT NULL,
+                    document_type TEXT NOT NULL,
+                    file_path TEXT,
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (application_id) REFERENCES applications(id)
+                );
+
+                -- Table des notes de candidature
+                CREATE TABLE IF NOT EXISTS application_notes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    application_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (application_id) REFERENCES applications(id)
+                );
+
+                -- Création des index
+                CREATE INDEX IF NOT EXISTS idx_applications_status ON applications(status);
+                CREATE INDEX IF NOT EXISTS idx_applications_user_job ON applications(user_id, job_id);
+                CREATE INDEX IF NOT EXISTS idx_application_stages_type ON application_stages(stage_type);
+                CREATE INDEX IF NOT EXISTS idx_application_documents_type ON application_documents(document_type);
+
+                -- Trigger pour la mise à jour automatique des timestamps
+                CREATE TRIGGER IF NOT EXISTS update_applications_timestamp
+                AFTER UPDATE ON applications
+                BEGIN
+                    UPDATE applications SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS update_application_stages_timestamp
+                AFTER UPDATE ON application_stages
+                BEGIN
+                    UPDATE application_stages SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS update_application_documents_timestamp
+                AFTER UPDATE ON application_documents
+                BEGIN
+                    UPDATE application_documents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS update_application_notes_timestamp
+                AFTER UPDATE ON application_notes
+                BEGIN
+                    UPDATE application_notes SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+                END;
+
                 INSERT INTO schema_version (version) VALUES (4);
             ",
             down: "
-                DROP INDEX IF EXISTS idx_jobs_matching_score;
+                DROP TRIGGER IF EXISTS update_applications_timestamp;
+                DROP TRIGGER IF EXISTS update_application_stages_timestamp;
+                DROP TRIGGER IF EXISTS update_application_documents_timestamp;
+                DROP TRIGGER IF EXISTS update_application_notes_timestamp;
+                
+                DROP INDEX IF EXISTS idx_applications_status;
+                DROP INDEX IF EXISTS idx_applications_user_job;
+                DROP INDEX IF EXISTS idx_application_stages_type;
+                DROP INDEX IF EXISTS idx_application_documents_type;
+                
+                DROP TABLE IF EXISTS application_notes;
+                DROP TABLE IF EXISTS application_documents;
+                DROP TABLE IF EXISTS application_stages;
+                DROP TABLE IF EXISTS applications;
+                
                 DELETE FROM schema_version WHERE version = 4;
             ",
         },

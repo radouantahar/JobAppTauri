@@ -1,107 +1,124 @@
 import { render, screen } from '@testing-library/react';
-import { SearchResults } from '../search/SearchResults';
-import type { Job } from '../../types';
-import { ISODateString } from '../../types';
+import { JobSearchResults } from '../JobSearchResults';
+import type { Job, JobType, CommuteTime, CommuteMode } from '../../types';
 
-const mockJob1: Job = {
+const mockJob: Job = {
   id: '1',
-  title: 'Développeur React',
-  company: 'TechCorp',
+  title: 'Test Job',
+  company: 'Test Company',
   location: 'Paris',
-  description: 'Description du poste',
-  url: 'https://example.com/job',
-  source: 'linkedin',
-  publishedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
-  jobType: 'full-time',
-  experienceLevel: 'mid',
+  type: 'CDI',
+  postedAt: new Date().toISOString(),
+  experience: 'mid',
+  salary: {
+    min: 40000,
+    max: 60000
+  },
+  description: 'Test description',
+  url: 'https://example.com',
+  remote: false,
   skills: ['React', 'TypeScript'],
-  salary: {
-    min: 45000,
-    max: 55000,
-    currency: 'EUR',
-    period: 'year'
-  },
-  matchingScore: 0.85,
-  commuteTimes: {
-    primaryHome: {
-      duration: 30,
-      distance: 5,
-      mode: 'transit'
-    }
-  }
+  jobType: 'CDI' as JobType,
+  experienceLevel: 'mid',
+  commuteTimes: [{
+    mode: 'driving' as CommuteMode,
+    duration: 30,
+    distance: 10
+  }] as CommuteTime[],
+  source: 'linkedin'
 };
 
-const mockJob2: Job = {
-  id: '2',
-  title: 'Développeur Full Stack',
-  company: 'DevCorp',
-  location: 'Lyon',
-  description: 'Description du poste',
-  url: 'https://example.com/job2',
-  source: 'linkedin',
-  publishedAt: '2024-03-19T00:00:00.000Z' as ISODateString,
-  jobType: 'full-time',
-  experienceLevel: 'senior',
-  skills: ['React', 'Node.js', 'TypeScript'],
-  salary: {
-    min: 55000,
-    max: 65000,
-    currency: 'EUR',
-    period: 'year'
-  },
-  matchingScore: 0.75,
-  commuteTimes: {
-    primaryHome: {
+const mockJobs: Job[] = [
+  {
+    ...mockJob,
+    id: '2',
+    title: 'Another Job',
+    jobType: 'CDI' as JobType,
+    commuteTimes: [{
+      mode: 'driving' as CommuteMode,
       duration: 45,
-      distance: 8,
-      mode: 'transit'
-    }
+      distance: 15
+    }] as CommuteTime[]
   }
-};
+];
 
-describe('SearchResults', () => {
-  const loadMoreRef = () => {};
+describe('JobSearchResults', () => {
+  const mockOnSaveJob = jest.fn();
+  const mockOnPageChange = jest.fn();
 
-  it('devrait afficher les cartes d\'offres', () => {
+  it('should render loading state', () => {
     render(
-      <SearchResults
-        jobs={[mockJob1, mockJob2]}
-        isLoading={false}
-        hasMore={false}
-        onJobClick={() => {}}
-        loadMoreRef={loadMoreRef}
-      />
-    );
-
-    expect(screen.getByText('Développeur React')).toBeInTheDocument();
-    expect(screen.getByText('Développeur Full Stack')).toBeInTheDocument();
-  });
-
-  it('devrait afficher l\'état de chargement', () => {
-    render(
-      <SearchResults
+      <JobSearchResults
         jobs={[]}
         isLoading={true}
-        hasMore={false}
-        onJobClick={() => {}}
-        loadMoreRef={loadMoreRef}
+        error={null}
+        onSaveJob={mockOnSaveJob}
+        currentPage={1}
+        totalPages={1}
+        onPageChange={mockOnPageChange}
       />
     );
-
     expect(screen.getByText('Chargement...')).toBeInTheDocument();
   });
 
-  it('devrait afficher l\'état vide', () => {
+  it('should render error state', () => {
     render(
-      <SearchResults
+      <JobSearchResults
         jobs={[]}
         isLoading={false}
-        hasMore={false}
-        onJobClick={() => {}}
-        loadMoreRef={loadMoreRef}
+        error="Une erreur est survenue"
+        onSaveJob={mockOnSaveJob}
+        currentPage={1}
+        totalPages={1}
+        onPageChange={mockOnPageChange}
       />
     );
+    expect(screen.getByText('Erreur: Une erreur est survenue')).toBeInTheDocument();
+  });
 
-    expect(screen.getByText('Aucune offre trouvée')).toBeInTheDocument();
+  it('should render empty state', () => {
+    render(
+      <JobSearchResults
+        jobs={[]}
+        isLoading={false}
+        error={null}
+        onSaveJob={mockOnSaveJob}
+        currentPage={1}
+        totalPages={1}
+        onPageChange={mockOnPageChange}
+      />
+    );
+    expect(screen.getByText('Aucun résultat trouvé')).toBeInTheDocument();
+  });
+
+  it('should render jobs', () => {
+    render(
+      <JobSearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        error={null}
+        onSaveJob={mockOnSaveJob}
+        currentPage={1}
+        totalPages={1}
+        onPageChange={mockOnPageChange}
+      />
+    );
+    expect(screen.getByText('Test Job')).toBeInTheDocument();
+    expect(screen.getByText('Another Job')).toBeInTheDocument();
+  });
+
+  it('should render pagination', () => {
+    render(
+      <JobSearchResults
+        jobs={mockJobs}
+        isLoading={false}
+        error={null}
+        onSaveJob={mockOnSaveJob}
+        currentPage={2}
+        totalPages={5}
+        onPageChange={mockOnPageChange}
+      />
+    );
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
 }); 

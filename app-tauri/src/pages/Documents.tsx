@@ -8,7 +8,7 @@ import { DOCUMENT_TYPES, type DocumentType, type DocumentTemplate } from '../typ
 
 export const Documents: React.FC = () => {
   const { isLoading: loading, setLoading } = useAppStore();
-  const [activeTab, setActiveTab] = useState<DocumentType>('cv');
+  const [activeTab, setActiveTab] = useState<DocumentType>('CV');
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState('');
@@ -70,12 +70,12 @@ export const Documents: React.FC = () => {
     <Container size="lg" py="xl">
       <Tabs value={activeTab} onChange={handleTabChange}>
         <Tabs.List>
-          <Tabs.Tab value="cv" leftSection={<IconFileText size="0.8rem" />}>CV</Tabs.Tab>
-          <Tabs.Tab value="cover_letter" leftSection={<IconFileDescription size="0.8rem" />}>Lettre de motivation</Tabs.Tab>
-          <Tabs.Tab value="portfolio" leftSection={<IconFileDescription size="0.8rem" />}>Portfolio</Tabs.Tab>
+          <Tabs.Tab value="CV" leftSection={<IconFileText size="0.8rem" />}>CV</Tabs.Tab>
+          <Tabs.Tab value="Lettre de motivation" leftSection={<IconFileDescription size="0.8rem" />}>Lettre de motivation</Tabs.Tab>
+          <Tabs.Tab value="Autre" leftSection={<IconFileDescription size="0.8rem" />}>Autre</Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="cv" pt="xl">
+        <Tabs.Panel value="CV" pt="xl">
           <DocumentTab
             templates={templates}
             selectedTemplate={selectedTemplate}
@@ -88,7 +88,7 @@ export const Documents: React.FC = () => {
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="cover_letter" pt="xl">
+        <Tabs.Panel value="Lettre de motivation" pt="xl">
           <DocumentTab
             templates={templates}
             selectedTemplate={selectedTemplate}
@@ -101,7 +101,7 @@ export const Documents: React.FC = () => {
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="portfolio" pt="xl">
+        <Tabs.Panel value="Autre" pt="xl">
           <DocumentTab
             templates={templates}
             selectedTemplate={selectedTemplate}

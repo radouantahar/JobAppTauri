@@ -7,12 +7,13 @@ import { useAppStore } from './store';
 import Navigation from './components/Navigation';
 import Dashboard from './pages/Dashboard';
 import { userService } from './services/api';
-import { SearchPage } from './pages/Search';
+import Search from './pages/Search';
 import Kanban from './pages/Kanban';
 import { Profile } from './pages/Profile';
 import { Documents } from './pages/Documents';
 import CommutePage from './pages/Commute';
 import { SettingsPage } from './pages/Settings';
+import { ApplicationList } from './components/applications/ApplicationList';
 
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
@@ -67,12 +68,13 @@ function App() {
             <AppShell.Main>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/search" element={<SearchPage />} />
+                <Route path="/search" element={<Search />} />
                 <Route path="/kanban" element={<Kanban />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/documents" element={<Documents />} />
                 <Route path="/commute" element={<CommutePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/applications" element={<ApplicationList />} />
                 <Route path="*" element={<Dashboard />} />
               </Routes>
             </AppShell.Main>
