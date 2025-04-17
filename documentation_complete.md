@@ -12,6 +12,8 @@ Cette application est conçue pour automatiser et optimiser le processus de rech
 - Analyse des temps de trajet
 - Détection des doublons
 - Suggestions IA personnalisées
+- Préchargement intelligent des données
+- Gestion des erreurs avec retry automatique
 
 ## Installation et Configuration
 
@@ -24,10 +26,34 @@ Cette application est conçue pour automatiser et optimiser le processus de rech
 
 ### Installation
 1. Cloner le dépôt
+```bash
+git clone https://github.com/radouantahar/JobAppTauri.git
+cd JobAppTauri
+```
+
 2. Installer les dépendances Python
+```bash
+python -m venv venv
+source venv/bin/activate  # ou `venv\Scripts\activate` sous Windows
+pip install -r requirements.txt
+```
+
 3. Installer les dépendances Node.js
+```bash
+cd app-tauri
+npm install
+```
+
 4. Configurer l'environnement Rust
+```bash
+rustup update
+cargo install tauri-cli
+```
+
 5. Lancer les services Docker
+```bash
+docker-compose up -d
+```
 
 ### Configuration Initiale
 1. Configurer les préférences utilisateur
@@ -42,12 +68,16 @@ Cette application est conçue pour automatiser et optimiser le processus de rech
 - Interface Kanban avec NocoDB
 - Gestion des profils
 - Paramètres de configuration
+- Système de préchargement intelligent
+- Gestion des erreurs avec retry
 
 ### Backend Python
 - Modules de scraping
 - Système de matching
 - Génération de documents
 - Analyse des données
+- Gestion des erreurs
+- Système de cache
 
 ### Stockage de Données
 - Base SQLite locale
@@ -62,18 +92,22 @@ Cette application est conçue pour automatiser et optimiser le processus de rech
 2. Lancer le scraping
 3. Analyser les résultats
 4. Gérer les candidatures
+5. Utiliser les filtres dynamiques
+6. Prévisualiser les temps de trajet
 
 ### Gestion des Candidatures
 1. Visualiser les offres dans le Kanban
 2. Déplacer les offres entre les colonnes
 3. Générer les documents
 4. Suivre les réponses
+5. Analyser les statistiques
 
 ### Analyse et Optimisation
 1. Consulter les suggestions IA
 2. Analyser les temps de trajet
 3. Optimiser les critères de recherche
 4. Suivre les statistiques
+5. Utiliser le système de préchargement
 
 ## Modules
 
@@ -82,24 +116,28 @@ Cette application est conçue pour automatiser et optimiser le processus de rech
 - Détection des doublons
 - Filtrage intelligent
 - Mise en cache
+- Gestion des erreurs avec retry
 
 ### Matching
 - Analyse sémantique
 - Scoring personnalisé
 - Suggestions IA
 - Feedback continu
+- Préchargement des données
 
 ### Génération de Documents
 - Templates personnalisables
 - Support multi-formats
 - Validation automatique
 - Historique des versions
+- Génération IA
 
 ### Analyse
 - Tracking des mouvements
 - Analyse des patterns
 - Suggestions d'amélioration
 - Métriques de performance
+- Analyse des temps de trajet
 
 ## Sécurité
 
@@ -305,3 +343,140 @@ const mockKanbanCards: KanbanCard[] = Array.from({ length: 30 }, ...);
 - Tests asynchrones avec `act()`
 - Mesures précises avec `performance.now()`
 - Vérification de la stabilité mémoire
+
+## Gestion de la Base de Données avec sqlx
+
+### Configuration
+1. Installation des dépendances :
+```bash
+cargo add sqlx --features runtime-tokio-rustls,sqlite,chrono,uuid
+cargo install sqlx-cli
+```
+
+2. Configuration de la base de données :
+```rust
+use sqlx::sqlite::SqlitePoolOptions;
+
+async fn init_db() -> Result<sqlx::Pool<sqlx::Sqlite>, sqlx::Error> {
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect("sqlite:app.db")
+        .await?;
+    
+    sqlx::migrate!().run(&pool).await?;
+    
+    Ok(pool)
+}
+```
+
+### Bonnes Pratiques
+1. **Gestion des Connexions** :
+   - Utiliser un pool de connexions
+   - Limiter le nombre de connexions simultanées
+   - Gérer proprement les erreurs de connexion
+
+2. **Transactions** :
+   - Utiliser les transactions pour les opérations multiples
+   - Gérer les rollbacks en cas d'erreur
+   - Isoler les opérations critiques
+
+3. **Requêtes** :
+   - Utiliser les macros sqlx pour la vérification au moment de la compilation
+   - Préparer les requêtes fréquentes
+   - Utiliser les paramètres nommés pour plus de clarté
+
+4. **Migrations** :
+   - Versionner les migrations
+   - Tester les migrations avant de les appliquer
+   - Sauvegarder la base de données avant les migrations
+
+### Exemples d'Utilisation
+```rust
+// Exemple de repository
+pub struct UserRepository {
+    pool: sqlx::Pool<sqlx::Sqlite>,
+}
+
+impl UserRepository {
+    pub fn new(pool: sqlx::Pool<sqlx::Sqlite>) -> Self {
+        Self { pool }
+    }
+
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, sqlx::Error> {
+        sqlx::query_as!(
+            User,
+            r#"
+            SELECT * FROM users
+            WHERE id = ?
+            "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    pub async fn create(&self, user: User) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO users (id, username, email, password_hash, created_at, preferences, settings)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            "#,
+            user.id,
+            user.username,
+            user.email,
+            user.password_hash,
+            user.created_at,
+            user.preferences,
+            user.settings
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+}
+```
+
+### Tests
+1. **Tests de Base de Données** :
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn setup_test_db() -> sqlx::Pool<sqlx::Sqlite> {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(":memory:")
+            .await
+            .unwrap();
+        
+        sqlx::migrate!().run(&pool).await.unwrap();
+        
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_create_user() {
+        let pool = setup_test_db().await;
+        let repo = UserRepository::new(pool);
+        
+        let user = User {
+            id: Uuid::new_v4(),
+            username: "test".to_string(),
+            email: "test@example.com".to_string(),
+            password_hash: "hash".to_string(),
+            created_at: Utc::now(),
+            last_login: None,
+            preferences: serde_json::json!({}),
+            settings: serde_json::json!({}),
+        };
+
+        repo.create(user.clone()).await.unwrap();
+        
+        let found = repo.find_by_id(user.id).await.unwrap().unwrap();
+        assert_eq!(found.username, user.username);
+    }
+}
+```

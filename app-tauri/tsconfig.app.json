@@ -14,7 +14,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "jsx": "react-jsx",
 
     /* Linting */
@@ -31,11 +33,12 @@
       "@/*": ["src/*"],
       "components/*": ["src/components/*"],
       "hooks/*": ["src/hooks/*"],
-      "contexts/*": ["src/contexts/*"]
+      "contexts/*": ["src/contexts/*"],
+      "pages/*": ["src/pages/*"]
     },
 
     /* Types */
-    "types": ["@tauri-apps/api", "vitest", "@testing-library/jest-dom"]
+    "types": ["@tauri-apps/api", "vitest", "@testing-library/jest-dom", "react", "react-dom", "react-router-dom"]
   },
   "include": ["src", "src/test/global.d.ts"]
 }

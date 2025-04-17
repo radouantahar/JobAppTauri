@@ -19,8 +19,8 @@ tauri-build = { version = "1.5.6", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.5.6", features = [] }
-rusqlite = { version = "0.29.0", features = ["bundled"] }
+tauri = { version = "1.5.6", features = ["shell-open"] }
+tauri-plugin-sql = { version = "0.1.0", features = ["sqlite"] }
 dotenv = "0.15"
 tokio = { version = "1.0", features = ["full"] }
 thiserror = "1.0"
@@ -48,6 +48,7 @@ bcrypt = "0.15"
 jsonwebtoken = "9.1"
 oauth2 = "4.3"
 jwt = "0.16"
+password-hash = "0.5"
 native-tls = { version = "0.2", features = ["vendored"] }
 rustls = { version = "0.21", features = ["dangerous_configuration"] }
 webpki = "0.22"
@@ -65,6 +66,31 @@ relative-path = "1.8"
 path-absolutize = "3.1"
 path-dedot = "3.1"
 path-slash = "0.2"
+sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid", "json", "migrate"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tracing-appender = "0.2"
+tracing-futures = "0.2"
+tracing-log = "0.2"
+tracing-error = "0.2"
+tracing-bunyan-formatter = "0.3"
+tracing-opentelemetry = "0.20"
+opentelemetry = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_jaeger = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_stdout = "0.20"
+opentelemetry_http = "0.8"
+opentelemetry_semantic_conventions = "0.12"
+opentelemetry_otlp = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_zipkin = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_datadog = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_contrib = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_stackdriver = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_prometheus = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_metrics = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_sdk = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_api = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_core = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry_util = { version = "0.20", features = ["rt-tokio"] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

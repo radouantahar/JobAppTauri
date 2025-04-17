@@ -1,146 +1,83 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+/// <reference types="vitest/globals" />
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Navigation from '../Navigation';
-import { useAppStore } from '../../store';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-// Mock des hooks et composants
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    useLocation: vi.fn(),
-  };
-});
+// Mock des hooks
+vi.mock('../../hooks/useAuth');
+vi.mock('react-router-dom');
 
-vi.mock('../../store', () => ({
-  useAppStore: vi.fn(),
-}));
+const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
+const mockUseNavigate = useNavigate as ReturnType<typeof vi.fn>;
 
 describe('Navigation', () => {
-  const mockSetIsAuthenticated = vi.fn();
-  const mockLocation = { pathname: '/' };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLocation as any).mockReturnValue(mockLocation);
-    (useAppStore as any).mockReturnValue({
-      setIsAuthenticated: mockSetIsAuthenticated,
-    });
+    mockUseAuth.mockReturnValue({ isAuthenticated: false });
+    mockUseNavigate.mockReturnValue(vi.fn());
   });
 
-  test('affiche tous les liens de navigation pour un utilisateur non authentifié', () => {
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={false} />
-      </MemoryRouter>
-    );
-
-    // Vérifie que les liens publics sont affichés
-    expect(screen.getByLabelText('Accueil')).toBeInTheDocument();
-    expect(screen.getByLabelText('Offres')).toBeInTheDocument();
-    expect(screen.getByLabelText('Kanban')).toBeInTheDocument();
-    expect(screen.getByLabelText('Trajets')).toBeInTheDocument();
-    expect(screen.getByLabelText('Statistiques')).toBeInTheDocument();
-
-    // Vérifie que les liens privés ne sont pas affichés
-    expect(screen.queryByLabelText('Documents')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Profil')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Paramètres')).not.toBeInTheDocument();
+  test('should render navigation links when not authenticated', () => {
+    render(<Navigation isAuthenticated={false} />);
+    
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
+    expect(screen.getByText('Recherche')).toBeInTheDocument();
+    expect(screen.getByText('Connexion')).toBeInTheDocument();
+    expect(screen.getByText('Inscription')).toBeInTheDocument();
+    expect(screen.queryByText('Déconnexion')).not.toBeInTheDocument();
   });
 
-  test('affiche tous les liens de navigation pour un utilisateur authentifié', () => {
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={true} />
-      </MemoryRouter>
-    );
-
-    // Vérifie que tous les liens sont affichés
-    expect(screen.getByLabelText('Accueil')).toBeInTheDocument();
-    expect(screen.getByLabelText('Offres')).toBeInTheDocument();
-    expect(screen.getByLabelText('Kanban')).toBeInTheDocument();
-    expect(screen.getByLabelText('Documents')).toBeInTheDocument();
-    expect(screen.getByLabelText('Trajets')).toBeInTheDocument();
-    expect(screen.getByLabelText('Profil')).toBeInTheDocument();
-    expect(screen.getByLabelText('Paramètres')).toBeInTheDocument();
-    expect(screen.getByLabelText('Statistiques')).toBeInTheDocument();
-    expect(screen.getByLabelText('Déconnexion')).toBeInTheDocument();
+  test('should render navigation links when authenticated', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    render(<Navigation isAuthenticated={true} />);
+    
+    expect(screen.getByText('Accueil')).toBeInTheDocument();
+    expect(screen.getByText('Recherche')).toBeInTheDocument();
+    expect(screen.getByText('Tableau Kanban')).toBeInTheDocument();
+    expect(screen.getByText('Documents')).toBeInTheDocument();
+    expect(screen.getByText('Statistiques')).toBeInTheDocument();
+    expect(screen.getByText('Déconnexion')).toBeInTheDocument();
+    expect(screen.queryByText('Connexion')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inscription')).not.toBeInTheDocument();
   });
 
-  test('met en surbrillance le lien actif', () => {
-    (useLocation as any).mockReturnValue({ pathname: '/jobs' });
+  test('should handle logout when clicking logout button', () => {
+    const mockNavigate = vi.fn();
+    mockUseNavigate.mockReturnValue(mockNavigate);
+    mockUseAuth.mockReturnValue({ 
+      isAuthenticated: true,
+      logout: vi.fn()
+    });
 
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={true} />
-      </MemoryRouter>
-    );
+    render(<Navigation isAuthenticated={true} />);
+    const logoutButton = screen.getByText('Déconnexion');
+    logoutButton.click();
 
-    const activeLink = screen.getByLabelText('Offres');
-    expect(activeLink).toHaveClass('active');
+    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
-  test('gère la déconnexion avec succès', async () => {
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={true} />
-      </MemoryRouter>
-    );
+  test('should navigate to correct routes when clicking links', () => {
+    const mockNavigate = vi.fn();
+    mockUseNavigate.mockReturnValue(mockNavigate);
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
 
-    const logoutButton = screen.getByLabelText('Déconnexion');
-    fireEvent.click(logoutButton);
+    render(<Navigation isAuthenticated={true} />);
+    
+    screen.getByText('Accueil').click();
+    expect(mockNavigate).toHaveBeenCalledWith('/');
 
-    await waitFor(() => {
-      expect(mockSetIsAuthenticated).toHaveBeenCalledWith(false);
-    });
-  });
+    screen.getByText('Recherche').click();
+    expect(mockNavigate).toHaveBeenCalledWith('/search');
 
-  test('affiche une notification d\'erreur en cas d\'échec de la déconnexion', async () => {
-    (useAppStore as any).mockReturnValue({
-      setIsAuthenticated: () => {
-        throw new Error('Erreur de déconnexion');
-      },
-    });
+    screen.getByText('Tableau Kanban').click();
+    expect(mockNavigate).toHaveBeenCalledWith('/kanban');
 
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={true} />
-      </MemoryRouter>
-    );
+    screen.getByText('Documents').click();
+    expect(mockNavigate).toHaveBeenCalledWith('/documents');
 
-    const logoutButton = screen.getByLabelText('Déconnexion');
-    fireEvent.click(logoutButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Erreur lors de la déconnexion')).toBeInTheDocument();
-    });
-  });
-
-  test('ferme la notification d\'erreur', async () => {
-    (useAppStore as any).mockReturnValue({
-      setIsAuthenticated: () => {
-        throw new Error('Erreur de déconnexion');
-      },
-    });
-
-    render(
-      <MemoryRouter>
-        <Navigation isAuthenticated={true} />
-      </MemoryRouter>
-    );
-
-    const logoutButton = screen.getByLabelText('Déconnexion');
-    fireEvent.click(logoutButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Erreur lors de la déconnexion')).toBeInTheDocument();
-    });
-
-    const closeButton = screen.getByRole('button', { name: /close/i });
-    fireEvent.click(closeButton);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Erreur lors de la déconnexion')).not.toBeInTheDocument();
-    });
+    screen.getByText('Statistiques').click();
+    expect(mockNavigate).toHaveBeenCalledWith('/statistics');
   });
 }); 

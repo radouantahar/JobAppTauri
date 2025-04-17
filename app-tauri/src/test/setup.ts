@@ -2,6 +2,14 @@ import '@testing-library/jest-dom';
 import { afterEach } from '@jest/globals';
 import { cleanup } from '@testing-library/react';
 
+declare global {
+  namespace Vi {
+    interface Assertion {
+      toBeInTheDocument(): void;
+    }
+  }
+}
+
 // Cleanup after each test case
 afterEach(() => {
   cleanup();
@@ -9,7 +17,7 @@ afterEach(() => {
 
 // Mock de window.performance
 const mockPerformance = {
-  now: vi.fn(() => Date.now()),
+  now: () => Date.now(),
   memory: {
     usedJSHeapSize: 0,
     totalJSHeapSize: 0,

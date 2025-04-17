@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { authService } from '../services/api';
 
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: { id: string; email: string } | null;
-  login: (email: string) => Promise<void>;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (email: string, name: string) => Promise<void>;
+  register: (email: string, name: string, password: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -16,13 +17,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { setLoading } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
-  const login = useCallback(async (email: string) => {
+  // Vérifier le token au chargement
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (token) {
+        try {
+          const user = await authService.verifyToken(token);
+          setIsAuthenticated(true);
+          setUser(user);
+        } catch (error) {
+          console.error('Token verification failed:', error);
+          localStorage.removeItem('token');
+          setToken(null);
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      }
+    };
+
+    verifyToken();
+  }, [token]);
+
+  const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
-      const user = await authService.login(email);
+      const { id, email: userEmail, token: newToken } = await authService.login(email, password);
       setIsAuthenticated(true);
-      setUser(user);
+      setUser({ id, email: userEmail });
+      setToken(newToken);
+      localStorage.setItem('token', newToken);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -34,23 +59,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = useCallback(async () => {
     setLoading(true);
     try {
-      await authService.logout();
+      if (token) {
+        await authService.logout(token);
+      }
       setIsAuthenticated(false);
       setUser(null);
+      setToken(null);
+      localStorage.removeItem('token');
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, token]);
 
-  const register = useCallback(async (email: string, name: string) => {
+  const register = useCallback(async (email: string, name: string, password: string) => {
     setLoading(true);
     try {
-      const user = await authService.register(email, name);
+      const { id, email: userEmail, token: newToken } = await authService.register(email, name, password);
       setIsAuthenticated(true);
-      setUser(user);
+      setUser({ id, email: userEmail });
+      setToken(newToken);
+      localStorage.setItem('token', newToken);
     } catch (error) {
       console.error('Register error:', error);
       throw error;
@@ -60,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [setLoading]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, register }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

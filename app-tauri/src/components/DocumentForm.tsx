@@ -1,87 +1,120 @@
-import React from 'react';
-import { TextInput, Textarea, Select, Button, Stack, LoadingOverlay, Alert } from '@mantine/core';
+import { useState } from 'react';
+import { Modal, TextInput, Textarea, Select, FileInput, Button, Group, Stack } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { DocumentType } from '../types';
-
-interface FormValues {
-  title: string;
-  content: string;
-  type: DocumentType;
-}
+import { Document, DocumentType, DOCUMENT_TYPES } from '../types';
 
 interface DocumentFormProps {
-  initialData?: FormValues;
-  isLoading?: boolean;
-  error?: string | null;
-  onSubmit?: (values: FormValues) => void;
+  opened: boolean;
+  onClose: () => void;
+  onSubmit: (document: Omit<Document, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
+  initialValues?: Partial<Document>;
 }
 
-export const DocumentForm: React.FC<DocumentFormProps> = ({
-  initialData,
-  isLoading = false,
-  error = null,
-  onSubmit,
-}) => {
-  const form = useForm<FormValues>({
+const documentTypes: { value: DocumentType; label: string }[] = [
+  { value: 'cv', label: 'CV' },
+  { value: 'cover-letter', label: 'Lettre de motivation' },
+  { value: 'portfolio', label: 'Portfolio' },
+  { value: 'other', label: 'Autre' },
+];
+
+export function DocumentForm({ opened, onClose, onSubmit, initialValues }: DocumentFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [fileSize, setFileSize] = useState(0);
+
+  const form = useForm<Omit<Document, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>({
     initialValues: {
-      title: initialData?.title || '',
-      content: initialData?.content || '',
-      type: initialData?.type || 'cv',
+      name: initialValues?.name || '',
+      type: initialValues?.type || 'cv',
+      description: initialValues?.description || '',
+      content: initialValues?.content || '',
+      size: initialValues?.size || 0,
+      url: initialValues?.url || '',
+      filePath: initialValues?.filePath || '',
     },
     validate: {
-      title: (value) => (value.length < 1 ? 'Le titre est requis' : null),
-      content: (value) => (value.length < 1 ? 'Le contenu est requis' : null),
+      name: (value: string) => (!value ? 'Le nom est requis' : null),
+      type: (value: DocumentType) => (!DOCUMENT_TYPES.includes(value) ? 'Type de document invalide' : null),
+      size: (value: number) => (value === 0 ? 'Le fichier est requis' : null),
     },
   });
 
-  const handleSubmit = (values: FormValues) => {
-    if (onSubmit) {
-      onSubmit(values);
+  const handleSubmit = async (values: typeof form.values) => {
+    setIsLoading(true);
+    try {
+      await onSubmit({
+        name: values.name,
+        type: values.type,
+        description: values.description,
+        content: values.content,
+        size: values.size,
+        url: values.url,
+        filePath: values.filePath,
+      });
+      form.reset();
+      onClose();
+    } catch (error) {
+      console.error('Erreur lors de la soumission du document:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Stack gap="md" pos="relative">
-        <LoadingOverlay visible={isLoading} />
-        
-        {error && (
-          <Alert color="red" title="Erreur">
-            {error}
-          </Alert>
-        )}
+    <Modal opened={opened} onClose={onClose} title="Ajouter un document" size="md">
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          <TextInput
+            label="Nom"
+            placeholder="Nom du document"
+            required
+            {...form.getInputProps('name')}
+          />
 
-        <TextInput
-          required
-          label="Titre"
-          placeholder="Entrez le titre du document"
-          {...form.getInputProps('title')}
-        />
+          <Select
+            label="Type de document"
+            placeholder="Sélectionnez un type"
+            data={documentTypes}
+            required
+            {...form.getInputProps('type')}
+          />
 
-        <Textarea
-          required
-          label="Contenu"
-          placeholder="Entrez le contenu du document"
-          minRows={4}
-          {...form.getInputProps('content')}
-        />
+          <Textarea
+            label="Description"
+            placeholder="Description du document"
+            {...form.getInputProps('description')}
+          />
 
-        <Select
-          label="Type de document"
-          placeholder="Sélectionnez le type de document"
-          data={[
-            { value: 'cv', label: 'CV' },
-            { value: 'cover-letter', label: 'Lettre de motivation' },
-            { value: 'portfolio', label: 'Portfolio' },
-            { value: 'other', label: 'Autre' },
-          ]}
-          {...form.getInputProps('type')}
-        />
+          <FileInput
+            label="Fichier"
+            placeholder="Sélectionnez un fichier"
+            accept=".pdf,.doc,.docx"
+            required
+            onChange={(file) => {
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const content = e.target?.result as string;
+                  form.setFieldValue('content', content);
+                  form.setFieldValue('url', URL.createObjectURL(file));
+                  form.setFieldValue('filePath', file.name);
+                  form.setFieldValue('size', file.size);
+                  setFileSize(file.size);
+                };
+                reader.readAsText(file);
+              }
+            }}
+          />
 
-        <Button type="submit" disabled={isLoading}>
-          Enregistrer
-        </Button>
-      </Stack>
-    </form>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button type="submit" loading={isLoading}>
+              Enregistrer
+            </Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
   );
-}; 
+} 

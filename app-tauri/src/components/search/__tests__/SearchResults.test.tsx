@@ -1,10 +1,8 @@
 /// <reference types="vitest" />
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from '../SearchResults';
-import type { Job, JobType, JobSource, ExperienceLevel, ISODateString } from '../../../types';
-
-// Fonction utilitaire pour convertir une chaîne en ISODateString
-const toISODateString = (date: string): ISODateString => date as ISODateString;
+import type { Job, JobType, JobSource, ExperienceLevel } from '../../../types';
+import { createISODateString } from '../../../types';
 
 vi.mock('../../JobCard', () => ({
   JobCard: ({ job }: { job: Job }) => <div data-testid={`job-card-${job.id}`}>{job.title}</div>
@@ -17,12 +15,11 @@ describe('SearchResults', () => {
       title: 'Développeur React',
       company: 'TechCorp',
       location: 'Paris',
-      type: 'CDI',
-      postedAt: toISODateString('2024-03-20T00:00:00.000Z'),
-      experience: 'mid',
       description: 'Description du poste',
       url: 'https://example.com/job',
+      type: 'CDI',
       source: 'linkedin' as JobSource,
+      publishedAt: createISODateString('2024-03-20T00:00:00.000Z'),
       jobType: 'full-time' as JobType,
       experienceLevel: 'mid' as ExperienceLevel,
       salary: {
@@ -49,12 +46,11 @@ describe('SearchResults', () => {
       title: 'Frontend Developer',
       company: 'WebCorp',
       location: 'Lyon',
-      type: 'CDI',
-      postedAt: toISODateString('2024-03-19T00:00:00.000Z'),
-      experience: 'senior',
       description: 'Description du poste',
       url: 'https://example.com/job2',
+      type: 'CDI',
       source: 'indeed' as JobSource,
+      publishedAt: createISODateString('2024-03-19T00:00:00.000Z'),
       jobType: 'full-time' as JobType,
       experienceLevel: 'senior' as ExperienceLevel,
       salary: {
@@ -153,7 +149,7 @@ describe('SearchResults', () => {
         loadMoreRef={() => {}}
       />
     );
-    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('loading-overlay')).toBeInTheDocument();
   });
 
   it('should show empty state', () => {

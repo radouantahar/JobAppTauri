@@ -12,6 +12,10 @@ pub enum AppError {
     IO(String),
     Network(String),
     Configuration(String),
+    DatabaseError(String),
+    AuthenticationError(String),
+    ValidationError(String),
+    BackupError(String),
 }
 
 impl fmt::Display for AppError {
@@ -25,6 +29,10 @@ impl fmt::Display for AppError {
             AppError::IO(msg) => write!(f, "Erreur I/O : {}", msg),
             AppError::Network(msg) => write!(f, "Erreur réseau : {}", msg),
             AppError::Configuration(msg) => write!(f, "Erreur de configuration : {}", msg),
+            AppError::DatabaseError(msg) => write!(f, "Erreur de base de données: {}", msg),
+            AppError::AuthenticationError(msg) => write!(f, "Erreur d'authentification: {}", msg),
+            AppError::ValidationError(msg) => write!(f, "Erreur de validation: {}", msg),
+            AppError::BackupError(msg) => write!(f, "Erreur de backup: {}", msg),
         }
     }
 }
@@ -141,6 +149,22 @@ pub fn handle_error(error: AppError) -> String {
         AppError::Configuration(msg) => {
             log::error!("Erreur de configuration : {}", msg);
             "Une erreur est survenue dans la configuration de l'application".to_string()
+        },
+        AppError::DatabaseError(msg) => {
+            log::error!("Erreur de base de données: {}", msg);
+            "Une erreur est survenue lors de l'accès à la base de données".to_string()
+        },
+        AppError::AuthenticationError(msg) => {
+            log::warn!("Erreur d'authentification: {}", msg);
+            "Identifiants invalides".to_string()
+        },
+        AppError::ValidationError(msg) => {
+            log::warn!("Erreur de validation: {}", msg);
+            msg
+        },
+        AppError::BackupError(msg) => {
+            log::error!("Erreur de backup: {}", msg);
+            "Une erreur est survenue lors de la sauvegarde des données".to_string()
         },
     }
 } 

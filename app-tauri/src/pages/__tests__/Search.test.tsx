@@ -3,14 +3,15 @@ import Search from '../Search';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import type { Job, AppState, JobType, CommuteMode, SearchFilters } from '../../types';
+import type { Job, AppState, JobType } from '../../types';
+import { createISODateString } from '../../types';
 
 jest.mock('../../store');
 
 const mockAppState: AppState = {
   isAuthenticated: false,
-  userProfile: null,
-  searchFilters: {
+  user: null,
+  filters: {
     keywords: '',
     location: '',
     salaryMin: null,
@@ -22,8 +23,15 @@ const mockAppState: AppState = {
     datePosted: null,
     sortBy: 'relevance'
   },
-  applications: [],
-  kanbanColumns: []
+  loading: false,
+  error: null,
+  setUser: vi.fn(),
+  setLoading: vi.fn(),
+  setError: vi.fn(),
+  setFilters: vi.fn(),
+  searchQuery: '',
+  isLoading: false,
+  setSearchQuery: vi.fn()
 };
 
 // Mock des dépendances
@@ -182,13 +190,9 @@ describe('SearchPage', () => {
         company: 'Test Company',
         location: 'Remote',
         type: 'CDI',
-        postedAt: '2024-04-15T12:00:00Z',
-        experience: 'mid',
-        description: 'Test description',
-        url: 'https://example.com/job/1',
-        source: 'linkedin',
         jobType: 'CDI' as JobType,
         experienceLevel: 'mid',
+        publishedAt: createISODateString('2024-04-15T12:00:00Z'),
         salary: {
           min: 50000,
           max: 100000,
@@ -196,12 +200,14 @@ describe('SearchPage', () => {
           period: 'year'
         },
         skills: ['React', 'TypeScript'],
-        commuteTimes: [{
-          mode: 'transit' as CommuteMode,
-          duration: 30,
-          distance: 5
-        }],
-        remote: true
+        matchingScore: 0.85,
+        remote: false,
+        contractType: 'permanent',
+        createdAt: createISODateString('2024-04-15T12:00:00Z'),
+        description: 'Test description',
+        url: 'https://example.com/job/1',
+        source: 'linkedin',
+        commuteTimes: []
       }
     ];
 
@@ -237,4 +243,6 @@ describe('SearchPage', () => {
       expect(screen.getByText('Aucun résultat trouvé')).toBeInTheDocument();
     });
   });
-}); 
+});
+
+ 

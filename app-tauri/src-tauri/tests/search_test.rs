@@ -3,6 +3,57 @@ use crate::AppState;
 use rusqlite::Connection;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tauri_plugin_sql::TauriSql;
+use chrono::Utc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_search_jobs() {
+        let db = TauriSql::default();
+        let criteria = SearchCriteria {
+            keywords: vec!["developer".to_string()],
+            location: Some("Paris".to_string()),
+            radius: Some(50),
+            min_salary: Some(40000.0),
+            job_type: Some("CDI".to_string()),
+            experience_level: Some("Mid".to_string()),
+            remote_preference: Some("Hybrid".to_string()),
+            date_posted: Some("7d".to_string()),
+        };
+        let result = search_jobs(db, criteria).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_get_search_preferences() {
+        let db = TauriSql::default();
+        let result = get_search_preferences(db).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_update_search_preferences() {
+        let db = TauriSql::default();
+        let preferences = SearchPreference {
+            id: 1,
+            keywords: vec!["rust".to_string(), "python".to_string()],
+            location: Some("Lyon".to_string()),
+            radius: Some(30),
+            min_salary: Some(45000.0),
+            job_type: Some("CDI".to_string()),
+            experience_level: Some("Senior".to_string()),
+            remote_preference: Some("Remote".to_string()),
+            date_posted: Some("30d".to_string()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let result = update_search_preferences(db, preferences).await;
+        assert!(result.is_ok());
+    }
+}
 
 #[tokio::test]
 async fn test_search_jobs() {

@@ -1,53 +1,38 @@
 # MyJobApplicationApp
 
-Une application de gestion des candidatures d'emploi avec interface graphique moderne et fonctionnalités avancées.
+Une application de gestion de candidatures d'emploi développée avec Tauri, React et TypeScript.
 
 ## Fonctionnalités
 
-### Tableau Kanban
-- Gestion visuelle des candidatures avec un tableau Kanban
-- Colonnes personnalisables pour suivre l'état des candidatures
-- Drag & drop pour déplacer facilement les cartes entre les colonnes
-- Modal détaillée pour chaque candidature
-- Synchronisation automatique avec la base de données
-- Gestion des erreurs et indicateurs de chargement
-- Tests unitaires complets
+- **Authentification** : Inscription, connexion et gestion de session
+- **Gestion des profils** : Profil utilisateur, localisations et préférences
+- **Gestion des offres** : Création, modification et recherche d'offres d'emploi
+- **Gestion des candidatures** : Suivi des candidatures et des entretiens
+- **Gestion des documents** : Stockage et gestion des CV, lettres de motivation et autres documents
+- **Tableau Kanban** : Visualisation et organisation des candidatures
+- **Recherche avancée** : Filtres et critères de recherche personnalisables
 
-### Recherche d'Emploi
-- Interface de recherche avancée
-- Filtres personnalisables
-- Résultats en temps réel
-- Sauvegarde des préférences de recherche
+## Technologies
 
-### Gestion des Documents
-- Upload et gestion des CV
-- Templates de lettres de motivation
-- Suivi des versions des documents
-
-### Tableau de Bord
-- Statistiques de candidatures
-- Graphiques d'évolution
-- Suivi des offres
+- **Frontend** : React, TypeScript, Mantine UI
+- **Backend** : Tauri, Rust
+- **Base de données** : SQLite avec tauri-plugin-sql
+- **Tests** : Vitest, Cypress
 
 ## Installation
 
-1. Cloner le dépôt
+1. Cloner le dépôt :
 ```bash
 git clone https://github.com/votre-username/MyJobApplicationApp.git
 cd MyJobApplicationApp
 ```
 
-2. Installer les dépendances
+2. Installer les dépendances :
 ```bash
-# Installer les dépendances Rust
-cargo install tauri-cli
-
-# Installer les dépendances Node.js
-cd app-tauri
 npm install
 ```
 
-3. Lancer l'application en mode développement
+3. Lancer l'application en mode développement :
 ```bash
 npm run tauri dev
 ```
@@ -55,35 +40,59 @@ npm run tauri dev
 ## Structure du Projet
 
 ```
-MyJobApplicationApp/
-├── app-tauri/              # Application Tauri
-│   ├── src/               # Code source TypeScript/React
-│   ├── src-tauri/         # Code source Rust
-│   └── tests/             # Tests unitaires
-├── modules/               # Modules Python
-├── docs/                  # Documentation
-└── docker/                # Configuration Docker
+app-tauri/
+├── src-tauri/          # Code Rust (Tauri)
+│   ├── src/
+│   │   ├── commands/   # Commandes Tauri
+│   │   ├── models/     # Modèles de données
+│   │   └── tests/      # Tests Rust
+│   └── tests/          # Tests d'intégration
+└── src/                # Code React
+    ├── components/     # Composants React
+    ├── hooks/         # Hooks personnalisés
+    ├── pages/         # Pages de l'application
+    ├── services/      # Services API
+    └── types/         # Types TypeScript
 ```
+
+## Base de Données
+
+L'application utilise SQLite avec tauri-plugin-sql pour la persistance des données. Les principales tables sont :
+
+- `users` : Informations des utilisateurs
+- `user_profiles` : Profils utilisateurs détaillés
+- `jobs` : Offres d'emploi
+- `applications` : Candidatures
+- `documents` : Documents (CV, lettres de motivation, etc.)
+- `application_stages` : Étapes des candidatures
+- `application_notes` : Notes sur les candidatures
+- `application_documents` : Documents liés aux candidatures
 
 ## Tests
 
-Les tests sont écrits avec Jest et React Testing Library. Pour lancer les tests :
-
+### Tests Frontend
 ```bash
-cd app-tauri
-npm test
+npm run test
+```
+
+### Tests Backend
+```bash
+cargo test
+```
+
+### Tests d'Intégration
+```bash
+npm run test:e2e
 ```
 
 ## Contribution
 
-Les contributions sont les bienvenues ! Veuillez suivre ces étapes :
-
-1. Fork le projet
-2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
+1. Forker le projet
+2. Créer une branche pour votre fonctionnalité
+3. Commiter vos changements
+4. Pousser vers la branche
 5. Ouvrir une Pull Request
 
 ## Licence
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails. 
+MIT 

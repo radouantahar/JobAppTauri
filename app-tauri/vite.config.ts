@@ -8,7 +8,7 @@ export default defineConfig({
   
   // Configuration du serveur de développement
   server: {
-    port: 3000,
+    port: 1420,
     strictPort: true,
     watch: {
       usePolling: true
@@ -57,7 +57,13 @@ export default defineConfig({
       '@mantine/notifications',
       'zustand'
     ]
-  }
+  },
+
+  // Prevent vite from obscuring rust errors
+  clearScreen: false,
+
+  // to make use of `TAURI_PLATFORM`, `TAURI_ARCH`, etc.
+  envPrefix: ['VITE_', 'TAURI_'],
 })
 
 

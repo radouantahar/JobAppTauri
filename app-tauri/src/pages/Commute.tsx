@@ -1,44 +1,41 @@
 // pages/Commute.tsx
-import { useState } from 'react';
-import { Container, Title, TextInput, Button, Stack } from '@mantine/core';
-import type { SearchFilters } from '../types';
-import { useJobSearch } from '../hooks/useJobSearch';
+import React from 'react';
+import { Container, Title, Text, Paper, Stack } from '@mantine/core';
+import { useAuth } from '@/contexts/AuthContext';
 
-const defaultFilters: SearchFilters = {
-  keywords: '',
-  location: '',
-  salaryMin: null,
-  salaryMax: null,
-  contractTypes: [],
-  experienceLevels: [],
-  remote: undefined,
-  skills: [],
-  datePosted: null,
-  sortBy: 'relevance'
-};
-
-const CommutePage: React.FC = () => {
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>(defaultFilters);
-
-  const { search } = useJobSearch();
-
-  const handleSearch = () => {
-    search(searchFilters);
-  };
+const Commute: React.FC = () => {
+  const { user } = useAuth();
 
   return (
-    <Container size="md" py="xl">
-      <Title order={2} mb="xl">Temps de trajet</Title>
-      <Stack gap="md">
-        <TextInput
-          label="Localisation"
-          value={searchFilters.location}
-          onChange={(e) => setSearchFilters({ ...searchFilters, location: e.target.value })}
-        />
-        <Button onClick={handleSearch}>Rechercher</Button>
+    <Container size="lg">
+      <Stack gap="xl">
+        <Title order={1}>Temps de Trajet</Title>
+        
+        <Paper shadow="xs" p="md">
+          <Title order={2} mb="md">Calcul des Trajets</Title>
+          <Text>
+            Cette fonctionnalité vous permettra de :
+          </Text>
+          <ul>
+            <li>Calculer les temps de trajet vers les lieux de travail</li>
+            <li>Comparer les différents modes de transport</li>
+            <li>Visualiser les trajets sur une carte</li>
+            <li>Estimer les coûts de transport</li>
+          </ul>
+          <Text mt="md" c="dimmed">
+            Fonctionnalité en cours de développement. Disponible prochainement.
+          </Text>
+        </Paper>
+
+        <Paper shadow="xs" p="md">
+          <Title order={2} mb="md">Préférences de Transport</Title>
+          <Text c="dimmed">
+            Configurez vos préférences de transport une fois la fonctionnalité disponible.
+          </Text>
+        </Paper>
       </Stack>
     </Container>
   );
 };
 
-export default CommutePage;
+export default Commute;

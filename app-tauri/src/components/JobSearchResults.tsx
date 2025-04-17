@@ -10,7 +10,6 @@ import {
   Pagination,
   Loader
 } from '@mantine/core';
-import { IconMapPin, IconBriefcase, IconBuilding, IconClock } from '@tabler/icons-react';
 import { JobModal } from './JobModal';
 import type { Job } from '../types';
 
@@ -23,6 +22,14 @@ interface JobSearchResultsProps {
   currentPage: number;
   totalPages: number;
 }
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 export const JobSearchResults = ({
   jobs,
@@ -77,28 +84,20 @@ export const JobSearchResults = ({
               </Button>
             </Group>
 
-            <Group gap="xs">
-              <IconBuilding size={16} />
-              <Text>{job.company}</Text>
-              <IconMapPin size={16} />
-              <Text>{job.location}</Text>
-            </Group>
-
-            <Group gap="xs">
-              <IconBriefcase size={16} />
-              <Badge>{job.type}</Badge>
-              <IconClock size={16} />
-              <Text size="sm" c="dimmed">
-                Publié {job.postedAt}
-              </Text>
-            </Group>
-
-            <Group gap="xs">
-              <Badge color="green">
-                {job.salary.min}€ - {job.salary.max}€
-              </Badge>
-              <Badge color="blue">{job.experience}</Badge>
-            </Group>
+            <Stack>
+              <Text fw={500}>{job.title}</Text>
+              <Text size="sm" c="dimmed">{job.company} • {job.location}</Text>
+              <Text size="sm">{job.jobType}</Text>
+              <Text size="sm" c="dimmed">Publié le {formatDate(job.publishedAt)}</Text>
+              <Group gap="xs">
+                {job.salary && (
+                  <Badge color="blue">
+                    {job.salary.min} - {job.salary.max} {job.salary.currency}
+                  </Badge>
+                )}
+                <Badge color="green">{job.experienceLevel}</Badge>
+              </Group>
+            </Stack>
 
             <Text lineClamp={3}>{job.description}</Text>
           </Stack>

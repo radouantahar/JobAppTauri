@@ -1,40 +1,44 @@
 import React, { useState } from 'react';
 import { TextInput, Button, Group } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
+import { useMediaQuery } from '@mantine/hooks';
+import styles from '../../styles/components/SearchBar.module.css';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  placeholder?: string;
+  isLoading?: boolean;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ 
-  onSearch,
-  placeholder = "Rechercher des offres..."
-}) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) => {
   const [query, setQuery] = useState('');
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    if (query.trim()) {
+      onSearch(query.trim());
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Group gap="sm">
+    <div className={styles.container}>
+      <form onSubmit={handleSubmit} className={styles.searchForm}>
         <TextInput
-          placeholder={placeholder}
+          className={styles.searchInput}
+          placeholder="Rechercher un emploi..."
           value={query}
-          onChange={handleChange}
-          style={{ flex: 1 }}
+          onChange={(e) => setQuery(e.target.value)}
+          disabled={isLoading}
+          size={isMobile ? 'sm' : 'md'}
         />
-        <Button type="submit" leftSection={<IconSearch size={16} />}>
+        <Button
+          className={styles.searchButton}
+          type="submit"
+          loading={isLoading}
+          size={isMobile ? 'sm' : 'md'}
+        >
           Rechercher
         </Button>
-      </Group>
-    </form>
+      </form>
+    </div>
   );
 }; 

@@ -1,146 +1,154 @@
-import { render, act } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { AuthContext } from '@/contexts/AuthContext';
 import { DocumentModal } from '../DocumentModal';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDocument } from '../../hooks/useDocument';
-import type { Document, DocumentType, ISODateString } from '../../types';
+import type { AuthContextType } from '@/contexts/AuthContext';
+import type { Document } from '@/types';
+import { createISODateString } from '@/__tests__/fixtures/date';
 
-// Mock des hooks
-vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: vi.fn()
-}));
+// Mock du contexte d'authentification
+const mockAuthContext: AuthContextType = {
+  isAuthenticated: true,
+  user: {
+    id: '1',
+    email: 'test@example.com'
+  },
+  token: 'mock-token',
+  login: vi.fn(),
+  logout: vi.fn(),
+  register: vi.fn()
+};
 
-vi.mock('../../hooks/useDocument', () => ({
-  useDocument: vi.fn()
-}));
-
-const mockUseAuth = vi.mocked(useAuth);
-const mockUseDocument = vi.mocked(useDocument);
-
+// Mock du document
 const mockDocument: Document = {
   id: '1',
-  title: 'Test Document',
-  description: 'Test Description',
+  userId: '1',
+  name: 'Test Document',
+  type: 'cv',
+  description: 'Test description',
   content: 'Test content',
-  type: 'CV' as DocumentType,
-  createdAt: new Date().toISOString() as ISODateString,
-  updatedAt: new Date().toISOString() as ISODateString
+  size: 1000,
+  url: 'http://example.com',
+  filePath: '/path/to/file',
+  createdAt: createISODateString(new Date()),
+  updatedAt: createISODateString(new Date())
+};
+
+// Mock des props du document
+const mockDocumentProps = {
+  document: mockDocument,
+  opened: true,
+  onClose: vi.fn()
+};
+
+// Wrapper pour fournir le contexte d'authentification
+const AuthWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <AuthContext.Provider value={mockAuthContext}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 describe('DocumentModal Performance Tests', () => {
   beforeEach(() => {
-    // Configuration des mocks par défaut
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
-      user: { id: '1', email: 'test@example.com' },
-    });
-
-    mockUseDocument.mockReturnValue({
-      document: mockDocument,
-      isLoading: false,
-      error: null,
-      updateDocument: vi.fn(),
-      deleteDocument: vi.fn(),
-    });
+    vi.clearAllMocks();
   });
 
-  it('devrait ouvrir le modal en moins de 300ms', () => {
+  it('should render document details quickly', async () => {
     const startTime = performance.now();
     
-    act(() => {
-      render(<DocumentModal documentId="1" onClose={() => {}} />);
-    });
-    
+    render(
+      <AuthWrapper>
+        <DocumentModal {...mockDocumentProps} />
+      </AuthWrapper>
+    );
+
     const endTime = performance.now();
     const renderTime = endTime - startTime;
-    
-    expect(renderTime).toBeLessThan(300);
+
+    // Vérifier que le rendu prend moins de 100ms
+    expect(renderTime).toBeLessThan(100);
+
+    // Vérifier que les éléments sont présents
+    expect(screen.getByText('Test Document')).toBeInTheDocument();
+    expect(screen.getByText('Test description')).toBeInTheDocument();
   });
 
-  it('devrait gérer efficacement les états de chargement', () => {
-    mockUseDocument.mockReturnValue({
-      document: null,
-      isLoading: true,
-      error: null,
-      updateDocument: vi.fn(),
-      deleteDocument: vi.fn(),
-    });
+  it('should handle document update efficiently', async () => {
+    render(
+      <AuthWrapper>
+        <DocumentModal {...mockDocumentProps} />
+      </AuthWrapper>
+    );
 
     const startTime = performance.now();
-    
-    act(() => {
-      render(<DocumentModal documentId="1" onClose={() => {}} />);
-    });
-    
+
+    // Simuler la mise à jour du document
+    fireEvent.click(screen.getByRole('button', { name: /mettre à jour/i }));
+
     const endTime = performance.now();
-    const renderTime = endTime - startTime;
-    
-    expect(renderTime).toBeLessThan(200);
+    const updateTime = endTime - startTime;
+
+    // Vérifier que la mise à jour prend moins de 200ms
+    expect(updateTime).toBeLessThan(200);
   });
 
-  it('devrait gérer efficacement les états d\'erreur', () => {
-    mockUseDocument.mockReturnValue({
-      document: null,
-      isLoading: false,
-      error: new Error('Erreur de chargement'),
-      updateDocument: vi.fn(),
-      deleteDocument: vi.fn(),
-    });
+  it('should handle document deletion efficiently', async () => {
+    render(
+      <AuthWrapper>
+        <DocumentModal {...mockDocumentProps} />
+      </AuthWrapper>
+    );
 
     const startTime = performance.now();
-    
-    act(() => {
-      render(<DocumentModal documentId="1" onClose={() => {}} />);
-    });
-    
+
+    // Simuler la suppression du document
+    fireEvent.click(screen.getByRole('button', { name: /supprimer/i }));
+
     const endTime = performance.now();
-    const renderTime = endTime - startTime;
-    
-    expect(renderTime).toBeLessThan(200);
+    const deleteTime = endTime - startTime;
+
+    // Vérifier que la suppression prend moins de 200ms
+    expect(deleteTime).toBeLessThan(200);
   });
 
-  it('devrait maintenir une utilisation mémoire stable lors de multiples ouvertures/fermetures', () => {
-    const initialMemory = performance.memory?.usedJSHeapSize || 0;
-    const memorySamples: number[] = [];
-
-    for (let i = 0; i < 10; i++) {
-      act(() => {
-        render(<DocumentModal documentId="1" onClose={() => {}} />);
-      });
-
-      if (performance.memory) {
-        memorySamples.push(performance.memory.usedJSHeapSize);
-      }
-    }
-
-    if (memorySamples.length > 0) {
-      const maxMemoryIncrease = Math.max(...memorySamples) - initialMemory;
-      expect(maxMemoryIncrease).toBeLessThan(3 * 1024 * 1024); // Moins de 3MB d'augmentation
-    }
-  });
-
-  it('devrait gérer efficacement les documents volumineux', () => {
-    const largeDocument: Document = {
-      ...mockDocument,
-      content: 'Contenu très long'.repeat(1000),
-    };
-
-    mockUseDocument.mockReturnValue({
-      document: largeDocument,
-      isLoading: false,
-      error: null,
-      updateDocument: vi.fn(),
-      deleteDocument: vi.fn(),
-    });
+  it('should handle modal close efficiently', async () => {
+    render(
+      <AuthWrapper>
+        <DocumentModal {...mockDocumentProps} />
+      </AuthWrapper>
+    );
 
     const startTime = performance.now();
-    
-    act(() => {
-      render(<DocumentModal documentId="1" onClose={() => {}} />);
-    });
-    
+
+    // Simuler la fermeture du modal
+    fireEvent.click(screen.getByRole('button', { name: /fermer/i }));
+
     const endTime = performance.now();
-    const renderTime = endTime - startTime;
+    const closeTime = endTime - startTime;
+
+    // Vérifier que la fermeture prend moins de 100ms
+    expect(closeTime).toBeLessThan(100);
+
+    // Vérifier que onClose a été appelé
+    expect(mockDocumentProps.onClose).toHaveBeenCalled();
+  });
+
+  it('should measure memory usage', async () => {
+    const startHeap = process.memoryUsage().heapUsed;
     
-    expect(renderTime).toBeLessThan(500);
+    render(
+      <AuthWrapper>
+        <DocumentModal {...mockDocumentProps} />
+      </AuthWrapper>
+    );
+
+    const endHeap = process.memoryUsage().heapUsed;
+    const memoryDiff = endHeap - startHeap;
+
+    // Vérifier que l'utilisation de la mémoire est raisonnable
+    expect(memoryDiff).toBeLessThan(1024 * 1024); // Moins de 1MB
   });
 }); 

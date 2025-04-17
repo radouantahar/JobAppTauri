@@ -134,3 +134,5 @@ export function SettingsPage() {
     </Container>
   );
 }
+
+export default SettingsPage;

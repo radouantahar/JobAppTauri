@@ -5,13 +5,17 @@ use std::sync::Mutex;
 use std::process::Command;
 use std::path::Path;
 use dotenv::dotenv;
+use tokio::sync::Mutex as AsyncMutex;
+use tauri_plugin_sql::{Migration, MigrationKind, SqlitePool};
+use migrations::migrations;
+use crate::database::backup::DatabaseBackup;
 
 mod commands;
 mod models;
-mod db;
+mod auth;
 
 use commands::*;
-use db::init_db;
+use auth::{login, register, logout};
 
 // Structure pour stocker l'état de l'application
 struct AppState {
@@ -63,16 +67,14 @@ async fn init_app(
     Ok(())
 }
 
-fn main() {
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
     dotenv().ok();
 
-    // Initialiser la base de données
-    if let Err(e) = init_db() {
-        eprintln!("Failed to initialize database: {}", e);
-        std::process::exit(1);
-    }
-
     tauri::Builder::default()
+        .plugin(tauri_plugin_sql::Builder::default()
+            .add_migrations("sqlite:job_app.db", migrations())
+            .build())
         .manage(AppState {
             python_path: Mutex::new(String::new()),
             app_path: Mutex::new(String::new()),
@@ -85,7 +87,30 @@ fn main() {
             get_kanban_columns,
             move_kanban_card,
             get_search_preferences,
+            update_search_preferences,
+            search_jobs,
+            get_documents,
+            create_document,
+            update_document,
+            delete_document,
+            get_document_templates,
+            login,
+            register,
+            logout,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tokio::main]
+async fn main() {
+    // ... existing code ...
+
+    // Initialiser le système de backup
+    let backup = DatabaseBackup::new(pool.clone());
+    if let Err(e) = backup.init().await {
+        eprintln!("Erreur lors de l'initialisation du système de backup: {}", e);
+    }
+
+    // ... existing code ...
 } 

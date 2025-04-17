@@ -9,24 +9,28 @@ describe('Auth Service', () => {
   });
 
   it('devrait se connecter avec succès', async () => {
-    const mockUser = { id: '1', email: 'test@example.com' };
+    const mockUser = { id: '1', email: 'test@example.com', token: 'mock-token' };
     (invoke as jest.Mock).mockResolvedValue(mockUser);
 
-    const result = await authService.login('test@example.com');
+    const result = await authService.login('test@example.com', 'password123');
 
-    expect(invoke).toHaveBeenCalledWith('login', { email: 'test@example.com' });
+    expect(invoke).toHaveBeenCalledWith('login', { 
+      email: 'test@example.com',
+      password: 'password123'
+    });
     expect(result).toEqual(mockUser);
   });
 
   it('devrait s\'inscrire avec succès', async () => {
-    const mockUser = { id: '1', email: 'test@example.com' };
+    const mockUser = { id: '1', email: 'test@example.com', token: 'mock-token' };
     (invoke as jest.Mock).mockResolvedValue(mockUser);
 
-    const result = await authService.register('test@example.com', 'Test User');
+    const result = await authService.register('test@example.com', 'Test User', 'password123');
 
     expect(invoke).toHaveBeenCalledWith('register', { 
       email: 'test@example.com',
-      name: 'Test User'
+      name: 'Test User',
+      password: 'password123'
     });
     expect(result).toEqual(mockUser);
   });
@@ -34,8 +38,8 @@ describe('Auth Service', () => {
   it('devrait se déconnecter avec succès', async () => {
     (invoke as jest.Mock).mockResolvedValue(undefined);
 
-    await authService.logout();
+    await authService.logout('mock-token');
 
-    expect(invoke).toHaveBeenCalledWith('logout');
+    expect(invoke).toHaveBeenCalledWith('logout', { token: 'mock-token' });
   });
 }); 

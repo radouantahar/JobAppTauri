@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useEffect } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { 
   Card, 
   Text, 
@@ -8,7 +8,6 @@ import {
   rem, 
   Notification,
   Stack,
-  Button,
   LoadingOverlay,
   Badge
 } from '@mantine/core';
@@ -24,12 +23,11 @@ import {
   IconFileTypeDoc,
   IconFileTypeCsv
 } from '@tabler/icons-react';
-import { useInViewport } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import { documentService } from '../services/api';
 import type { Document } from '../types';
-import classes from './DocumentList.module.css';
+import classes from '../styles/components/DocumentList.module.css';
 
 const DOCUMENT_TYPE_ICONS = {
   'pdf': IconFileTypePdf,
@@ -44,6 +42,7 @@ interface DocumentListProps {
   onEdit?: (document: Document) => void;
   onShare?: (document: Document) => void;
   onDownload?: (document: Document) => void;
+  isLoading: boolean;
 }
 
 const DocumentCard = memo(function DocumentCard({ 
@@ -89,7 +88,7 @@ const DocumentCard = memo(function DocumentCard({
     }
     try {
       await navigator.share({
-        title: document.title,
+        title: document.name,
         text: document.description,
         url: document.url || window.location.href,
       });
@@ -139,7 +138,7 @@ const DocumentCard = memo(function DocumentCard({
         <Group justify="space-between">
           <Group gap={4}>
             <DocumentTypeIcon size={16} />
-            <Text fw={500}>{document.title}</Text>
+            <Text fw={500}>{document.name}</Text>
           </Group>
           <Menu shadow="md" width={200}>
             <Menu.Target>
@@ -214,82 +213,12 @@ const DocumentCard = memo(function DocumentCard({
   );
 });
 
-export const DocumentList = memo(function DocumentList({ 
+export const DocumentList: React.FC<DocumentListProps> = ({
   documents,
   onDelete,
   onEdit,
-  onShare,
-  onDownload
-}: DocumentListProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const { ref, inViewport } = useInViewport();
-
-  const loadMoreDocuments = useCallback(async () => {
-    if (!hasMore || isLoading) return;
-    
-    setIsLoading(true);
-    setError(null);
-    try {
-      const newDocuments = await documentService.getDocuments(page + 1);
-      if (newDocuments.length === 0) {
-        setHasMore(false);
-      } else {
-        setPage(prev => prev + 1);
-      }
-    } catch (err) {
-      console.error('Error loading more documents:', err);
-      setError('Erreur lors du chargement des documents');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, hasMore, isLoading]);
-
-  useEffect(() => {
-    if (inViewport && hasMore && !isLoading) {
-      loadMoreDocuments();
-    }
-  }, [inViewport, hasMore, isLoading, loadMoreDocuments]);
-
-  const handleDelete = useCallback((documentId: string) => {
-    onDelete?.(documentId);
-  }, [onDelete]);
-
-  const handleEdit = useCallback((document: Document) => {
-    onEdit?.(document);
-  }, [onEdit]);
-
-  const handleShare = useCallback((document: Document) => {
-    onShare?.(document);
-  }, [onShare]);
-
-  const handleDownload = useCallback((document: Document) => {
-    onDownload?.(document);
-  }, [onDownload]);
-
-  if (error) {
-    return (
-      <Stack>
-        <Notification
-          icon={<IconX size={18} />}
-          color="red"
-          title="Erreur"
-          withCloseButton
-          onClose={() => setError(null)}
-        >
-          {error}
-        </Notification>
-        <Button 
-          onClick={() => loadMoreDocuments()} 
-          leftSection={<IconFileText size={16} />}
-        >
-          Réessayer
-        </Button>
-      </Stack>
-    );
-  }
+  isLoading
+}) => {
 
   return (
     <Stack>
@@ -297,14 +226,11 @@ export const DocumentList = memo(function DocumentList({
         <DocumentCard
           key={document.id}
           document={document}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          onShare={handleShare}
-          onDownload={handleDownload}
+          onDelete={onDelete}
+          onEdit={onEdit}
         />
       ))}
-      <div ref={ref} style={{ height: 20 }} />
-      {isLoading && <LoadingOverlay visible={true} />}
+      {isLoading && <LoadingOverlay visible />}
     </Stack>
   );
-}); 
+}; 

@@ -30,15 +30,15 @@ interface StoreState {
   columns: KanbanColumn[];
   setColumns: (columns: KanbanColumn[]) => void;
   addColumn: (column: KanbanColumn) => void;
-  updateColumn: (id: string, updates: Partial<KanbanColumn>) => void;
-  deleteColumn: (id: string) => void;
+  updateColumn: (id: number, updates: Partial<KanbanColumn>) => void;
+  deleteColumn: (id: number) => void;
 
   // Search Preferences
   searchPreferences: SearchPreference[];
   setSearchPreferences: (preferences: SearchPreference[]) => void;
   addSearchPreference: (preference: SearchPreference) => void;
-  updateSearchPreference: (id: string, updates: Partial<SearchPreference>) => void;
-  deleteSearchPreference: (id: string) => void;
+  updateSearchPreference: (id: number, updates: Partial<SearchPreference>) => void;
+  deleteSearchPreference: (id: number) => void;
 
   // Applications
   applications: Application[];
@@ -109,10 +109,10 @@ export const useAppStore = create<StoreState>()(
       columns: [],
       setColumns: (columns) => set({ columns }),
       addColumn: (column) => set((state) => ({ columns: [...state.columns, column] })),
-      updateColumn: (id, updates) => set((state) => ({
+      updateColumn: (id: number, updates) => set((state) => ({
         columns: state.columns.map(col => col.id === id ? { ...col, ...updates } : col)
       })),
-      deleteColumn: (id) => set((state) => ({
+      deleteColumn: (id: number) => set((state) => ({
         columns: state.columns.filter(col => col.id !== id)
       })),
 
@@ -122,12 +122,12 @@ export const useAppStore = create<StoreState>()(
       addSearchPreference: (preference) => set((state) => ({
         searchPreferences: [...state.searchPreferences, preference]
       })),
-      updateSearchPreference: (id, updates) => set((state) => ({
+      updateSearchPreference: (id: number, updates) => set((state) => ({
         searchPreferences: state.searchPreferences.map(pref =>
           pref.id === id ? { ...pref, ...updates } : pref
         )
       })),
-      deleteSearchPreference: (id) => set((state) => ({
+      deleteSearchPreference: (id: number) => set((state) => ({
         searchPreferences: state.searchPreferences.filter(pref => pref.id !== id)
       })),
 
@@ -139,11 +139,11 @@ export const useAppStore = create<StoreState>()(
       })),
       updateApplication: (id: string, updates: Partial<Application>) => set((state) => ({
         applications: state.applications.map(app =>
-          typeof app.id === 'string' && app.id === id ? { ...app, ...updates } : app
+          app.id === id ? { ...app, ...updates } : app
         )
       })),
       deleteApplication: (id: string) => set((state) => ({
-        applications: state.applications.filter(app => typeof app.id === 'string' && app.id !== id)
+        applications: state.applications.filter(app => app.id !== id)
       })),
 
       // Search

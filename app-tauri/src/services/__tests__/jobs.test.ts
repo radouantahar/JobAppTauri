@@ -1,7 +1,8 @@
 /// <reference types="vitest/globals" />
 import { invoke } from '@tauri-apps/api/core';
 import { jobService } from '../api';
-import type { Job, SearchCriteria, ISODateString, CommuteTime } from '../../types';
+import type { Job, ISODateString, CommuteTime } from '../../types';
+import type { SearchCriteria } from '../../types/search';
 import { createMockJobs } from '../../__tests__/fixtures/jobs';
 
 vi.mock('@tauri-apps/api/core');
@@ -15,12 +16,11 @@ test('JobService', () => {
     company: 'TechCorp',
     location: 'Paris',
     type: 'CDI',
-    experience: 'mid',
     description: 'Description du poste',
     url: 'https://example.com/job',
     source: 'linkedin',
-    postedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
-    jobType: 'CDI',
+    publishedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
+    jobType: 'full-time',
     experienceLevel: 'mid',
     salary: {
       min: 45000,
@@ -28,13 +28,16 @@ test('JobService', () => {
       currency: 'EUR',
       period: 'year'
     },
+    matchingScore: 0,
     skills: ['React', 'TypeScript', 'Node.js'],
     commuteTimes: [{
       duration: 30,
       distance: 5,
       mode: 'transit'
     }],
-    remote: true
+    remote: true,
+    contractType: 'CDI',
+    createdAt: '2024-03-20T00:00:00.000Z'
   };
 
   test('should fetch jobs', async () => {
@@ -48,7 +51,7 @@ test('JobService', () => {
     });
 
     const result = await jobService.searchJobs({
-      keywords: '',
+      keywords: [''],
       location: ''
     });
     expect(result).toEqual(mockResponse);
@@ -59,14 +62,12 @@ test('JobService', () => {
     vi.mocked(invoke).mockResolvedValue(mockJobs);
 
     const searchCriteria: SearchCriteria = {
-      keywords: '',
+      keywords: [''],
       location: 'Paris',
-      contractTypes: ['CDI'],
+      jobTypes: ['full-time'],
       experienceLevels: ['mid'],
-      salaryRange: {
-        min: 40000,
-        max: 60000
-      },
+      salaryMin: 40000,
+      salaryMax: 60000,
       remote: false
     };
 
@@ -128,11 +129,12 @@ test('JobService', () => {
   test('should search jobs with filters', async () => {
     vi.mocked(invoke).mockResolvedValue(mockJobs);
     const filters: SearchCriteria = {
-      keywords: 'test',
+      keywords: [''],
       location: '',
-      contractTypes: [],
+      jobTypes: [],
       experienceLevels: [],
-      salaryRange: undefined,
+      salaryMin: undefined,
+      salaryMax: undefined,
       remote: undefined
     };
     const result = await jobService.searchJobs(filters);

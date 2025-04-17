@@ -1,44 +1,56 @@
 /**
- * Base types for the application with enhanced type safety
+ * Main types file that re-exports all type definitions
  */
 
-// ==================== Core Types ====================
-export type ISODateString = string & { readonly __brand: 'ISODateString' };
-export type JobID = string;
-export type UserID = string;
-// CommuteTime is defined as an interface below
+// Core types
+export * from './core';
 
-// ==================== Enums and Literals ====================
+// Document types
+export * from './documents';
+
+// Statistics types
+export * from './statistics';
+
+// Job types
+export * from './job';
+
+// User types
+export * from './user';
+
+// Kanban types
+export * from './kanban';
+
+// Search types
+export * from './search';
+
+// LLM types
+export * from './llm';
+
+// Enums and literals
 export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'other';
 export type JobStatus = 'saved' | 'applied' | 'interview' | 'offer' | 'rejected';
 export type CommuteMode = 'driving' | 'transit' | 'walking' | 'bicycling';
 export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
 export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary';
 export type RemotePreference = 'office' | 'hybrid' | 'remote';
-export type DocumentType = 'cv' | 'cover-letter' | 'portfolio' | 'other';
-export const DOCUMENT_TYPES: DocumentType[] = ['cv', 'cover-letter', 'portfolio', 'other'];
 export type InterviewType = 'phone' | 'video' | 'onsite' | 'technical';
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'CHF';
 export type SalaryPeriod = 'hour' | 'week' | 'month' | 'year';
 export type Language = 'fr' | 'en' | 'de';
 
-// ==================== Interfaces ====================
-
-/** Geographic coordinates with latitude and longitude */
+// Interfaces
 export interface Coordinates {
   readonly lat: number;
   readonly lng: number;
 }
 
-/** Commute information including duration, distance, and mode */
 export interface CommuteLocation {
-  duration: number; // in minutes
-  distance: number; // in km
+  duration: number;
+  distance: number;
   mode: CommuteMode;
   coordinates?: Coordinates;
 }
 
-/** Salary range with optional min/max and currency/period */
 export interface SalaryRange {
   min: number;
   max: number;
@@ -46,7 +58,6 @@ export interface SalaryRange {
   period: string;
 }
 
-/** Education history entry */
 export interface Education {
   institution: string;
   degree: string;
@@ -55,42 +66,10 @@ export interface Education {
   endYear?: number;
 }
 
-/** CV/resume information */
-export interface CVInfo {
-  path: string;
-  lastUpdated: string;
-  skills?: string[];
-  experienceYears?: number;
-  education?: Education[];
-  certifications?: string[];
-}
-
-/** Job posting information */
-export interface Job {
-  id: JobID;
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  url: string;
-  source: JobSource;
-  publishedAt: ISODateString;
-  jobType: JobType;
-  experienceLevel: ExperienceLevel;
-  salary: SalaryRange;
-  matchingScore: number;
-  skills: string[];
-  commuteTimes: Record<string, CommuteTime>;
-  remote: boolean;
-  contractType: string;
-  createdAt: string;
-}
-
-/** Application tracking information */
 export interface Application {
   id: string;
   jobId: string;
-  status: 'in_progress' | 'interview' | 'offer' | 'rejected';
+  status: JobStatus;
   company: string;
   position: string;
   appliedDate: string;
@@ -107,209 +86,6 @@ export interface Application {
     notes?: string;
     contactPerson?: string;
   }[];
-}
-
-/** Job search criteria */
-export interface SearchCriteria {
-  query?: string;
-  page?: number;
-  location?: string;
-  jobType?: JobType[];
-  experienceLevel?: ExperienceLevel[];
-  salaryMin?: number;
-  salaryMax?: number;
-  skills?: string[];
-  remote?: boolean;
-}
-
-/** User profile information */
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  location: string;
-  cv: string;
-  preferredJobTypes: string[];
-  preferredLocations: string[];
-  experienceLevel: string;
-  salaryExpectation: number;
-  availability: string;
-  noticePeriod: number;
-}
-
-/** Kanban card representing a job application */
-export interface KanbanCard {
-  id: string;
-  jobId: string;
-  title: string;
-  description: string;
-  status: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  interviews?: Array<{
-    date: string;
-    type: string;
-    notes?: string;
-  }>;
-}
-
-/** Interview details */
-export interface Interview {
-  date: ISODateString;
-  type: InterviewType;
-  notes?: string;
-  outcome?: 'pending' | 'positive' | 'negative';
-}
-
-/** Kanban column containing cards */
-export interface KanbanColumn {
-  id: number;
-  name: string;
-  position: number;
-  cards: KanbanCard[];
-  color?: string; // hex color
-  limit?: number;
-}
-
-/** Weighted keyword for search */
-export interface KeywordWeight {
-  keyword: string;
-  weight: number; // 1-10 scale
-  required?: boolean;
-}
-
-/** Search category with weighted keywords */
-export interface SearchCategory {
-  id: number;
-  name: string;
-  keywords: KeywordWeight[];
-  priority?: number; // 1-10 scale
-}
-
-/** Saved search preference */
-export interface SearchPreference {
-  id: number;
-  name: string;
-  isActive: boolean;
-  categories: SearchCategory[];
-  lastUsed?: ISODateString;
-}
-
-/** LLM model information */
-export interface LLMModel {
-  name: string;
-  maxTokens: number;
-  supportsJson?: boolean;
-  isFineTuned?: boolean;
-}
-
-/** LLM provider information */
-export interface LLMProvider {
-  id: number;
-  name: string;
-  type: 'local' | 'openai' | 'mistral' | 'anthropic' | 'groq' | 'custom';
-  isActive: boolean;
-  priority: number; // 1-10 scale
-  models: LLMModel[];
-  costPer1kTokens: number;
-  apiKey?: string;
-  baseUrl?: string;
-  rateLimit?: number; // requests per minute
-}
-
-/** Document template structure */
-export interface DocumentTemplate {
-  id: number;
-  name: string;
-  type: DocumentType;
-  content: string;
-  variables?: string[];
-  isDefault?: boolean;
-  language?: Language;
-}
-
-/** Generated document record */
-export interface GeneratedDocument {
-  id: number;
-  jobId: JobID;
-  templateId: number;
-  type: DocumentType;
-  content: string;
-  createdAt: ISODateString;
-  version?: number;
-  feedback?: {
-    rating?: number; // 1-5 scale
-    comments?: string;
-  };
-}
-
-/** Application state */
-export interface AppState {
-  isAuthenticated: boolean;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  } | null;
-  loading: boolean;
-  error: Error | null;
-  setUser: (user: AppState['user']) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: Error | null) => void;
-  searchQuery: string;
-  filters: SearchFilters;
-  isLoading: boolean;
-  setSearchQuery: (query: string) => void;
-  setFilters: (filters: SearchFilters) => void;
-}
-
-/** Standard API response format */
-export interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  success: boolean;
-}
-
-/** Job statistics */
-export interface JobStats {
-  totalJobs: number;
-  trendData: {
-    labels: string[];
-    values: number[];
-  };
-  sourceDistribution: {
-    labels: string[];
-    values: number[];
-  };
-}
-
-/** Application statistics */
-export interface ApplicationStats {
-  totalApplications: number;
-  totalInterviews: number;
-  totalOffers: number;
-  successRate: number;
-}
-
-/** Document generation request */
-export interface DocumentGenerationRequest {
-  jobId: JobID;
-  templateId: number;
-  type: DocumentType;
-  variables?: Record<string, string>;
-}
-
-/** Document interface */
-export interface Document {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  type: DocumentType;
-  url?: string;
-  createdAt: ISODateString;
-  updatedAt: ISODateString;
 }
 
 export interface User {
@@ -332,7 +108,6 @@ export interface CommuteTime {
   mode: CommuteMode;
 }
 
-/** Search filters */
 export interface SearchFilters {
   keywords: string;
   location: string;
@@ -340,29 +115,54 @@ export interface SearchFilters {
   salaryMax: number | null;
   contractTypes: string[];
   experienceLevels: string[];
-  remote: boolean | null;
+  remote: boolean | null | undefined;
+  skills: string[];
+  datePosted: Date | null;
+  sortBy: 'relevance' | 'date' | 'salary';
 }
 
-/** Search error information */
-export interface SearchError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
+export interface AppState {
+  isAuthenticated: boolean;
+  user: User | null;
+  loading: boolean;
+  error: Error | null;
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: Error | null) => void;
+  searchQuery: string;
+  filters: SearchFilters;
+  isLoading: boolean;
+  setSearchQuery: (query: string) => void;
+  setFilters: (filters: SearchFilters) => void;
 }
 
-/** Search filters state */
-export interface Filters {
-  location: string;
-  jobType: JobType[];
-  experienceLevel: ExperienceLevel[];
-  salaryRange: {
-    min: number;
-    max: number;
-  };
+import { ISODateString } from './core';
+
+export interface KanbanCard {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  updatedAt: ISODateString;
+  notes?: string;
+  interviews?: {
+    date: ISODateString;
+    type: InterviewType;
+    notes?: string;
+    contactPerson?: string;
+    outcome?: 'positive' | 'negative' | 'pending';
+  }[];
+  createdAt: ISODateString;
 }
 
-/** Utility function to create an ISODateString */
-export function createISODateString(date: string | Date): ISODateString {
-  const isoString = typeof date === 'string' ? date : date.toISOString();
-  return isoString as ISODateString;
+import { ApplicationStatus } from './core';
+
+export interface CoreApplicationStats {
+  total: number;
+  byStatus: Record<ApplicationStatus, number>;
+  byMonth: Record<string, number>;
+  averageResponseTime: number;
+  successRate: number;
 }
+
+export type { ApplicationStats } from './statistics';

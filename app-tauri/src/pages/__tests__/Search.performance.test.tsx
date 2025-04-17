@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Search from '../Search';
-import type { Job, ISODateString, AppState, JobType, ExperienceLevel } from '../../types';
+import type { Job, AppState, JobType, ExperienceLevel } from '../../types';
+import { createISODateString } from '../../types';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,11 +25,10 @@ const generateMockJobs = (count: number): Job[] => {
     company: `Company ${i + 1}`,
     location: 'Paris',
     type: 'CDI',
-    postedAt: new Date().toISOString() as ISODateString,
-    experience: 'mid',
     description: 'Description',
     url: 'https://example.com',
     source: 'linkedin',
+    publishedAt: createISODateString(new Date().toISOString()),
     jobType: 'full-time' as JobType,
     experienceLevel: 'mid' as ExperienceLevel,
     skills: ['React', 'TypeScript'],
@@ -48,7 +48,7 @@ const generateMockJobs = (count: number): Job[] => {
     ],
     remote: true,
     contractType: 'CDI',
-    createdAt: new Date().toISOString() as ISODateString
+    createdAt: createISODateString(new Date().toISOString())
   }));
 };
 

@@ -1,8 +1,19 @@
-use crate::models::*;
+use crate::models::{UserProfile, UserLocations, CVInfo, UserPreferences, JobPreferences};
 use tauri::State;
 use std::sync::Mutex;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use tauri_plugin_sql::TauriSql;
+
+pub mod auth;
+pub mod documents;
+pub mod applications;
+pub mod search;
+
+pub use auth::{register, login, logout, get_current_user};
+pub use documents::{get_documents, create_document, update_document, delete_document, get_document_templates, upload_document, get_user_documents};
+pub use applications::{create_application, get_application, update_application_status, add_application_stage, add_application_note, add_application_document};
+pub use search::{search_jobs, get_search_preferences, update_search_preferences, get_job_details};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchCriteria {
@@ -37,42 +48,56 @@ pub async fn search_jobs(
 
 // Commande pour obtenir le profil utilisateur
 #[tauri::command]
-pub async fn get_user_profile(
-    _state: State<'_, AppState>,
-) -> Result<UserProfile, String> {
-    // Implémentation de la récupération du profil utilisateur
-    // TODO: Implémenter la logique de récupération
-    Ok(UserProfile {
-        id: 1,
-        name: "Test User".to_string(),
-        email: Some("test@example.com".to_string()),
-        phone: None,
-        locations: UserLocations {
-            primary: "Paris".to_string(),
-            secondary: None,
-            coordinates: None,
-        },
-        cv: CVInfo {
-            path: PathBuf::from("test.pdf"),
-            last_updated: "2024-04-14".to_string(),
-            skills: None,
-            experience_years: None,
-            education: None,
-            certifications: None,
-        },
-        preferences: None,
-        job_preferences: None,
-    })
+pub async fn get_user_profile(db: State<'_, TauriSql>) -> Result<UserProfile, String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    
+    let user: UserProfile = sqlx::query_as!(
+        UserProfile,
+        r#"
+        SELECT * FROM user_profiles WHERE id = 1
+        "#
+    )
+    .fetch_one(&conn)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(user)
 }
 
 // Commande pour mettre à jour le profil utilisateur
 #[tauri::command]
 pub async fn update_user_profile(
-    _state: State<'_, AppState>,
-    _profile: UserProfile,
+    db: State<'_, TauriSql>,
+    profile: UserProfile,
 ) -> Result<(), String> {
-    // Implémentation de la mise à jour du profil utilisateur
-    // TODO: Implémenter la logique de mise à jour
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    
+    sqlx::query!(
+        r#"
+        UPDATE user_profiles
+        SET name = $1, phone = $2, location = $3, primary_home = $4,
+            secondary_home = $5, skills = $6, experience = $7,
+            education = $8, cv_path = $9, cv_last_updated = $10,
+            updated_at = $11
+        WHERE id = $12
+        "#,
+        profile.name,
+        profile.phone,
+        profile.location,
+        profile.primary_home,
+        profile.secondary_home,
+        profile.skills,
+        profile.experience,
+        profile.education,
+        profile.cv_path,
+        profile.cv_last_updated,
+        chrono::Utc::now(),
+        profile.id
+    )
+    .execute(&conn)
+    .await
+    .map_err(|e| e.to_string())?;
+
     Ok(())
 }
 

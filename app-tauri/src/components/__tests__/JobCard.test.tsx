@@ -1,90 +1,42 @@
 /// <reference types="vitest/globals" />
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { JobCard } from '../JobCard';
-import type { Job, JobType, CommuteTime, CommuteMode } from '../../types';
-import { createMockJob } from '../../__tests__/helpers';
-
-const mockJob: Job = {
-  id: '1',
-  title: 'Test Job',
-  company: 'Test Company',
-  location: 'Paris',
-  type: 'CDI',
-  postedAt: new Date().toISOString(),
-  experience: 'mid',
-  salary: {
-    min: 40000,
-    max: 60000
-  },
-  description: 'Test description',
-  url: 'https://example.com',
-  remote: false,
-  skills: ['React', 'TypeScript'],
-  jobType: 'CDI' as JobType,
-  experienceLevel: 'mid',
-  commuteTimes: [{
-    mode: 'driving' as CommuteMode,
-    duration: 30,
-    distance: 10
-  }] as CommuteTime[],
-  source: 'linkedin'
-};
+import { createMockJob } from './fixtures/job';
 
 describe('JobCard', () => {
-  const mockOnClick = vi.fn();
-  const mockOnShareClick = vi.fn();
+  const mockJob = createMockJob();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders job information correctly', () => {
+  it('renders job details correctly', () => {
     render(<JobCard job={mockJob} />);
     
     expect(screen.getByText(mockJob.title)).toBeInTheDocument();
     expect(screen.getByText(mockJob.company)).toBeInTheDocument();
     expect(screen.getByText(mockJob.location)).toBeInTheDocument();
-    expect(screen.getByText(mockJob.description)).toBeInTheDocument();
+    expect(screen.getByText(mockJob.type)).toBeInTheDocument();
   });
 
-  it('calls onClick when card is clicked', () => {
-    const job = createMockJob();
-    render(
-      <JobCard
-        job={job}
-        onClick={mockOnClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    fireEvent.click(screen.getByRole('article'));
-    expect(mockOnClick).toHaveBeenCalledWith(job);
+  it('renders salary range when available', () => {
+    render(<JobCard job={mockJob} />);
+    expect(screen.getByText('40 000 € - 60 000 € / an')).toBeInTheDocument();
   });
 
-  it('calls onShareClick when share button is clicked', () => {
-    const job = createMockJob();
-    render(
-      <JobCard
-        job={job}
-        onClick={mockOnClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    fireEvent.click(screen.getByLabelText('share'));
-    expect(mockOnShareClick).toHaveBeenCalledWith(job);
+  it('renders skills when available', () => {
+    render(<JobCard job={mockJob} />);
+    if (mockJob.skills && mockJob.skills.length > 0) {
+      mockJob.skills.forEach(skill => {
+        expect(screen.getByText(skill)).toBeInTheDocument();
+      });
+    }
   });
 
-  it('displays salary information when available', () => {
-    render(
-      <JobCard
-        job={mockJob}
-        onClick={mockOnClick}
-        onShareClick={mockOnShareClick}
-      />
-    );
-
-    const salaryText = `${mockJob.salary.min.toLocaleString()} - ${mockJob.salary.max.toLocaleString()} ${mockJob.salary.currency}/${mockJob.salary.period}`;
-    expect(screen.getByText(salaryText)).toBeInTheDocument();
+  it('calls onRemoveFavorite when favorite button is clicked', () => {
+    const onRemoveFavorite = vi.fn();
+    render(<JobCard job={mockJob} isFavorite onRemoveFavorite={onRemoveFavorite} />);
+    
+    const favoriteButton = screen.getByTitle('Retirer des favoris');
+    fireEvent.click(favoriteButton);
+    
+    expect(onRemoveFavorite).toHaveBeenCalled();
   });
 });

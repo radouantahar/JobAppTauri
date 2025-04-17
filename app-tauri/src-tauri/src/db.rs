@@ -1,44 +1,80 @@
-use rusqlite::{Connection, Result as SqlResult};
-use std::path::PathBuf;
-use std::env;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
+use std::path::Path;
+use anyhow::Result;
+use tracing::info;
 
-pub struct DbState {
-    #[allow(dead_code)]
-    pub conn: Connection,
+pub struct Database {
+    pool: SqlitePool,
 }
 
-pub fn init_db() -> SqlResult<DbState> {
-    let db_path = get_db_path();
-    
-    // Créer le dossier data s'il n'existe pas
-    if let Some(parent) = db_path.parent() {
-        if let Err(e) = std::fs::create_dir_all(parent) {
-            eprintln!("Failed to create data directory: {}", e);
-            // On continue même si la création du dossier échoue
-            // car le dossier pourrait déjà exister
-        }
+impl Database {
+    pub async fn new(db_path: &str) -> Result<Self> {
+        let connect_options = SqliteConnectOptions::new()
+            .filename(db_path)
+            .create_if_missing(true);
+
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect_with(connect_options)
+            .await?;
+
+        info!("Base de données connectée avec succès");
+
+        Ok(Self { pool })
     }
 
-    let conn = Connection::open(&db_path)?;
+    pub async fn run_migrations(&self) -> Result<()> {
+        sqlx::migrate!("./migrations")
+            .run(&self.pool)
+            .await?;
 
-    // Appliquer les migrations
-    conn.execute(
-        include_str!("../migrations/001_initial.sql"),
-        [],
-    )?;
+        info!("Migrations exécutées avec succès");
+        Ok(())
+    }
 
-    Ok(DbState { conn })
+    pub fn get_pool(&self) -> &SqlitePool {
+        &self.pool
+    }
 }
 
-#[allow(dead_code)]
-pub fn get_db_connection() -> SqlResult<Connection> {
-    let db_path = get_db_path();
-    Connection::open(&db_path)
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
 
-fn get_db_path() -> PathBuf {
-    let mut path = env::current_dir().unwrap();
-    path.push("data");
-    path.push("jobs.db");
-    path
+    #[tokio::test]
+    async fn test_database_connection() -> Result<()> {
+        let temp_dir = tempdir()?;
+        let db_path = temp_dir.path().join("test.db");
+        let db = Database::new(db_path.to_str().unwrap()).await?;
+        
+        // Vérifier que la connexion est établie
+        let _ = sqlx::query("SELECT 1").fetch_one(db.get_pool()).await?;
+        
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_migrations() -> Result<()> {
+        let temp_dir = tempdir()?;
+        let db_path = temp_dir.path().join("test.db");
+        let db = Database::new(db_path.to_str().unwrap()).await?;
+        
+        // Exécuter les migrations
+        db.run_migrations().await?;
+        
+        // Vérifier que les tables existent
+        let tables: Vec<String> = sqlx::query_scalar(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )
+        .fetch_all(db.get_pool())
+        .await?;
+        
+        assert!(tables.contains(&"users".to_string()));
+        assert!(tables.contains(&"jobs".to_string()));
+        assert!(tables.contains(&"applications".to_string()));
+        assert!(tables.contains(&"documents".to_string()));
+        
+        Ok(())
+    }
 } 

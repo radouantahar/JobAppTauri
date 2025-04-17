@@ -1,16 +1,61 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "package": {
-    "productName": "My Job Application App",
-    "version": "0.1.0"
-  },
+  "$schema": "node_modules/@tauri-apps/cli/schema.json",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "MyJobApplication",
+    "version": "0.1.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "all": false,
+        "scope": ["$APPDATA/*"]
+      }
+    },
     "bundle": {
-      "identifier": "com.myjobapp.dev"
+      "active": true,
+      "targets": "all",
+      "identifier": "com.myjobapplication.app",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": [
+        "migrations/*.sql"
+      ]
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "MyJobApplication",
+        "width": 1200,
+        "height": 800
+      }
+    ],
+    "plugins": {
+      "sql": {
+        "default": {
+          "driver": "sqlite",
+          "url": "sqlite:app.db"
+        }
+      }
     }
   }
 }

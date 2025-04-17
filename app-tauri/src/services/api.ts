@@ -16,16 +16,20 @@ import type {
 
 // Service d'authentification
 export const authService = {
-  async login(email: string): Promise<{ id: string; email: string }> {
-    return await invoke<{ id: string; email: string }>('login', { email });
+  async login(email: string, password: string): Promise<{ id: string; email: string; token: string }> {
+    return await invoke<{ id: string; email: string; token: string }>('login', { email, password });
   },
 
-  async logout(): Promise<void> {
-    return await invoke<void>('logout');
+  async logout(token: string): Promise<void> {
+    return await invoke<void>('logout', { token });
   },
 
-  async register(email: string, name: string): Promise<{ id: string; email: string }> {
-    return await invoke<{ id: string; email: string }>('register', { email, name });
+  async register(email: string, name: string, password: string): Promise<{ id: string; email: string; token: string }> {
+    return await invoke<{ id: string; email: string; token: string }>('register', { email, name, password });
+  },
+
+  async verifyToken(token: string): Promise<{ id: string; email: string }> {
+    return await invoke<{ id: string; email: string }>('verify_token', { token });
   }
 };
 

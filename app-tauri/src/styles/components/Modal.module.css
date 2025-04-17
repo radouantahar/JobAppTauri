@@ -1,0 +1,48 @@
+.modal {
+  composes: modal-enter from '../../styles/animations.css';
+}
+
+.modalExit {
+  composes: modal-exit from '../../styles/animations.css';
+}
+
+.modalOverlay {
+  composes: fadeIn from '../../styles/animations.css';
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  composes: scaleIn from '../../styles/animations.css';
+  background-color: var(--mantine-color-body);
+  border-radius: var(--mantine-radius-md);
+  box-shadow: var(--mantine-shadow-xl);
+}
+
+.modalHeader {
+  composes: transition-all from '../../styles/animations.css';
+}
+
+.modalTitle {
+  composes: transition-all from '../../styles/animations.css';
+}
+
+.modalTitle:hover {
+  color: var(--mantine-color-blue-6);
+}
+
+.modalClose {
+  composes: transition-all from '../../styles/animations.css';
+}
+
+.modalClose:hover {
+  transform: scale(1.1);
+  color: var(--mantine-color-red-6);
+}
+
+.modalBody {
+  composes: slideIn from '../../styles/animations.css';
+}
+
+.modalFooter {
+  composes: slideIn from '../../styles/animations.css';
+} 

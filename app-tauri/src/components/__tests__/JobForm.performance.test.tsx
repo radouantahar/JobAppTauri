@@ -1,6 +1,9 @@
-import { render, act } from '@testing-library/react';
+/// <reference types="vitest/globals" />
+import React from 'react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { JobForm } from '../JobForm';
-import type { Job, JobType, ExperienceLevel, JobSource, CommuteMode } from '../../types';
+import type { Job } from '../../types/job';
 
 vi.mock('@mantine/core', () => ({
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -13,6 +16,20 @@ vi.mock('@mantine/core', () => ({
 }));
 
 const mockSubmit = vi.fn();
+
+// Mock de window.performance.memory
+const mockPerformance = {
+  memory: {
+    usedJSHeapSize: 0,
+    totalJSHeapSize: 0,
+    jsHeapSizeLimit: 0,
+  },
+};
+
+Object.defineProperty(window, 'performance', {
+  value: mockPerformance,
+  writable: true,
+});
 
 describe('JobForm Performance Tests', () => {
   beforeEach(() => {

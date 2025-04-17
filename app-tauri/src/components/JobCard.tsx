@@ -1,82 +1,59 @@
-import { memo, useMemo } from 'react';
-import { Card, Text, Group, Badge, ActionIcon, Stack } from '@mantine/core';
-import { IconHeart, IconShare } from '@tabler/icons-react';
-import { useAppStore } from '../store';
-import type { Job } from '../types';
-import classes from './JobCard.module.css';
+import React from 'react';
+import { Job } from '../types/job';
 
 interface JobCardProps {
   job: Job;
+  onRemoveFavorite?: () => void;
+  isFavorite?: boolean;
   onClick?: (job: Job) => void;
-  onShareClick?: (job: Job) => void;
 }
 
-export const JobCard = memo(function JobCard({ job, onClick, onShareClick }: JobCardProps) {
-  const { addFavorite, removeFavorite, favorites } = useAppStore();
-  
-  const isFavorite = useMemo(() => favorites.includes(job.id), [favorites, job.id]);
-
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      if (isFavorite) {
-        removeFavorite(job.id);
-      } else {
-        addFavorite(job.id);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
-  };
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onShareClick?.(job);
-  };
-
-  const handleClick = () => {
-    onClick?.(job);
-  };
-
+export const JobCard: React.FC<JobCardProps> = ({ job, onRemoveFavorite, isFavorite = false, onClick }) => {
   return (
-    <Card onClick={handleClick} className={classes.card}>
-      <Stack gap="xs">
-        <Group justify="space-between" wrap="nowrap">
-          <Text size="lg" fw={500} className={classes.title}>
-            {job.title}
-          </Text>
-          <Group gap="xs">
-            <ActionIcon
-              variant="subtle"
-              color={isFavorite ? 'red' : 'gray'}
-              onClick={handleFavoriteClick}
+    <div 
+      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => onClick?.(job)}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">{job.title}</h3>
+          <p className="text-gray-600">{job.company}</p>
+        </div>
+        {isFavorite && onRemoveFavorite && (
+          <button
+            onClick={onRemoveFavorite}
+            className="text-red-500 hover:text-red-700"
+            title="Retirer des favoris"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
             >
-              <IconHeart size={20} />
-            </ActionIcon>
-            <ActionIcon variant="subtle" onClick={handleShareClick}>
-              <IconShare size={20} />
-            </ActionIcon>
-          </Group>
-        </Group>
-
-        <Text size="sm" c="dimmed">
-          {job.company} • {job.location}
-        </Text>
-
-        <Group gap="xs">
-          <Badge>{job.jobType}</Badge>
-          <Badge>{job.experienceLevel}</Badge>
-          {job.salary && (
-            <Badge>
-              {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()} {job.salary.currency}/{job.salary.period}
-            </Badge>
-          )}
-        </Group>
-
-        <Text lineClamp={3} size="sm">
-          {job.description}
-        </Text>
-      </Stack>
-    </Card>
+              <path
+                fillRule="evenodd"
+                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+      <div className="mt-2">
+        <p className="text-sm text-gray-500">{job.location}</p>
+        <p className="text-sm text-gray-500">{job.type}</p>
+      </div>
+      <div className="mt-4">
+        <a
+          href={job.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          Voir l'offre
+        </a>
+      </div>
+    </div>
   );
-});
+};

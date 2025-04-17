@@ -7,7 +7,7 @@ import { showNotification } from '@mantine/notifications';
 import type { UserProfile, ExperienceLevel } from '../types';
 
 const experienceLevels: { value: ExperienceLevel; label: string }[] = [
-  { value: 'junior', label: 'Junior' },
+  { value: 'entry', label: 'Junior' },
   { value: 'mid', label: 'Confirmé' },
   { value: 'senior', label: 'Senior' },
   { value: 'lead', label: 'Expert' },
@@ -20,16 +20,19 @@ export const Profile = () => {
     name: '',
     email: '',
     location: '',
-    cv: '',
+    title: '',
+    bio: '',
+    experience: '',
     preferredJobTypes: [],
     preferredLocations: [],
-    experienceLevel: undefined,
     salaryExpectation: {
       min: 0,
-      max: 0
+      max: 0,
+      currency: 'EUR',
+      period: 'year'
     },
     availability: '',
-    noticePeriod: ''
+    noticePeriod: 0
   });
 
   useEffect(() => {
@@ -68,6 +71,40 @@ export const Profile = () => {
     }
   };
 
+  const handleSalaryMinChange = (value: string | number) => {
+    const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    setProfile(prev => ({
+      ...prev,
+      salaryExpectation: {
+        min: numericValue,
+        max: prev.salaryExpectation?.max || 0,
+        currency: prev.salaryExpectation?.currency || 'EUR',
+        period: prev.salaryExpectation?.period || 'year'
+      }
+    }));
+  };
+
+  const handleSalaryMaxChange = (value: string | number) => {
+    const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    setProfile(prev => ({
+      ...prev,
+      salaryExpectation: {
+        min: prev.salaryExpectation?.min || 0,
+        max: numericValue,
+        currency: prev.salaryExpectation?.currency || 'EUR',
+        period: prev.salaryExpectation?.period || 'year'
+      }
+    }));
+  };
+
+  const handleNoticePeriodChange = (value: string | number) => {
+    const numericValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    setProfile(prev => ({
+      ...prev,
+      noticePeriod: numericValue
+    }));
+  };
+
   return (
     <Container size="md" py="xl">
       <Title order={2} mb="xl">Mon Profil</Title>
@@ -89,14 +126,19 @@ export const Profile = () => {
             onChange={(e) => setProfile({ ...profile, location: e.target.value })}
           />
           <TextInput
-            label="CV"
-            value={profile.cv || ''}
-            onChange={(e) => setProfile({ ...profile, cv: e.target.value })}
+            label="Titre"
+            value={profile.title || ''}
+            onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+          />
+          <TextInput
+            label="Bio"
+            value={profile.bio || ''}
+            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
           />
           <Select
             label="Niveau d'expérience"
-            value={profile.experienceLevel}
-            onChange={(value) => setProfile({ ...profile, experienceLevel: value as ExperienceLevel })}
+            value={profile.experience}
+            onChange={(value) => setProfile({ ...profile, experience: value as ExperienceLevel })}
             data={experienceLevels}
           />
           <TextInput
@@ -112,25 +154,21 @@ export const Profile = () => {
           <Group grow>
             <NumberInput
               label="Salaire minimum"
-              value={profile.salaryExpectation?.min || 0}
-              onChange={(value) => setProfile({
-                ...profile,
-                salaryExpectation: {
-                  min: typeof value === 'number' ? value : 0,
-                  max: profile.salaryExpectation?.max || 0
-                }
-              })}
+              value={profile.salaryExpectation?.min}
+              onChange={handleSalaryMinChange}
+              min={0}
+              step={1000}
+              hideControls
+              allowDecimal={false}
             />
             <NumberInput
               label="Salaire maximum"
-              value={profile.salaryExpectation?.max || 0}
-              onChange={(value) => setProfile({
-                ...profile,
-                salaryExpectation: {
-                  min: profile.salaryExpectation?.min || 0,
-                  max: typeof value === 'number' ? value : 0
-                }
-              })}
+              value={profile.salaryExpectation?.max}
+              onChange={handleSalaryMaxChange}
+              min={0}
+              step={1000}
+              hideControls
+              allowDecimal={false}
             />
           </Group>
           <TextInput
@@ -138,10 +176,14 @@ export const Profile = () => {
             value={profile.availability || ''}
             onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
           />
-          <TextInput
-            label="Préavis"
-            value={profile.noticePeriod || ''}
-            onChange={(e) => setProfile({ ...profile, noticePeriod: e.target.value })}
+          <NumberInput
+            label="Préavis (en jours)"
+            value={profile.noticePeriod}
+            onChange={handleNoticePeriodChange}
+            min={0}
+            step={1}
+            hideControls
+            allowDecimal={false}
           />
           <Group justify="flex-end">
             <Button type="submit">Enregistrer</Button>
@@ -151,3 +193,5 @@ export const Profile = () => {
     </Container>
   );
 };
+
+export default Profile;

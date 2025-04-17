@@ -1,20 +1,19 @@
-use crate::AppState;
-use rusqlite::params;
-use serde::{Deserialize, Serialize};
+use crate::models::{Job, SearchPreference};
 use tauri::State;
+use tauri_plugin_sql::TauriSql;
+use serde::{Deserialize, Serialize};
+use chrono::Utc;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchCriteria {
-    pub keywords: String,
-    pub location: String,
-    pub salary_min: Option<i32>,
-    pub salary_max: Option<i32>,
-    pub contract_types: Vec<String>,
-    pub experience_levels: Vec<String>,
-    pub remote: Option<bool>,
-    pub skills: Vec<String>,
+    pub keywords: Vec<String>,
+    pub location: Option<String>,
+    pub radius: Option<i32>,
+    pub min_salary: Option<f64>,
+    pub job_type: Option<String>,
+    pub experience_level: Option<String>,
+    pub remote_preference: Option<String>,
     pub date_posted: Option<String>,
-    pub sort_by: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,132 +36,116 @@ pub struct JobResult {
 
 #[tauri::command]
 pub async fn search_jobs(
-    state: State<'_, AppState>,
+    db: State<'_, TauriSql>,
     criteria: SearchCriteria,
-) -> Result<Vec<JobResult>, String> {
-    let conn = state.db.lock().await;
-    let conn = conn.as_ref().ok_or("Database connection not initialized")?;
-
-    let mut query = String::from(
-        "SELECT id, title, company, location, job_type, salary_min, salary_max, 
-        description, url, posted_at, experience_level, skills, remote, source 
-        FROM jobs WHERE 1=1",
-    );
-
-    let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+) -> Result<Vec<Job>, String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    
+    let mut query = "SELECT * FROM jobs WHERE 1=1".to_string();
+    let mut params: Vec<String> = Vec::new();
 
     if !criteria.keywords.is_empty() {
-        query.push_str(" AND (title LIKE ? OR description LIKE ? OR company LIKE ?)");
-        let keyword = format!("%{}%", criteria.keywords);
-        params.push(Box::new(keyword.clone()));
-        params.push(Box::new(keyword.clone()));
-        params.push(Box::new(keyword));
-    }
-
-    if !criteria.location.is_empty() {
-        query.push_str(" AND location LIKE ?");
-        params.push(Box::new(format!("%{}%", criteria.location)));
-    }
-
-    if let Some(salary_min) = criteria.salary_min {
-        query.push_str(" AND salary_min >= ?");
-        params.push(Box::new(salary_min));
-    }
-
-    if let Some(salary_max) = criteria.salary_max {
-        query.push_str(" AND salary_max <= ?");
-        params.push(Box::new(salary_max));
-    }
-
-    if !criteria.contract_types.is_empty() {
-        query.push_str(" AND job_type IN (");
-        for (i, _) in criteria.contract_types.iter().enumerate() {
-            if i > 0 {
-                query.push(',');
-            }
-            query.push('?');
-        }
-        query.push(')');
-        for contract_type in criteria.contract_types {
-            params.push(Box::new(contract_type));
-        }
-    }
-
-    if !criteria.experience_levels.is_empty() {
-        query.push_str(" AND experience_level IN (");
-        for (i, _) in criteria.experience_levels.iter().enumerate() {
-            if i > 0 {
-                query.push(',');
-            }
-            query.push('?');
-        }
-        query.push(')');
-        for level in criteria.experience_levels {
-            params.push(Box::new(level));
-        }
-    }
-
-    if let Some(remote) = criteria.remote {
-        query.push_str(" AND remote = ?");
-        params.push(Box::new(remote));
-    }
-
-    if !criteria.skills.is_empty() {
         query.push_str(" AND (");
-        for (i, skill) in criteria.skills.iter().enumerate() {
+        for (i, keyword) in criteria.keywords.iter().enumerate() {
             if i > 0 {
                 query.push_str(" OR ");
             }
-            query.push_str("skills LIKE ?");
-            params.push(Box::new(format!("%{}%", skill)));
+            query.push_str("(title LIKE ? OR description LIKE ?)");
+            params.push(format!("%{}%", keyword));
+            params.push(format!("%{}%", keyword));
         }
-        query.push(')');
+        query.push_str(")");
     }
 
-    if let Some(date_posted) = criteria.date_posted {
-        query.push_str(" AND posted_at >= ?");
-        params.push(Box::new(date_posted));
+    if let Some(location) = criteria.location {
+        query.push_str(" AND location LIKE ?");
+        params.push(format!("%{}%", location));
     }
 
-    if let Some(sort_by) = criteria.sort_by {
-        match sort_by.as_str() {
-            "date" => query.push_str(" ORDER BY posted_at DESC"),
-            "salary" => query.push_str(" ORDER BY salary_max DESC"),
-            _ => query.push_str(" ORDER BY posted_at DESC"),
-        }
-    } else {
-        query.push_str(" ORDER BY posted_at DESC");
+    if let Some(job_type) = criteria.job_type {
+        query.push_str(" AND job_type = ?");
+        params.push(job_type);
     }
 
-    let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+    if let Some(experience_level) = criteria.experience_level {
+        query.push_str(" AND experience_level = ?");
+        params.push(experience_level);
+    }
 
-    let jobs = stmt
-        .query_map(
-            rusqlite::params_from_iter(params.iter().map(|p| p.as_ref())),
-            |row| {
-                Ok(JobResult {
-                    id: row.get(0)?,
-                    title: row.get(1)?,
-                    company: row.get(2)?,
-                    location: row.get(3)?,
-                    job_type: row.get(4)?,
-                    salary_min: row.get(5)?,
-                    salary_max: row.get(6)?,
-                    description: row.get(7)?,
-                    url: row.get(8)?,
-                    posted_at: row.get(9)?,
-                    experience_level: row.get(10)?,
-                    skills: serde_json::from_str(&row.get::<_, String>(11)?).unwrap_or_default(),
-                    remote: row.get(12)?,
-                    source: row.get(13)?,
-                })
-            },
-        )
-        .map_err(|e| e.to_string())?
-        .collect::<Result<Vec<_>, _>>()
+    if let Some(remote_preference) = criteria.remote_preference {
+        query.push_str(" AND remote = ?");
+        params.push(remote_preference);
+    }
+
+    query.push_str(" ORDER BY posted_at DESC");
+
+    let jobs: Vec<Job> = sqlx::query_as(&query)
+        .bind_all(params)
+        .fetch_all(&conn)
+        .await
         .map_err(|e| e.to_string())?;
 
     Ok(jobs)
+}
+
+#[tauri::command]
+pub async fn get_search_preferences(
+    db: State<'_, TauriSql>,
+) -> Result<Vec<SearchPreference>, String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    
+    let preferences: Vec<SearchPreference> = sqlx::query_as!(
+        SearchPreference,
+        r#"
+        SELECT * FROM search_preferences ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(&conn)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(preferences)
+}
+
+#[tauri::command]
+pub async fn update_search_preferences(
+    db: State<'_, TauriSql>,
+    preferences: SearchPreference,
+) -> Result<bool, String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    
+    sqlx::query!(
+        r#"
+        INSERT INTO search_preferences (keywords, location, radius, min_salary, job_type,
+            experience_level, remote_preference, date_posted, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (id) DO UPDATE SET
+            keywords = $1,
+            location = $2,
+            radius = $3,
+            min_salary = $4,
+            job_type = $5,
+            experience_level = $6,
+            remote_preference = $7,
+            date_posted = $8,
+            updated_at = $10
+        "#,
+        preferences.keywords,
+        preferences.location,
+        preferences.radius,
+        preferences.min_salary,
+        preferences.job_type,
+        preferences.experience_level,
+        preferences.remote_preference,
+        preferences.date_posted,
+        Utc::now(),
+        Utc::now()
+    )
+    .execute(&conn)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(true)
 }
 
 #[tauri::command]

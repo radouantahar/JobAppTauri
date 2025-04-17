@@ -14,6 +14,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **tauri-plugin-window-state** - Pour la gestion de l'état des fenêtres
   - **tauri-plugin-sql** - Pour l'accès à SQLite
   - **tauri-plugin-fs** - Pour la gestion des fichiers
+  - **tauri-plugin-http** - Pour les requêtes HTTP
+  - **tauri-plugin-autostart** - Pour le démarrage automatique
 
 ### Frontend
 - **React.js** avec **TypeScript** - Pour une interface utilisateur robuste et typée
@@ -30,6 +32,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **React Virtualized** - Pour le rendu efficace des listes
   - **React Window** - Pour le rendu des grandes listes
   - **React Beautiful DnD** - Pour le drag-and-drop avancé
+  - **React Error Boundary** - Pour la gestion des erreurs
+  - **React Suspense** - Pour le chargement différé
+  - **React Query Devtools** - Pour le débogage
 
 ### Interface Kanban
 - **NocoDB** (déjà installé en Docker) - Pour la gestion des données en mode Kanban
@@ -37,17 +42,30 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **@nocodb/sdk** - Pour l'intégration avec l'API NocoDB
   - **@nocodb/ui** - Pour les composants d'interface
   - **@nocodb/plugin-kanban** - Pour les fonctionnalités Kanban
+  - **@nocodb/plugin-calendar** - Pour la vue calendrier
+  - **@nocodb/plugin-gallery** - Pour la vue galerie
 
 ## 2. Backend et Stockage de Données
 
 ### Base de Données
 - **SQLite** - Base de données locale légère
-  - **SQLAlchemy** - ORM Python pour interagir avec la base de données
-  - **Alembic** - Pour les migrations de schéma de base de données
-  - **Pydantic** - Pour la validation des données
-  - **aiosqlite** - Pour l'accès asynchrone à SQLite
+  - **sqlx** - ORM Rust pour interagir avec la base de données
+    - Version: 0.7+
+    - Features: runtime-tokio-rustls, sqlite, chrono, uuid
+    - Avantages: 
+      - Vérification des requêtes SQL au moment de la compilation
+      - Support asynchrone avec tokio
+      - Gestion des migrations
+      - Support des types chrono et uuid
+  - **rusqlite** - Pour l'accès bas niveau à SQLite
+    - Version: 0.29.0+
+    - Features: bundled
+    - Utilisé pour les opérations spécifiques nécessitant un accès direct
+  - **Pydantic** - Pour la validation des données côté Python
   - **sqlite-vss** - Pour la recherche vectorielle
   - **sqlite-fts5** - Pour la recherche en texte intégral
+  - **sqlite-utils** - Pour les utilitaires SQLite
+  - **sqlite-web** - Pour l'interface web SQLite
 
 ### Serveur Local
 - **FastAPI** - Framework Python pour créer une API REST locale
@@ -59,6 +77,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **passlib** - Pour le hachage des mots de passe
   - **python-jose[cryptography]** - Pour le chiffrement
   - **python-jose[pycryptodome]** - Pour les algorithmes de chiffrement
+  - **httpx** - Pour les requêtes HTTP asynchrones
+  - **tenacity** - Pour les retries automatiques
 
 ## 3. Module de Scraping
 
@@ -72,6 +92,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **selectolax** - Pour le parsing HTML optimisé
   - **parsel** - Pour l'extraction de données
   - **w3lib** - Pour le nettoyage des URLs
+  - **retry** - Pour les retries automatiques
+  - **backoff** - Pour le backoff exponentiel
 
 ### Scraping de Temps de Transport
 - **Selenium** - Pour l'automatisation du navigateur
@@ -81,12 +103,15 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - **playwright-python** - Pour l'automatisation avec Python
   - **playwright-stealth** - Pour éviter la détection
   - **playwright-extra** - Pour les fonctionnalités avancées
+  - **playwright-async-api** - Pour l'API asynchrone
 
 ### Gestion des Proxies
 - **rotating-proxy-list** - Pour éviter les blocages
 - **aiohttp-socks** - Pour le support des proxies SOCKS
 - **proxy-database** - Pour la gestion des proxies
 - **proxy-checker** - Pour la vérification des proxies
+- **proxybroker** - Pour la recherche de proxies
+- **proxy-rotator** - Pour la rotation des proxies
 
 ## 4. Module de Parsing et Traitement de CV
 
@@ -96,6 +121,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **pdfplumber** - Pour l'extraction de tableaux
 - **pdf2image** - Pour la conversion en images
 - **pytesseract** - Pour l'OCR
+- **pdfquery** - Pour l'extraction de données
+- **pdfrw** - Pour la manipulation de PDF
+- **pdfkit** - Pour la génération de PDF
 
 ### Traitement du Texte
 - **spaCy** - Pour l'analyse NLP
@@ -105,6 +133,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
   - Modèle: paraphrase-multilingual-mpnet-base-v2
 - **sentence-transformers** - Pour les embeddings
 - **fasttext** - Pour la classification de texte
+- **gensim** - Pour l'analyse de similarité
+- **textblob** - Pour l'analyse de sentiment
+- **pattern** - Pour l'analyse de texte
 
 ## 5. Module de Matching et Scoring
 
@@ -115,6 +146,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **pandas** - Pour l'analyse des données
 - **faiss** - Pour la recherche vectorielle
 - **annoy** - Pour les index approximatifs
+- **hnswlib** - Pour les index hiérarchiques
+- **nmslib** - Pour la recherche de similarité
 
 ### Intégration LLM Local
 - **Ollama** (déjà installé en Docker)
@@ -123,6 +156,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **llama-index** - Pour l'indexation sémantique
 - **llama-cpp-python** - Pour l'interface Python
 - **llama-tokenizer-js** - Pour le tokenization
+- **llama-api** - Pour l'API REST
+- **llama-cli** - Pour l'interface en ligne de commande
 
 ## 6. Module de Génération de Documents
 
@@ -132,6 +167,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **prompt-toolkit** - Pour la gestion des prompts
 - **langchain** - Pour la génération de texte
 - **transformers** - Pour la génération de texte
+- **text-generation** - Pour la génération de texte
+- **gpt-2-simple** - Pour la génération de texte
+- **gpt-neo** - Pour la génération de texte
 
 ### Création de Documents
 - **python-docx** - Pour les fichiers Word
@@ -140,6 +178,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **weasyprint** - Alternative pour la conversion en PDF
 - **reportlab** - Pour la génération de PDF
 - **pypdf** - Pour la manipulation de PDF
+- **docx2pdf** - Pour la conversion Word vers PDF
+- **pdf2docx** - Pour la conversion PDF vers Word
 
 ## 7. Modules à Implémenter
 
@@ -149,6 +189,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **rapidfuzz** - Pour les comparaisons rapides
 - **textdistance** - Pour les distances de texte
 - **jellyfish** - Pour les comparaisons de chaînes
+- **strsim** - Pour la similarité de chaînes
+- **python-Levenshtein** - Pour la distance de Levenshtein
+- **textacy** - Pour l'analyse de texte
 
 ### Gestion des Domiciles
 - **geopy** - Pour le géocodage
@@ -157,6 +200,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **geojson** - Pour le stockage des données géographiques
 - **shapely** - Pour les opérations géométriques
 - **rtree** - Pour les index spatiaux
+- **osmnx** - Pour les données OpenStreetMap
+- **networkx** - Pour l'analyse de réseau
 
 ### Préférences de Recherche
 - **pydantic** - Pour la validation
@@ -164,6 +209,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **pandas** - Pour l'analyse
 - **scikit-learn** - Pour le machine learning
 - **optuna** - Pour l'optimisation
+- **hyperopt** - Pour l'optimisation hyperparamétrique
+- **bayesian-optimization** - Pour l'optimisation bayésienne
+- **scikit-optimize** - Pour l'optimisation séquentielle
 
 ### Suggestions IA
 - **transformers** - Pour l'analyse
@@ -171,6 +219,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **numpy** - Pour les calculs
 - **torch** - Pour le deep learning
 - **lightgbm** - Pour le boosting
+- **xgboost** - Pour le boosting
+- **catboost** - Pour le boosting
+- **prophet** - Pour les prévisions
 
 ### Analyse du Feedback Kanban
 - **pandas** - Pour l'analyse
@@ -178,6 +229,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **matplotlib** - Pour la visualisation
 - **plotly** - Pour les graphiques interactifs
 - **seaborn** - Pour les visualisations statistiques
+- **bokeh** - Pour les visualisations interactives
+- **altair** - Pour les visualisations déclaratives
+- **holoviews** - Pour les visualisations complexes
 
 ### Gestion des API LLM
 - **httpx** - Pour les requêtes HTTP
@@ -185,6 +239,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **tenacity** - Pour les retries
 - **backoff** - Pour le backoff exponentiel
 - **aiohttp** - Pour les requêtes asynchrones
+- **requests** - Pour les requêtes HTTP
+- **urllib3** - Pour les requêtes HTTP
+- **httplib2** - Pour les requêtes HTTP
 
 ## 8. Scheduler et Automatisation
 
@@ -194,6 +251,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **croniter** - Pour le parsing des expressions cron
 - **celery** - Pour les tâches distribuées
 - **dramatiq** - Pour les tâches asynchrones
+- **rq** - Pour les tâches en file d'attente
+- **huey** - Pour les tâches en file d'attente
+- **arq** - Pour les tâches asynchrones
 
 ### Logging et Monitoring
 - **Loguru** - Pour les logs
@@ -201,6 +261,9 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **prometheus-client** - Pour les métriques
 - **sentry-sdk** - Pour le monitoring des erreurs
 - **opentelemetry** - Pour le tracing distribué
+- **elastic-apm** - Pour le monitoring des performances
+- **newrelic** - Pour le monitoring des performances
+- **datadog** - Pour le monitoring des performances
 
 ## 9. Conteneurisation et Déploiement
 
@@ -211,6 +274,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **Redis** (optionnel) - Pour le cache
 - **PostgreSQL** (optionnel) - Pour la base de données
 - **MinIO** (optionnel) - Pour le stockage d'objets
+- **Traefik** - Pour le reverse proxy
+- **Portainer** - Pour la gestion de Docker
 
 ### Packaging Application
 - **Tauri CLI** - Pour le packaging
@@ -219,6 +284,8 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **nsis** - Pour les installateurs Windows
 - **appimagetool** - Pour les packages Linux
 - **create-dmg** - Pour les packages macOS
+- **wix** - Pour les installateurs Windows
+- **inno setup** - Pour les installateurs Windows
 
 ## 10. Outils de Développement
 
@@ -240,6 +307,7 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - **coverage** - Pour la couverture de tests
 - **mutation-testing** - Pour les tests de mutation
 - **property-based-testing** - Pour les tests basés sur les propriétés
+- **benchmark** - Pour les tests de performance
 
 ## Système de Préchargement
 
@@ -247,6 +315,10 @@ Ce document détaille les technologies, bibliothèques et outils spécifiques qu
 - @tauri-apps/api/core
 - react
 - zustand (pour le store global)
+- react-query (pour le cache)
+- axios (pour les requêtes HTTP)
+- retry (pour les retries)
+- backoff (pour le backoff exponentiel)
 
 ### Configuration
 ```typescript

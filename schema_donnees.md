@@ -6,187 +6,159 @@ Le schéma de données est conçu pour supporter une application desktop locale 
 
 ## Tables Principales
 
-### 1. Tables de Base
-
-#### users
+### Users
 ```sql
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
+    id UUID PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
-    preferences JSON,
-    settings JSON
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-#### profiles
+### User Profiles
 ```sql
-CREATE TABLE profiles (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    full_name TEXT,
-    current_position TEXT,
-    summary TEXT,
-    skills JSON,
-    experiences JSON,
-    education JSON,
-    languages JSON,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+CREATE TABLE user_profiles (
+    user_id UUID PRIMARY KEY REFERENCES users(id),
+    name TEXT,
+    phone TEXT,
+    location TEXT,
+    primary_home TEXT,
+    secondary_home TEXT,
+    skills TEXT[],
+    experience TEXT,
+    education TEXT,
+    cv_path TEXT,
+    cv_last_updated TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-#### jobs
+### Jobs
 ```sql
 CREATE TABLE jobs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    source TEXT NOT NULL,
-    source_id TEXT NOT NULL,
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
     title TEXT NOT NULL,
     company TEXT NOT NULL,
     location TEXT NOT NULL,
-    description TEXT,
-    requirements TEXT,
+    job_type TEXT NOT NULL,
+    posted_at TIMESTAMP NOT NULL,
+    experience_level TEXT NOT NULL,
     salary_min INTEGER,
     salary_max INTEGER,
+    salary_currency TEXT,
+    salary_period TEXT,
+    description TEXT NOT NULL,
     url TEXT,
-    posted_at TIMESTAMP,
-    expires_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    UNIQUE(source, source_id)
+    remote BOOLEAN DEFAULT FALSE,
+    skills TEXT[],
+    source TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-### 2. Tables de Gestion
-
-#### applications
+### Applications
 ```sql
 CREATE TABLE applications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    job_id INTEGER NOT NULL,
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    job_id UUID REFERENCES jobs(id),
     status TEXT NOT NULL,
-    applied_at TIMESTAMP,
-    response_received BOOLEAN DEFAULT FALSE,
+    applied_at TIMESTAMP NOT NULL,
     notes TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
+    cv_path TEXT,
+    cover_letter_path TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-#### documents
+### Documents
 ```sql
 CREATE TABLE documents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    type TEXT NOT NULL,
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    document_type TEXT NOT NULL,
     content TEXT,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-### 3. Tables de Configuration
-
-#### search_preferences
+### Application Stages
 ```sql
-CREATE TABLE search_preferences (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    keywords JSON,
-    locations JSON,
-    salary_range JSON,
-    job_types JSON,
-    experience_levels JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+CREATE TABLE application_stages (
+    id UUID PRIMARY KEY,
+    application_id UUID REFERENCES applications(id),
+    stage_type TEXT NOT NULL,
+    scheduled_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    notes TEXT,
+    outcome TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-#### notification_settings
+### Application Notes
 ```sql
-CREATE TABLE notification_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    email_notifications BOOLEAN DEFAULT TRUE,
-    desktop_notifications BOOLEAN DEFAULT TRUE,
-    notification_frequency TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+CREATE TABLE application_notes (
+    id UUID PRIMARY KEY,
+    application_id UUID REFERENCES applications(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-### 4. Tables d'Analyse
-
-#### job_matches
+### Application Documents
 ```sql
-CREATE TABLE job_matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    job_id INTEGER NOT NULL,
-    score FLOAT NOT NULL,
-    match_details JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
+CREATE TABLE application_documents (
+    id UUID PRIMARY KEY,
+    application_id UUID REFERENCES applications(id),
+    document_type TEXT NOT NULL,
+    file_path TEXT,
+    content TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 ```
 
-#### feedback_analysis
+## Relations
+
+- Un utilisateur a un profil (`users` -> `user_profiles`)
+- Un utilisateur peut avoir plusieurs offres (`users` -> `jobs`)
+- Une offre peut avoir plusieurs candidatures (`jobs` -> `applications`)
+- Une candidature peut avoir plusieurs étapes (`applications` -> `application_stages`)
+- Une candidature peut avoir plusieurs notes (`applications` -> `application_notes`)
+- Une candidature peut avoir plusieurs documents (`applications` -> `application_documents`)
+- Un utilisateur peut avoir plusieurs documents (`users` -> `documents`)
+
+## Index
+
 ```sql
-CREATE TABLE feedback_analysis (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    job_id INTEGER NOT NULL,
-    feedback_type TEXT NOT NULL,
-    feedback_data JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
-);
+-- Index pour les recherches fréquentes
+CREATE INDEX idx_jobs_user_id ON jobs(user_id);
+CREATE INDEX idx_applications_user_id ON applications(user_id);
+CREATE INDEX idx_applications_job_id ON applications(job_id);
+CREATE INDEX idx_documents_user_id ON documents(user_id);
+CREATE INDEX idx_application_stages_application_id ON application_stages(application_id);
+CREATE INDEX idx_application_notes_application_id ON application_notes(application_id);
+CREATE INDEX idx_application_documents_application_id ON application_documents(application_id);
 ```
 
-### 5. Tables de Géolocalisation
+## Contraintes
 
-#### locations
-```sql
-CREATE TABLE locations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    address TEXT NOT NULL,
-    latitude FLOAT,
-    longitude FLOAT,
-    is_primary BOOLEAN DEFAULT FALSE,
-    transport_preferences JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-```
-
-#### transport_times
-```sql
-CREATE TABLE transport_times (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    location_id INTEGER NOT NULL,
-    job_id INTEGER NOT NULL,
-    mode TEXT NOT NULL,
-    duration INTEGER,
-    distance FLOAT,
-    route_data JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    FOREIGN KEY (location_id) REFERENCES locations(id),
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
-);
-```
+- Clés étrangères pour maintenir l'intégrité des données
+- Valeurs uniques pour les emails des utilisateurs
+- Valeurs non nulles pour les champs obligatoires
+- Types de données appropriés pour chaque champ
 
 ## Index et Optimisations
 
@@ -296,3 +268,115 @@ END;
 - VACUUM régulier
 - ANALYZE des statistiques
 - Réindexation périodique
+
+## Implémentation avec sqlx
+
+### Modèles Rust
+```rust
+use sqlx::FromRow;
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
+
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct User {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
+    pub password_hash: String,
+    pub created_at: DateTime<Utc>,
+    pub last_login: Option<DateTime<Utc>>,
+    pub preferences: serde_json::Value,
+    pub settings: serde_json::Value,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct Profile {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub full_name: Option<String>,
+    pub current_position: Option<String>,
+    pub summary: Option<String>,
+    pub skills: serde_json::Value,
+    pub experiences: serde_json::Value,
+    pub education: serde_json::Value,
+    pub languages: serde_json::Value,
+}
+```
+
+### Requêtes SQLx
+```rust
+// Exemple de requête avec sqlx
+async fn get_user_by_id(
+    pool: &sqlx::Pool<sqlx::Sqlite>,
+    user_id: Uuid,
+) -> Result<User, sqlx::Error> {
+    sqlx::query_as!(
+        User,
+        r#"
+        SELECT * FROM users
+        WHERE id = ?
+        "#,
+        user_id
+    )
+    .fetch_one(pool)
+    .await
+}
+
+// Exemple de transaction
+async fn create_user_with_profile(
+    pool: &sqlx::Pool<sqlx::Sqlite>,
+    user: User,
+    profile: Profile,
+) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    
+    sqlx::query!(
+        r#"
+        INSERT INTO users (id, username, email, password_hash, created_at, preferences, settings)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        "#,
+        user.id,
+        user.username,
+        user.email,
+        user.password_hash,
+        user.created_at,
+        user.preferences,
+        user.settings
+    )
+    .execute(&mut tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        INSERT INTO profiles (id, user_id, full_name, current_position, summary, skills, experiences, education, languages)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        profile.id,
+        profile.user_id,
+        profile.full_name,
+        profile.current_position,
+        profile.summary,
+        profile.skills,
+        profile.experiences,
+        profile.education,
+        profile.languages
+    )
+    .execute(&mut tx)
+    .await?;
+
+    tx.commit().await
+}
+```
+
+### Migrations
+Les migrations sont gérées avec sqlx-cli :
+```bash
+# Créer une nouvelle migration
+sqlx migrate add <nom_migration>
+
+# Appliquer les migrations
+sqlx migrate run
+
+# Vérifier l'état des migrations
+sqlx migrate info
+```

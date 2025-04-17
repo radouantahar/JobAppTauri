@@ -1,14 +1,31 @@
-import { render, act } from '@testing-library/react';
+/// <reference types="vitest/globals" />
+import React from 'react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { KanbanForm } from '../KanbanForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { useKanban } from '../../hooks/useKanban';
 
-// Mock des hooks
-jest.mock('../../contexts/AuthContext');
-jest.mock('../../hooks/useKanban');
+// Mock de window.performance.memory
+const mockPerformance = {
+  memory: {
+    usedJSHeapSize: 0,
+    totalJSHeapSize: 0,
+    jsHeapSizeLimit: 0,
+  },
+};
 
-const mockUseAuth = useAuth as jest.Mock;
-const mockUseKanban = useKanban as jest.Mock;
+Object.defineProperty(window, 'performance', {
+  value: mockPerformance,
+  writable: true,
+});
+
+// Mock des hooks
+vi.mock('../../contexts/AuthContext');
+vi.mock('../../hooks/useKanban');
+
+const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
+const mockUseKanban = useKanban as ReturnType<typeof vi.fn>;
 
 describe('KanbanForm Performance Tests', () => {
   const mockKanban = {
@@ -54,8 +71,8 @@ describe('KanbanForm Performance Tests', () => {
       kanban: mockKanban,
       isLoading: false,
       error: null,
-      createKanban: jest.fn(),
-      updateKanban: jest.fn(),
+      createKanban: vi.fn(),
+      updateKanban: vi.fn(),
     });
   });
 
@@ -77,8 +94,8 @@ describe('KanbanForm Performance Tests', () => {
       kanban: null,
       isLoading: true,
       error: null,
-      createKanban: jest.fn(),
-      updateKanban: jest.fn(),
+      createKanban: vi.fn(),
+      updateKanban: vi.fn(),
     });
 
     const startTime = performance.now();
@@ -98,8 +115,8 @@ describe('KanbanForm Performance Tests', () => {
       kanban: null,
       isLoading: false,
       error: new Error('Erreur de chargement'),
-      createKanban: jest.fn(),
-      updateKanban: jest.fn(),
+      createKanban: vi.fn(),
+      updateKanban: vi.fn(),
     });
 
     const startTime = performance.now();
@@ -154,8 +171,8 @@ describe('KanbanForm Performance Tests', () => {
       kanban: largeKanban,
       isLoading: false,
       error: null,
-      createKanban: jest.fn(),
-      updateKanban: jest.fn(),
+      createKanban: vi.fn(),
+      updateKanban: vi.fn(),
     });
 
     const startTime = performance.now();

@@ -4,3 +4,8 @@ pub fn run() {
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
+
+pub mod commands;
+pub mod models;
+pub mod auth;
+pub mod error;

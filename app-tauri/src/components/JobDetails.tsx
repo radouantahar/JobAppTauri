@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Card, Text, Group, Badge, Button, Stack, ActionIcon } from '@mantine/core';
 import { IconHeart, IconShare } from '@tabler/icons-react';
 import { useAppStore } from '../store';
-import type { Job } from '../types';
+import type { Job } from '../types/job';
 import classes from './JobDetails.module.css';
 
 interface JobDetailsProps {

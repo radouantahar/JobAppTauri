@@ -79,4 +79,6 @@ export const JobSearch: React.FC = () => {
       </Stack>
     </Container>
   );
-}; 
+};
+
+export default JobSearch; 

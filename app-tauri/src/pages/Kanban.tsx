@@ -1,87 +1,136 @@
-import React, { useEffect } from 'react';
-import { useKanbanBoard } from '../hooks/useKanbanBoard';
-import { KanbanCard } from '../types';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
+import { Container, Title, SimpleGrid, Button, Group } from '@mantine/core';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { kanbanService } from '../services/kanban';
+import { useAuth } from '../contexts/AuthContext';
+import { KanbanCardForm } from '../components/KanbanCardForm';
+import KanbanColumn from '../components/KanbanColumn';
+import { KanbanCard } from '../types/kanban';
+import { useNavigate } from 'react-router-dom';
+import { createISODateString } from '../types/core';
+import type { Job } from '../types/job';
 
-const KanbanColumn: React.FC<{
-  title: string;
-  cards: KanbanCard[];
-}> = ({ title, cards }) => {
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Non spécifié';
+const COLUMNS = [
+  { id: 'todo', title: 'Candidatures envoyées' },
+  { id: 'in-progress', title: 'Entretiens' },
+  { id: 'done', title: 'Offres' },
+  { id: 'rejected', title: 'Refusés' },
+];
+
+export function Kanban() {
+  const { user } = useAuth();
+  const [cards, setCards] = useState<KanbanCard[]>([]);
+  const [isFormOpened, setIsFormOpened] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<KanbanCard | undefined>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      loadCards();
+    }
+  }, [user]);
+
+  const loadCards = async () => {
     try {
-      return format(new Date(dateString), 'PPP', { locale: fr });
+      const userCards = await kanbanService.getCards(user!.id);
+      const mappedCards: KanbanCard[] = userCards.map((card: Partial<Job> & { id: string; status: string }) => ({
+        id: card.id,
+        jobId: card.id,
+        title: card.title || '',
+        company: card.company || '',
+        location: card.location || '',
+        type: card.type || 'CDI',
+        url: card.url || '',
+        description: card.description || '',
+        experienceLevel: card.experienceLevel || 'mid',
+        jobType: card.jobType || 'full-time',
+        publishedAt: card.publishedAt || new Date().toISOString(),
+        status: card.status as 'todo' | 'in-progress' | 'done',
+        createdAt: createISODateString(new Date().toISOString()),
+        updatedAt: createISODateString(new Date().toISOString()),
+        notes: '',
+        interviews: [],
+        salary: card.salary,
+        skills: card.skills || [],
+        remote: card.remote || false,
+        source: card.source || 'linkedin',
+        matchingScore: card.matchingScore || 0,
+        commuteTimes: card.commuteTimes || [],
+        contractType: card.contractType || 'CDI'
+      }));
+      setCards(mappedCards);
     } catch (error) {
-      return 'Date invalide';
+      console.error('Erreur lors du chargement des cartes:', error);
     }
   };
 
-  return (
-    <div className="flex-1 p-4 bg-gray-100 rounded-lg">
-      <h2 className="text-lg font-semibold mb-4">{title}</h2>
-      <div className="space-y-4">
-        {cards.map(card => (
-          <div key={card.id} className="kanban-card">
-            <h3>{card.title}</h3>
-            <p>{card.description}</p>
-            <p>Dernière mise à jour : {formatDate(card.updatedAt)}</p>
-            {card.notes && <p>Notes : {card.notes}</p>}
-            {card.interviews && card.interviews.length > 0 && (
-              <div className="interviews">
-                <h4>Entretiens :</h4>
-                {card.interviews.map((interview, index) => (
-                  <p key={index}>
-                    {interview.type} - {formatDate(interview.date)}
-                    {interview.notes && <span> - {interview.notes}</span>}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
 
-const Kanban: React.FC = () => {
-  const { cards, isLoading, error, fetchCards } = useKanbanBoard();
+    const { draggableId, destination } = result;
+    const card = cards.find((c) => c.id === draggableId);
 
-  useEffect(() => {
-    fetchCards();
-  }, [fetchCards]);
+    if (card && card.status !== destination.droppableId) {
+      try {
+        await kanbanService.updateCardStatus(draggableId, destination.droppableId);
+        setCards((prev) =>
+          prev.map((c) =>
+            c.id === draggableId ? { ...c, status: destination.droppableId as 'todo' | 'in-progress' | 'done' } : c
+          )
+        );
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+      }
+    }
+  };
 
-  if (isLoading) {
-    return <div>Chargement...</div>;
-  }
+  const handleCardClick = (card: KanbanCard) => {
+    setSelectedCard(card);
+    setIsFormOpened(true);
+    navigate(`/job/${card.id}`);
+  };
 
-  if (error) {
-    return <div>Erreur: {error.message}</div>;
-  }
-
-  const columns = {
-    'À postuler': cards.filter(card => card.status === 'À postuler'),
-    'En cours': cards.filter(card => card.status === 'En cours'),
-    'Entretiens': cards.filter(card => card.status === 'Entretiens'),
-    'Offres': cards.filter(card => card.status === 'Offres'),
-    'Refusés': cards.filter(card => card.status === 'Refusés'),
+  const handleFormSuccess = () => {
+    loadCards();
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Tableau Kanban</h1>
-      <div className="flex gap-4">
-        {Object.entries(columns).map(([title, columnCards]) => (
-          <KanbanColumn
-            key={title}
-            title={title}
-            cards={columnCards}
-          />
-        ))}
-      </div>
-    </div>
+    <Container size="xl" py="xl">
+      <Group justify="space-between" mb="xl">
+        <Title order={1}>Tableau Kanban</Title>
+        <Button onClick={() => setIsFormOpened(true)}>
+          Nouvelle candidature
+        </Button>
+      </Group>
+
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <SimpleGrid cols={4} spacing="md">
+          {COLUMNS.map((column) => (
+            <Droppable key={column.id} droppableId={column.id}>
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  <KanbanColumn
+                    title={column.title}
+                    cards={cards.filter((card) => card.status === column.id)}
+                    onCardClick={handleCardClick}
+                  />
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          ))}
+        </SimpleGrid>
+      </DragDropContext>
+
+      <KanbanCardForm
+        opened={isFormOpened}
+        onClose={() => setIsFormOpened(false)}
+        card={selectedCard}
+        onSubmit={handleFormSuccess}
+        jobId={selectedCard?.id || ''}
+      />
+    </Container>
   );
-};
+}
 
 export default Kanban;

@@ -1,41 +1,35 @@
 import { useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-
-interface Card {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  jobId: string;
-  createdAt: string;
-  updatedAt: string;
-  notes?: string;
-  interviews?: Array<{
-    date: string;
-    type: string;
-    notes: string;
-  }>;
-}
+import type { KanbanCard } from '../types';
 
 interface UseKanbanReturn {
-  card: Card | null;
+  card: KanbanCard | null;
   isLoading: boolean;
   error: Error | null;
-  updateCard: (cardData: Partial<Card>) => Promise<void>;
+  updateCard: (cardData: Partial<KanbanCard>) => Promise<void>;
   deleteCard: () => Promise<void>;
   moveCard: (newStatus: string) => Promise<void>;
 }
 
+/**
+ * Hook pour gérer une carte Kanban
+ * @param cardId - Identifiant de la carte
+ * @returns Les données et fonctions pour gérer la carte
+ */
 export const useKanban = (cardId: string): UseKanbanReturn => {
-  const [card, setCard] = useState<Card | null>(null);
+  const [card, setCard] = useState<KanbanCard | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const updateCard = useCallback(async (updates: Partial<Card>) => {
+  /**
+   * Met à jour une carte Kanban
+   * @param updates - Les données à mettre à jour
+   */
+  const updateCard = useCallback(async (updates: Partial<KanbanCard>) => {
     try {
       setIsLoading(true);
       const result = await invoke('update_kanban_card', { cardId, updates });
-      setCard(result as Card);
+      setCard(result as KanbanCard);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Erreur lors de la mise à jour'));
     } finally {
@@ -43,6 +37,9 @@ export const useKanban = (cardId: string): UseKanbanReturn => {
     }
   }, [cardId]);
 
+  /**
+   * Supprime une carte Kanban
+   */
   const deleteCard = async () => {
     try {
       setIsLoading(true);
@@ -55,10 +52,14 @@ export const useKanban = (cardId: string): UseKanbanReturn => {
     }
   };
 
+  /**
+   * Déplace une carte vers un nouveau statut
+   * @param newStatus - Le nouveau statut de la carte
+   */
   const moveCard = async (newStatus: string) => {
     try {
       setIsLoading(true);
-      const result = await invoke<Card>('move_card', { 
+      const result = await invoke<KanbanCard>('move_card', { 
         cardId,
         newStatus 
       });

@@ -1,7 +1,8 @@
 import { memo, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Stack, Text, LoadingOverlay } from '@mantine/core';
 import { JobCard } from '../JobCard';
-import type { Job } from '../../types';
+import type { Job } from '../../types/job';
+import styles from '../../styles/components/SearchResults.module.css';
 
 interface SearchResultsProps {
   jobs: Job[];
@@ -36,15 +37,15 @@ export const SearchResults = memo(function SearchResults({
 
   const loadingIndicator = useMemo(() => 
     hasMore && (
-      <div ref={loadMoreRef}>
-        <LoadingOverlay visible={isLoading} />
+      <div ref={loadMoreRef} className={styles.loadingOverlay}>
+        <LoadingOverlay visible={isLoading} data-testid="loading-overlay" />
       </div>
     )
   , [hasMore, isLoading, loadMoreRef]);
 
   const noResultsMessage = useMemo(() => 
     !isLoading && jobs.length === 0 && (
-      <Text ta="center" c="dimmed">
+      <Text className={styles.emptyState}>
         Aucune offre trouvée
       </Text>
     )
@@ -67,10 +68,12 @@ export const SearchResults = memo(function SearchResults({
   }, [isLoading, hasMore, loadMoreRef]);
 
   return (
-    <Stack gap="md" ref={containerRef}>
-      {jobCards}
-      {loadingIndicator}
-      {noResultsMessage}
-    </Stack>
+    <div className={styles.container}>
+      <div className={styles.resultsGrid} ref={containerRef}>
+        {jobCards}
+        {loadingIndicator}
+        {noResultsMessage}
+      </div>
+    </div>
   );
 }); 
