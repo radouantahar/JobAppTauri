@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from '@mantine/form';
 import { TextInput, Select, NumberInput, Textarea, Button, Group, Stack } from '@mantine/core';
-import type { Job, JobType, ExperienceLevel, SalaryRange } from '../types/index';
+import type { Job, JobType, ExperienceLevel, Salary } from '../types/job';
 
 /**
  * Props pour le composant JobForm
@@ -17,22 +17,21 @@ interface JobFormProps {
  * Options pour les types de contrats
  */
 const jobTypes: { value: JobType; label: string }[] = [
-  { value: 'full-time', label: 'CDI' },
-  { value: 'part-time', label: 'CDD' },
-  { value: 'internship', label: 'Stage' },
-  { value: 'contract', label: 'Freelance' },
-  { value: 'temporary', label: 'Intérim' },
+  { value: 'CDI', label: 'CDI' },
+  { value: 'CDD', label: 'CDD' },
+  { value: 'Stage', label: 'Stage' },
+  { value: 'Alternance', label: 'Alternance' },
+  { value: 'Freelance', label: 'Freelance' },
 ];
 
 /**
  * Options pour les niveaux d'expérience
  */
 const experienceLevels: { value: ExperienceLevel; label: string }[] = [
-  { value: 'entry', label: 'Débutant' },
+  { value: 'junior', label: 'Débutant' },
   { value: 'mid', label: 'Confirmé' },
   { value: 'senior', label: 'Senior' },
-  { value: 'lead', label: 'Expert' },
-  { value: 'executive', label: 'Directeur' },
+  { value: 'expert', label: 'Expert' },
 ];
 
 /**
@@ -46,15 +45,15 @@ export const JobForm: React.FC<JobFormProps> = ({ onSubmit, initialValues }) => 
       title: '',
       company: '',
       location: '',
-      jobType: 'full-time',
+      jobType: 'CDI',
       description: '',
       salary: {
         min: 0,
         max: 0,
         currency: 'EUR',
         period: 'year',
-      } as SalaryRange,
-      experienceLevel: 'entry',
+      } as Salary,
+      experienceLevel: 'junior',
       ...initialValues,
     },
   });

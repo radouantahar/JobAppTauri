@@ -1,10 +1,11 @@
 use crate::models::User;
 use tauri::State;
-use tauri_plugin_sql::SqlitePool;
+use tauri_plugin_sql::{SqlitePool, Row};
 use serde::{Deserialize, Serialize};
 use chrono::Utc;
 use uuid::Uuid;
 use bcrypt::{hash, verify, DEFAULT_COST};
+use std::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterRequest {
@@ -32,10 +33,17 @@ pub async fn register(
     password: String,
     first_name: String,
     last_name: String,
-    pool: State<'_, SqlitePool>,
+    db: State<'_, TauriSql>,
 ) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+
     // Vérifier si l'utilisateur existe déjà
-    if let Some(_) = User::find_by_email(&pool, &email).await.map_err(|e| e.to_string())? {
+    let mut rows = conn.query(
+        "SELECT * FROM users WHERE email = ?",
+        &[&email],
+    ).map_err(|e| e.to_string())?;
+
+    if rows.next().map_err(|e| e.to_string())?.is_some() {
         return Err("Email already exists".to_string());
     }
 
@@ -43,18 +51,24 @@ pub async fn register(
     let password_hash = hash(password, DEFAULT_COST).map_err(|e| e.to_string())?;
 
     // Créer l'utilisateur
-    let user = User {
-        id: Uuid::new_v4(),
-        email,
-        password_hash,
-        first_name,
-        last_name,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let user_id = Uuid::new_v4();
+    let now = Utc::now().to_string();
 
-    // Sauvegarder l'utilisateur
-    user.create(&pool).await.map_err(|e| e.to_string())?;
+    conn.execute(
+        r#"
+        INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &email,
+            &password_hash,
+            &first_name,
+            &last_name,
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -63,13 +77,20 @@ pub async fn register(
 pub async fn login(
     email: String,
     password: String,
-    pool: State<'_, SqlitePool>,
+    db: State<'_, TauriSql>,
 ) -> Result<User, String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+
     // Trouver l'utilisateur
-    let user = User::find_by_email(&pool, &email)
-        .await
-        .map_err(|e| e.to_string())?
+    let mut rows = conn.query(
+        "SELECT * FROM users WHERE email = ?",
+        &[&email],
+    ).map_err(|e| e.to_string())?;
+
+    let row = rows.next().map_err(|e| e.to_string())?
         .ok_or_else(|| "User not found".to_string())?;
+
+    let user = User::from(row);
 
     // Vérifier le mot de passe
     if !verify(password, &user.password_hash).map_err(|e| e.to_string())? {
@@ -87,21 +108,20 @@ pub async fn logout() -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_current_user(
-    db: State<'_, SqlitePool>,
+    db: State<'_, TauriSql>,
 ) -> Result<Option<User>, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
     // Pour l'instant, on retourne le premier utilisateur
     // TODO: Implémenter la gestion des tokens pour récupérer l'utilisateur actuel
-    let user: Option<User> = sqlx::query_as!(
-        User,
-        r#"
-        SELECT * FROM users LIMIT 1
-        "#
-    )
-    .fetch_optional(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM users LIMIT 1",
+        &[],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(user)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(Some(User::from(row)))
+    } else {
+        Ok(None)
+    }
 } 

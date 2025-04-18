@@ -1,10 +1,10 @@
-use rusqlite::{Connection, Result};
+use tauri_plugin_sql::{SqlitePool, Result};
 use std::path::PathBuf;
 use tauri::api::path::app_data_dir;
 use tauri::Config;
 
 pub struct DatabaseConfig {
-    pub connection: Connection,
+    pub pool: SqlitePool,
 }
 
 impl DatabaseConfig {
@@ -16,14 +16,14 @@ impl DatabaseConfig {
         std::fs::create_dir_all(&app_data_path)?;
         
         let db_path = app_data_path.join("database.sqlite");
-        let connection = Connection::open(db_path)?;
+        let pool = SqlitePool::new(&db_path.to_string_lossy())?;
         
-        Ok(Self { connection })
+        Ok(Self { pool })
     }
 
     pub fn init_tables(&self) -> Result<()> {
         // Table des utilisateurs
-        self.connection.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT UNIQUE NOT NULL,
@@ -32,11 +32,11 @@ impl DatabaseConfig {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )",
-            [],
+            &[],
         )?;
 
         // Table des profils utilisateurs
-        self.connection.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -51,77 +51,57 @@ impl DatabaseConfig {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )",
-            [],
-        )?;
-
-        // Table des offres d'emploi
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                company TEXT NOT NULL,
-                location TEXT,
-                description TEXT,
-                requirements TEXT,
-                salary_min INTEGER,
-                salary_max INTEGER,
-                salary_currency TEXT,
-                salary_period TEXT,
-                url TEXT,
-                source TEXT,
-                status TEXT DEFAULT 'new',
-                matching_score REAL,
-                user_id INTEGER NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )",
-            [],
-        )?;
-
-        // Table des temps de trajet
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS commute_times (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                job_id INTEGER NOT NULL,
-                home_type TEXT NOT NULL,
-                duration INTEGER NOT NULL,
-                distance REAL NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (job_id) REFERENCES jobs(id)
-            )",
-            [],
+            &[],
         )?;
 
         // Table des documents
-        self.connection.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS documents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 name TEXT NOT NULL,
-                type TEXT NOT NULL,
                 path TEXT NOT NULL,
+                type TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )",
-            [],
+            &[],
         )?;
 
-        // Table des modèles de documents
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS document_templates (
+        // Table des emplois
+        self.pool.execute(
+            "CREATE TABLE IF NOT EXISTS jobs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                content TEXT NOT NULL,
+                title TEXT NOT NULL,
+                company TEXT NOT NULL,
+                location TEXT,
+                description TEXT,
+                url TEXT,
+                status TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )",
-            [],
+            &[],
+        )?;
+
+        // Table des candidatures
+        self.pool.execute(
+            "CREATE TABLE IF NOT EXISTS applications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                job_id INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                applied_at TIMESTAMP,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (job_id) REFERENCES jobs(id)
+            )",
+            &[],
         )?;
 
         Ok(())

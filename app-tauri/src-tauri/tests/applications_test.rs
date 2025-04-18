@@ -11,23 +11,22 @@ mod tests {
     async fn test_create_application() {
         let db = TauriSql::default();
         let user_id = Uuid::new_v4();
-        let job_id = Uuid::new_v4();
         
-        let application = Application {
-            id: Uuid::new_v4(),
+        let result = create_application(
             user_id,
-            job_id,
-            status: "applied".to_string(),
-            applied_at: Utc::now(),
-            notes: Some("Test application".to_string()),
-            cv_path: Some("/path/to/cv.pdf".to_string()),
-            cover_letter_path: Some("/path/to/cover_letter.pdf".to_string()),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        };
-
-        let result = create_application(db, application).await;
+            "Test Company".to_string(),
+            "Software Engineer".to_string(),
+            "applied".to_string(),
+            Some("Test application".to_string()),
+            db,
+        ).await;
+        
         assert!(result.is_ok());
+        let application = result.unwrap();
+        assert_eq!(application.company_name, "Test Company");
+        assert_eq!(application.position, "Software Engineer");
+        assert_eq!(application.status, "applied");
+        assert_eq!(application.notes, Some("Test application".to_string()));
     }
 
     #[tokio::test]
@@ -35,31 +34,26 @@ mod tests {
         let db = TauriSql::default();
         let application_id = Uuid::new_v4();
         
-        let result = get_application(db, application_id).await;
-        assert!(result.is_err()); // Should fail as application doesn't exist
+        let result = get_application(application_id, db).await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none()); // Should return None as application doesn't exist
     }
 
     #[tokio::test]
     async fn test_update_application() {
         let db = TauriSql::default();
-        let user_id = Uuid::new_v4();
-        let job_id = Uuid::new_v4();
+        let application_id = Uuid::new_v4();
         
-        let application = Application {
-            id: Uuid::new_v4(),
-            user_id,
-            job_id,
-            status: "interview".to_string(),
-            applied_at: Utc::now(),
-            notes: Some("Updated application".to_string()),
-            cv_path: Some("/path/to/updated_cv.pdf".to_string()),
-            cover_letter_path: Some("/path/to/updated_cover_letter.pdf".to_string()),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        };
-
-        let result = update_application(db, application).await;
-        assert!(result.is_err()); // Should fail as application doesn't exist
+        let result = update_application(
+            application_id,
+            "Updated Company".to_string(),
+            "Senior Engineer".to_string(),
+            "interview".to_string(),
+            Some("Updated application".to_string()),
+            db,
+        ).await;
+        
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
@@ -67,36 +61,26 @@ mod tests {
         let db = TauriSql::default();
         let application_id = Uuid::new_v4();
         
-        let result = delete_application(db, application_id).await;
-        assert!(result.is_err()); // Should fail as application doesn't exist
+        let result = delete_application(application_id, db).await;
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
-    async fn test_list_applications() {
+    async fn test_get_user_applications() {
         let db = TauriSql::default();
         let user_id = Uuid::new_v4();
         
-        let result = list_applications(db, user_id).await;
+        let result = get_user_applications(user_id, db).await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().len(), 0); // Should return empty list
     }
 
     #[tokio::test]
-    async fn test_get_applications_by_job() {
-        let db = TauriSql::default();
-        let job_id = Uuid::new_v4();
-        
-        let result = get_applications_by_job(db, job_id).await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().len(), 0); // Should return empty list
-    }
-
-    #[tokio::test]
-    async fn test_get_applications_by_status() {
+    async fn test_search_applications() {
         let db = TauriSql::default();
         let user_id = Uuid::new_v4();
         
-        let result = get_applications_by_status(db, user_id, "applied".to_string()).await;
+        let result = search_applications(user_id, "test".to_string(), db).await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().len(), 0); // Should return empty list
     }

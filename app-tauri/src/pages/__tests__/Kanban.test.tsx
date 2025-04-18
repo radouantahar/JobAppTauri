@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Kanban } from '../Kanban';
+import Kanban from '../Kanban';
 import { kanbanService } from '../../services/api';
 import { useAppStore } from '../../store';
 

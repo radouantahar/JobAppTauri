@@ -1,42 +1,15 @@
 {
   "$schema": "node_modules/@tauri-apps/cli/schema.json",
+  "productName": "app-tauri",
+  "version": "0.1.0",
+  "identifier": "com.tauri.dev",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "MyJobApplication",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "fs": {
-        "all": false,
-        "scope": ["$APPDATA/*"]
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.myjobapplication.app",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "resources": [
-        "migrations/*.sql"
-      ]
-    },
+  "app": {
     "security": {
       "csp": null
     },
@@ -44,18 +17,51 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "MyJobApplication",
-        "width": 1200,
-        "height": 800
+        "title": "app-tauri",
+        "width": 800,
+        "height": 600
       }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
     ],
-    "plugins": {
-      "sql": {
-        "default": {
-          "driver": "sqlite",
-          "url": "sqlite:app.db"
-        }
+    "windows": {
+      "wix": {
+        "language": "fr-FR"
       }
+    }
+  },
+  "plugins": {
+    "shell": {
+      "all": false,
+      "open": true
+    },
+    "fs": {
+      "all": false,
+      "readFile": true,
+      "writeFile": true,
+      "readDir": true,
+      "copyFile": true,
+      "createDir": true,
+      "removeDir": true,
+      "removeFile": true,
+      "renameFile": true
+    },
+    "path": {
+      "all": true
+    },
+    "process": {
+      "all": false,
+      "exit": true,
+      "relaunch": true
     }
   }
 }

@@ -14,83 +14,33 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "1.5.6", features = [] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.5.6", features = ["shell-open"] }
-tauri-plugin-sql = { version = "0.1.0", features = ["sqlite"] }
-dotenv = "0.15"
+tauri = { version = "1.5", features = ["shell-open"] }
 tokio = { version = "1.0", features = ["full"] }
-thiserror = "1.0"
-anyhow = "1.0"
-async-trait = "0.1"
-futures = "0.3"
-chrono = { version = "0.4", features = ["serde"] }
+tauri-plugin-sql = { version = "2.0.0-rc.4", features = ["sqlite"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
-sysinfo = "0.29"
-percent-encoding = "2.3"
-url = "2.4"
-reqwest = { version = "0.11", features = ["json"] }
-base64 = "0.21"
-ring = "0.17"
-rand = "0.8"
-aes = "0.8"
-block-modes = "0.9"
-hex = "0.4"
-sha2 = "0.10"
-hmac = "0.12"
-pbkdf2 = "0.12"
-scrypt = "0.11"
-argon2 = "0.5"
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
 bcrypt = "0.15"
-jsonwebtoken = "9.1"
-oauth2 = "4.3"
-jwt = "0.16"
+argon2 = { version = "0.5", features = ["std"] }
+rand = { version = "0.8", features = ["std", "std_rng"] }
+jsonwebtoken = "9.2"
 password-hash = "0.5"
-native-tls = { version = "0.2", features = ["vendored"] }
-rustls = { version = "0.21", features = ["dangerous_configuration"] }
-webpki = "0.22"
-webpki-roots = "0.25"
-rustls-pemfile = "1.0"
-rustls-native-certs = "0.6"
-mime = "0.3"
-mime_guess = "2.0"
-multipart = "0.18"
-tempfile = "3.8"
-walkdir = "2.4"
-glob = "0.3"
-pathdiff = "0.2"
-relative-path = "1.8"
-path-absolutize = "3.1"
-path-dedot = "3.1"
-path-slash = "0.2"
-sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid", "json", "migrate"] }
-tracing = "0.1"
-tracing-subscriber = "0.3"
-tracing-appender = "0.2"
-tracing-futures = "0.2"
-tracing-log = "0.2"
-tracing-error = "0.2"
-tracing-bunyan-formatter = "0.3"
-tracing-opentelemetry = "0.20"
-opentelemetry = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_jaeger = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_stdout = "0.20"
-opentelemetry_http = "0.8"
-opentelemetry_semantic_conventions = "0.12"
-opentelemetry_otlp = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_zipkin = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_datadog = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_contrib = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_stackdriver = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_prometheus = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_metrics = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_sdk = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_api = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_core = { version = "0.20", features = ["rt-tokio"] }
-opentelemetry_util = { version = "0.20", features = ["rt-tokio"] }
+base64 = "0.21"
+log = "0.4"
+env_logger = "0.10"
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+pretty_assertions = "1.4"
+test-log = "0.2"
+tempfile = "3.10"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

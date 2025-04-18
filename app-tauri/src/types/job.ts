@@ -3,14 +3,21 @@
  */
 
 export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'other';
-export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary';
-export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
+export type JobType = 'CDI' | 'CDD' | 'Stage' | 'Alternance' | 'Freelance';
+export type ExperienceLevel = 'junior' | 'mid' | 'senior' | 'expert';
 export type CommuteMode = 'driving' | 'transit' | 'walking' | 'bicycling';
 
+export interface Salary {
+  min: number;
+  max: number;
+  currency: string;
+  period: 'hour' | 'day' | 'week' | 'month' | 'year';
+}
+
 export interface CommuteTime {
+  mode: CommuteMode;
   duration: number;
   distance: number;
-  mode: CommuteMode;
 }
 
 export interface Job {
@@ -18,24 +25,15 @@ export interface Job {
   title: string;
   company: string;
   location: string;
-  type: string;
-  url: string;
-  description?: string;
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-    period: string;
-  };
+  type: JobType;
+  postedAt: string;
   experienceLevel: ExperienceLevel;
+  salary: Salary;
+  description: string;
+  url: string;
+  remote: boolean;
+  skills: string[];
   jobType: JobType;
-  publishedAt: string;
-  postedAt?: string;
-  skills?: string[];
-  remote?: boolean;
-  source?: JobSource;
-  matchingScore?: number;
-  commuteTimes?: CommuteTime[];
-  contractType?: string;
-  createdAt?: string;
+  commuteTimes: CommuteTime[];
+  source: JobSource;
 } 

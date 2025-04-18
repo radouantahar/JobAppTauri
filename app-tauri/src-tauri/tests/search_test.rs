@@ -1,9 +1,8 @@
 use crate::commands::search::{search_jobs, SearchCriteria};
 use crate::AppState;
-use rusqlite::Connection;
+use tauri_plugin_sql::TauriSql;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tauri_plugin_sql::TauriSql;
 use chrono::Utc;
 
 #[cfg(test)]
@@ -57,8 +56,9 @@ mod tests {
 
 #[tokio::test]
 async fn test_search_jobs() {
-    // Créer une connexion à la base de données en mémoire
-    let conn = Connection::open_in_memory().unwrap();
+    // Créer une connexion à la base de données
+    let db = TauriSql::default();
+    let conn = db.get("sqlite:test.db").unwrap();
     
     // Créer la table jobs
     conn.execute(
@@ -78,7 +78,7 @@ async fn test_search_jobs() {
             remote BOOLEAN NOT NULL,
             source TEXT NOT NULL
         )",
-        [],
+        &[],
     )
     .unwrap();
 
@@ -88,41 +88,39 @@ async fn test_search_jobs() {
             title, company, location, job_type, salary_min, salary_max,
             description, url, posted_at, experience_level, skills, remote, source
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        rusqlite::params![
-            "Développeur React",
-            "Tech Corp",
-            "Paris",
-            "CDI",
-            40000,
-            60000,
-            "Description du poste",
-            "https://example.com/job",
-            "2024-01-01",
-            "mid",
-            r#"["React", "TypeScript"]"#,
-            true,
-            "linkedin"
+        &[
+            &"Développeur React",
+            &"Tech Corp",
+            &"Paris",
+            &"CDI",
+            &40000,
+            &60000,
+            &"Description du poste",
+            &"https://example.com/job",
+            &"2024-01-01",
+            &"mid",
+            &r#"["React", "TypeScript"]"#,
+            &true,
+            &"linkedin"
         ],
     )
     .unwrap();
 
     // Créer l'état de l'application
     let state = AppState {
-        db: Arc::new(Mutex::new(Some(conn))),
+        db: Arc::new(Mutex::new(Some(db))),
     };
 
     // Test 1: Recherche par mot-clé
     let criteria = SearchCriteria {
-        keywords: "React".to_string(),
-        location: "".to_string(),
-        salary_min: None,
-        salary_max: None,
-        contract_types: vec![],
-        experience_levels: vec![],
-        remote: None,
-        skills: vec![],
+        keywords: vec!["React".to_string()],
+        location: None,
+        radius: None,
+        min_salary: None,
+        job_type: None,
+        experience_level: None,
+        remote_preference: None,
         date_posted: None,
-        sort_by: None,
     };
 
     let results = search_jobs(state.clone(), criteria).await.unwrap();
@@ -131,16 +129,14 @@ async fn test_search_jobs() {
 
     // Test 2: Recherche par localisation
     let criteria = SearchCriteria {
-        keywords: "".to_string(),
-        location: "Paris".to_string(),
-        salary_min: None,
-        salary_max: None,
-        contract_types: vec![],
-        experience_levels: vec![],
-        remote: None,
-        skills: vec![],
+        keywords: vec![],
+        location: Some("Paris".to_string()),
+        radius: None,
+        min_salary: None,
+        job_type: None,
+        experience_level: None,
+        remote_preference: None,
         date_posted: None,
-        sort_by: None,
     };
 
     let results = search_jobs(state.clone(), criteria).await.unwrap();
@@ -149,16 +145,14 @@ async fn test_search_jobs() {
 
     // Test 3: Recherche par type de contrat
     let criteria = SearchCriteria {
-        keywords: "".to_string(),
-        location: "".to_string(),
-        salary_min: None,
-        salary_max: None,
-        contract_types: vec!["CDI".to_string()],
-        experience_levels: vec![],
-        remote: None,
-        skills: vec![],
+        keywords: vec![],
+        location: None,
+        radius: None,
+        min_salary: None,
+        job_type: Some("CDI".to_string()),
+        experience_level: None,
+        remote_preference: None,
         date_posted: None,
-        sort_by: None,
     };
 
     let results = search_jobs(state.clone(), criteria).await.unwrap();
@@ -167,16 +161,14 @@ async fn test_search_jobs() {
 
     // Test 4: Recherche par salaire
     let criteria = SearchCriteria {
-        keywords: "".to_string(),
-        location: "".to_string(),
-        salary_min: Some(35000),
-        salary_max: Some(65000),
-        contract_types: vec![],
-        experience_levels: vec![],
-        remote: None,
-        skills: vec![],
+        keywords: vec![],
+        location: None,
+        radius: None,
+        min_salary: Some(35000.0),
+        job_type: None,
+        experience_level: None,
+        remote_preference: None,
         date_posted: None,
-        sort_by: None,
     };
 
     let results = search_jobs(state.clone(), criteria).await.unwrap();
@@ -186,16 +178,14 @@ async fn test_search_jobs() {
 
     // Test 5: Recherche par compétences
     let criteria = SearchCriteria {
-        keywords: "".to_string(),
-        location: "".to_string(),
-        salary_min: None,
-        salary_max: None,
-        contract_types: vec![],
-        experience_levels: vec![],
-        remote: None,
-        skills: vec!["React".to_string()],
+        keywords: vec![],
+        location: None,
+        radius: None,
+        min_salary: None,
+        job_type: None,
+        experience_level: None,
+        remote_preference: None,
         date_posted: None,
-        sort_by: None,
     };
 
     let results = search_jobs(state.clone(), criteria).await.unwrap();
@@ -205,8 +195,9 @@ async fn test_search_jobs() {
 
 #[tokio::test]
 async fn test_get_job_details() {
-    // Créer une connexion à la base de données en mémoire
-    let conn = Connection::open_in_memory().unwrap();
+    // Créer une connexion à la base de données
+    let db = TauriSql::default();
+    let conn = db.get("sqlite:test.db").unwrap();
     
     // Créer la table jobs
     conn.execute(
@@ -226,7 +217,7 @@ async fn test_get_job_details() {
             remote BOOLEAN NOT NULL,
             source TEXT NOT NULL
         )",
-        [],
+        &[],
     )
     .unwrap();
 
@@ -236,27 +227,27 @@ async fn test_get_job_details() {
             title, company, location, job_type, salary_min, salary_max,
             description, url, posted_at, experience_level, skills, remote, source
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        rusqlite::params![
-            "Développeur React",
-            "Tech Corp",
-            "Paris",
-            "CDI",
-            40000,
-            60000,
-            "Description du poste",
-            "https://example.com/job",
-            "2024-01-01",
-            "mid",
-            r#"["React", "TypeScript"]"#,
-            true,
-            "linkedin"
+        &[
+            &"Développeur React",
+            &"Tech Corp",
+            &"Paris",
+            &"CDI",
+            &40000,
+            &60000,
+            &"Description du poste",
+            &"https://example.com/job",
+            &"2024-01-01",
+            &"mid",
+            &r#"["React", "TypeScript"]"#,
+            &true,
+            &"linkedin"
         ],
     )
     .unwrap();
 
     // Créer l'état de l'application
     let state = AppState {
-        db: Arc::new(Mutex::new(Some(conn))),
+        db: Arc::new(Mutex::new(Some(db))),
     };
 
     // Test 1: Récupérer un job existant

@@ -1,48 +1,53 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from './SearchResults';
-import { Job, JobType, ExperienceLevel, createISODateString } from '../types';
+import { Job, JobType, ExperienceLevel, JobSource } from '../types/job';
+import { createISODateString } from '../types/core';
 import { createMockJob } from '../__tests__/helpers';
 
 const mockJobs: Job[] = [
   createMockJob({
     id: '1',
-    title: 'Développeur Frontend',
+    title: 'Développeur Full Stack',
     company: 'Tech Corp',
     location: 'Paris',
-    jobType: 'full-time' as JobType,
+    type: 'CDI' as JobType,
+    postedAt: createISODateString(new Date().toISOString()),
     experienceLevel: 'mid' as ExperienceLevel,
-    publishedAt: createISODateString('2024-03-15'),
     salary: {
-      min: 45000,
-      max: 65000,
+      min: 40000,
+      max: 60000,
       currency: 'EUR',
       period: 'year'
     },
-    skills: ['React', 'TypeScript'],
-    matchingScore: 0.85,
+    description: 'Description du poste',
+    url: 'https://example.com/job/1',
     remote: false,
-    contractType: 'permanent',
-    createdAt: createISODateString('2024-03-15T10:00:00Z')
+    skills: ['React', 'TypeScript'],
+    jobType: 'CDI' as JobType,
+    commuteTimes: [],
+    source: 'linkedin' as JobSource
   }),
   createMockJob({
     id: '2',
-    title: 'Développeur Backend',
-    company: 'Data Systems',
+    title: 'Ingénieur DevOps',
+    company: 'Cloud Inc',
     location: 'Lyon',
-    jobType: 'full-time' as JobType,
+    type: 'CDI' as JobType,
+    postedAt: createISODateString(new Date().toISOString()),
     experienceLevel: 'senior' as ExperienceLevel,
-    publishedAt: createISODateString('2024-03-14'),
     salary: {
-      min: 55000,
-      max: 75000,
+      min: 50000,
+      max: 70000,
       currency: 'EUR',
       period: 'year'
     },
-    skills: ['Python', 'FastAPI'],
-    matchingScore: 0.9,
-    remote: false,
-    contractType: 'permanent',
-    createdAt: createISODateString('2024-03-14T10:00:00Z')
+    description: 'Description du poste',
+    url: 'https://example.com/job/2',
+    remote: true,
+    skills: ['Docker', 'Kubernetes'],
+    jobType: 'CDI' as JobType,
+    commuteTimes: [],
+    source: 'linkedin' as JobSource
   })
 ];
 

@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result};
+use tauri_plugin_sql::{SqlitePool, Result};
 
 pub struct Migration {
     pub version: i32,
@@ -8,13 +8,13 @@ pub struct Migration {
 }
 
 impl Migration {
-    pub fn execute(&self, conn: &Connection) -> Result<()> {
-        conn.execute(self.up, [])?;
+    pub fn execute(&self, pool: &SqlitePool) -> Result<()> {
+        pool.execute(self.up, &[])?;
         Ok(())
     }
 
-    pub fn rollback(&self, conn: &Connection) -> Result<()> {
-        conn.execute(self.down, [])?;
+    pub fn rollback(&self, pool: &SqlitePool) -> Result<()> {
+        pool.execute(self.down, &[])?;
         Ok(())
     }
 }
@@ -206,33 +206,10 @@ pub fn get_migrations() -> Vec<Migration> {
     ]
 }
 
-pub fn run_migrations(conn: &Connection) -> Result<()> {
-    // Vérifier si la table schema_version existe
-    let table_exists: bool = conn
-        .query_row(
-            "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='schema_version')",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or(false);
-
-    if !table_exists {
-        // Exécuter la première migration qui crée la table schema_version
-        let first_migration = get_migrations().first().unwrap();
-        first_migration.execute(conn)?;
+pub fn run_migrations(pool: &SqlitePool) -> Result<()> {
+    let migrations = get_migrations();
+    for migration in migrations {
+        migration.execute(pool)?;
     }
-
-    // Récupérer la version actuelle
-    let current_version: i32 = conn
-        .query_row("SELECT MAX(version) FROM schema_version", [], |row| row.get(0))
-        .unwrap_or(0);
-
-    // Exécuter les migrations en attente
-    for migration in get_migrations() {
-        if migration.version > current_version {
-            migration.execute(conn)?;
-        }
-    }
-
     Ok(())
 } 

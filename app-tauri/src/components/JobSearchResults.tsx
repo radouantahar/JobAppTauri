@@ -88,7 +88,7 @@ export const JobSearchResults = ({
               <Text fw={500}>{job.title}</Text>
               <Text size="sm" c="dimmed">{job.company} • {job.location}</Text>
               <Text size="sm">{job.jobType}</Text>
-              <Text size="sm" c="dimmed">Publié le {formatDate(job.publishedAt)}</Text>
+              <Text size="sm" c="dimmed">Publié le {formatDate(job.postedAt)}</Text>
               <Group gap="xs">
                 {job.salary && (
                   <Badge color="blue">

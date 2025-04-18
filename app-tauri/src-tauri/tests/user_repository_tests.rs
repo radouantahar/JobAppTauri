@@ -1,15 +1,15 @@
 use crate::db::user_repository::UserRepository;
 use crate::models::{User, UserProfile, Document};
-use sqlx::sqlite::SqlitePool;
+use tauri_plugin_sql::SqlitePool;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use anyhow::Result;
 
 async fn setup_test_db() -> Result<SqlitePool> {
-    let pool = SqlitePool::connect(":memory:").await?;
+    let pool = SqlitePool::new(":memory:").await?;
     
     // Création des tables
-    sqlx::query(
+    pool.execute(
         r#"
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
@@ -49,10 +49,9 @@ async fn setup_test_db() -> Result<SqlitePool> {
             description TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-        "#
-    )
-    .execute(&pool)
-    .await?;
+        "#,
+        &[]
+    ).await?;
 
     Ok(pool)
 }

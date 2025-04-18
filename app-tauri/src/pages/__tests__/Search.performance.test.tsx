@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Search from '../Search';
-import type { Job, AppState, JobType, ExperienceLevel } from '../../types';
-import { createISODateString } from '../../types';
+import type { Job, JobType, ExperienceLevel, JobSource, Salary } from '../../types/job';
+import type { AppState } from '../../types';
+import { toISODateString } from '../../types/core/date';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,31 +25,22 @@ const generateMockJobs = (count: number): Job[] => {
     title: `Job ${i + 1}`,
     company: `Company ${i + 1}`,
     location: 'Paris',
-    type: 'CDI',
-    description: 'Description',
-    url: 'https://example.com',
-    source: 'linkedin',
-    publishedAt: createISODateString(new Date().toISOString()),
-    jobType: 'full-time' as JobType,
+    type: 'CDI' as JobType,
+    postedAt: toISODateString(new Date('2024-03-20')),
     experienceLevel: 'mid' as ExperienceLevel,
-    skills: ['React', 'TypeScript'],
     salary: {
       min: 40000,
       max: 60000,
       currency: 'EUR',
       period: 'year'
-    },
-    matchingScore: 0.85,
-    commuteTimes: [
-      {
-        mode: 'driving',
-        duration: 30,
-        distance: 10
-      }
-    ],
+    } as Salary,
+    description: 'Description',
+    url: 'https://example.com',
     remote: true,
-    contractType: 'CDI',
-    createdAt: createISODateString(new Date().toISOString())
+    skills: ['React', 'TypeScript'],
+    jobType: 'CDI' as JobType,
+    commuteTimes: [],
+    source: 'linkedin' as JobSource
   }));
 };
 

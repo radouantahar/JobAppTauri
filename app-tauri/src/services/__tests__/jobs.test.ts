@@ -1,46 +1,40 @@
 /// <reference types="vitest/globals" />
 import { invoke } from '@tauri-apps/api/core';
 import { jobService } from '../api';
-import type { Job, ISODateString, CommuteTime } from '../../types';
+import type { ISODateString, JobType, CommuteTime } from '../../types';
 import type { SearchCriteria } from '../../types/search';
 import { createMockJobs } from '../../__tests__/fixtures/jobs';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core');
 
 const mockJobs = createMockJobs(10);
 
-test('JobService', () => {
-  const mockJob: Job = {
+describe('JobService', () => {
+  const mockJob = {
     id: '1',
-    title: 'Développeur React',
-    company: 'TechCorp',
+    title: 'Développeur Full Stack',
+    company: 'Tech Corp',
     location: 'Paris',
-    type: 'CDI',
-    description: 'Description du poste',
-    url: 'https://example.com/job',
-    source: 'linkedin',
-    publishedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
-    jobType: 'full-time',
+    type: 'CDI' as JobType,
+    postedAt: '2024-03-20T00:00:00.000Z' as ISODateString,
     experienceLevel: 'mid',
     salary: {
-      min: 45000,
-      max: 55000,
+      min: 40000,
+      max: 60000,
       currency: 'EUR',
       period: 'year'
     },
-    matchingScore: 0,
-    skills: ['React', 'TypeScript', 'Node.js'],
-    commuteTimes: [{
-      duration: 30,
-      distance: 5,
-      mode: 'transit'
-    }],
+    description: 'Description du poste',
+    url: 'https://example.com/job',
     remote: true,
-    contractType: 'CDI',
-    createdAt: '2024-03-20T00:00:00.000Z'
+    skills: ['React', 'Node.js'],
+    jobType: 'CDI' as JobType,
+    commuteTimes: [] as CommuteTime[],
+    source: 'linkedin'
   };
 
-  test('should fetch jobs', async () => {
+  it('should fetch jobs', async () => {
     const mockResponse = {
       data: [mockJob],
       success: true
@@ -53,7 +47,7 @@ test('JobService', () => {
     const result = await jobService.searchJobs({
       keywords: [''],
       location: ''
-    });
+    } as SearchCriteria);
     expect(result).toEqual(mockResponse);
   });
 
@@ -140,4 +134,8 @@ test('JobService', () => {
     const result = await jobService.searchJobs(filters);
     expect(result).toEqual(mockJobs);
   });
+});
+
+describe('jobService', () => {
+  // Tests...
 }); 

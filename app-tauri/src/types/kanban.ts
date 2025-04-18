@@ -1,36 +1,43 @@
-import { Job } from './job';
-import { Interview } from './interview';
-import { ISODateString } from './core';
+import type { ISODateString } from './core/date';
+import type { JobType, ExperienceLevel, JobSource, Salary, CommuteTime } from './job';
 
 /**
  * Interface pour une carte Kanban
  */
-export interface KanbanCard extends Job {
-  /** Identifiant unique de la carte */
-  id: string;
-  /** ID du job associé */
-  jobId: string;
-  /** Statut de la carte */
-  status: 'todo' | 'in-progress' | 'done';
-  /** Date de création */
-  createdAt: ISODateString;
-  /** Date de dernière mise à jour */
-  updatedAt: ISODateString;
-  /** Notes optionnelles */
+export interface Interview {
+  date: ISODateString;
+  type: 'phone' | 'video' | 'onsite' | 'technical';
   notes?: string;
-  /** Liste des entretiens */
+  contactPerson?: string;
+  outcome?: 'positive' | 'negative' | 'neutral' | 'pending';
+}
+
+export interface KanbanCard {
+  id: string;
+  jobId: string;
+  title: string;
+  company: string;
+  location: string;
+  type: JobType;
+  postedAt: string;
+  experienceLevel: ExperienceLevel;
+  salary: Salary;
+  description: string;
+  url: string;
+  remote: boolean;
+  skills: string[];
+  jobType: JobType;
+  commuteTimes: CommuteTime[];
+  source: JobSource;
+  status: 'todo' | 'in-progress' | 'done';
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+  notes?: string;
   interviews?: Interview[];
 }
 
 export interface KanbanColumn {
-  id: number;
+  id: string;
   title: string;
-  description?: string;
-  order: number;
-  jobs: Job[];
-  color?: string;
-  icon?: string;
-  limit?: number;
-  createdAt: string;
-  updatedAt: string;
+  cards: KanbanCard[];
 } 

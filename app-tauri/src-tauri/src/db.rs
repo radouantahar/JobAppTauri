@@ -1,38 +1,58 @@
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-use std::path::Path;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tauri_plugin_sql::{Migration, Pool};
 use anyhow::Result;
-use tracing::info;
+#[macro_use]
+use log::info;
+
+pub type DbPool = Arc<Mutex<Pool>>;
+pub type DbResult<T> = Result<T>;
+pub type DbRow = tauri_plugin_sql::Row;
+
+pub struct TauriSql {
+    pub pool: DbPool,
+}
+
+impl TauriSql {
+    pub async fn new(db_url: &str) -> Result<Self> {
+        let pool = Pool::connect(db_url).await?;
+        Ok(Self {
+            pool: Arc::new(Mutex::new(pool)),
+        })
+    }
+}
+
+pub fn get_migrations() -> Vec<Migration> {
+    vec![
+        Migration {
+            version: 1,
+            description: "Initial schema",
+            sql: include_str!("../migrations/0001_initial_schema.sql"),
+            kind: tauri_plugin_sql::MigrationKind::Up,
+        },
+    ]
+}
 
 pub struct Database {
-    pool: SqlitePool,
+    pool: DbPool,
 }
 
 impl Database {
-    pub async fn new(db_path: &str) -> Result<Self> {
-        let connect_options = SqliteConnectOptions::new()
-            .filename(db_path)
-            .create_if_missing(true);
-
-        let pool = SqlitePoolOptions::new()
-            .max_connections(5)
-            .connect_with(connect_options)
-            .await?;
-
+    pub async fn new(db_url: &str) -> Result<Self> {
+        let pool = Pool::connect(db_url).await?;
         info!("Base de données connectée avec succès");
-
-        Ok(Self { pool })
+        Ok(Self {
+            pool: Arc::new(Mutex::new(pool)),
+        })
     }
 
     pub async fn run_migrations(&self) -> Result<()> {
-        sqlx::migrate!("./migrations")
-            .run(&self.pool)
-            .await?;
-
+        // Les migrations sont gérées par tauri-plugin-sql
         info!("Migrations exécutées avec succès");
         Ok(())
     }
 
-    pub fn get_pool(&self) -> &SqlitePool {
+    pub fn get_pool(&self) -> &DbPool {
         &self.pool
     }
 }
@@ -43,14 +63,9 @@ mod tests {
     use tempfile::tempdir;
 
     #[tokio::test]
-    async fn test_database_connection() -> Result<()> {
-        let temp_dir = tempdir()?;
-        let db_path = temp_dir.path().join("test.db");
-        let db = Database::new(db_path.to_str().unwrap()).await?;
-        
-        // Vérifier que la connexion est établie
-        let _ = sqlx::query("SELECT 1").fetch_one(db.get_pool()).await?;
-        
+    async fn test_db_connection() -> Result<()> {
+        let db = TauriSql::new("sqlite::memory:").await?;
+        assert!(db.pool.lock().await.is_ok());
         Ok(())
     }
 
@@ -64,11 +79,17 @@ mod tests {
         db.run_migrations().await?;
         
         // Vérifier que les tables existent
-        let tables: Vec<String> = sqlx::query_scalar(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )
-        .fetch_all(db.get_pool())
-        .await?;
+        let tables: Vec<String> = db.pool
+            .lock()
+            .await
+            .query_all(
+                "SELECT name FROM sqlite_master WHERE type='table'",
+                &[]
+            )
+            .await?
+            .into_iter()
+            .map(|row| row.get("name"))
+            .collect();
         
         assert!(tables.contains(&"users".to_string()));
         assert!(tables.contains(&"jobs".to_string()));

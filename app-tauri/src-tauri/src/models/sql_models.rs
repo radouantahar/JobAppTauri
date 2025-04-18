@@ -4,7 +4,7 @@ use uuid::Uuid;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct User {
+pub struct UserModel {
     pub id: Uuid,
     pub email: String,
     pub password_hash: String,
@@ -15,7 +15,7 @@ pub struct User {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Job {
+pub struct JobModel {
     pub id: Uuid,
     pub title: String,
     pub company: String,
@@ -27,7 +27,7 @@ pub struct Job {
     pub url: String,
     pub posted_at: DateTime<Utc>,
     pub experience_level: String,
-    pub skills: String,
+    pub skills: Vec<String>,
     pub remote: bool,
     pub source: String,
     pub created_at: DateTime<Utc>,
@@ -35,10 +35,12 @@ pub struct Job {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Application {
+pub struct ApplicationModel {
     pub id: Uuid,
     pub user_id: Uuid,
     pub job_id: Uuid,
+    pub company_name: String,
+    pub position: String,
     pub status: String,
     pub applied_date: DateTime<Utc>,
     pub notes: Option<String>,
@@ -47,11 +49,15 @@ pub struct Application {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Document {
+pub struct DocumentModel {
     pub id: Uuid,
+    pub user_id: Uuid,
     pub name: String,
     pub content: String,
     pub document_type: String,
+    pub size: i64,
+    pub file_path: Option<String>,
+    pub description: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -95,6 +101,8 @@ pub fn migrations() -> Vec<Migration> {
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
                     job_id TEXT NOT NULL,
+                    company_name TEXT NOT NULL,
+                    position TEXT NOT NULL,
                     status TEXT NOT NULL,
                     applied_date TIMESTAMP NOT NULL,
                     notes TEXT,
@@ -106,11 +114,16 @@ pub fn migrations() -> Vec<Migration> {
 
                 CREATE TABLE IF NOT EXISTS documents (
                     id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
                     name TEXT NOT NULL,
                     content TEXT NOT NULL,
                     document_type TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    file_path TEXT,
+                    description TEXT,
                     created_at TIMESTAMP NOT NULL,
-                    updated_at TIMESTAMP NOT NULL
+                    updated_at TIMESTAMP NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
                 );
             "#,
             kind: MigrationKind::Up,

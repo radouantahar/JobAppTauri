@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 use thiserror::Error;
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
+use crate::types::{DbPool, DbResult, DbRow};
 
 #[derive(Debug, Error)]
 pub enum ValidationError {
@@ -13,16 +16,19 @@ pub enum ValidationError {
     InvalidDocumentType,
 }
 
+/// Type pour les identifiants
+pub type Id = Uuid;
+
 /// Type personnalisé pour les emails avec validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Email(String);
 
 impl Email {
-    pub fn new(email: String) -> Result<Self, ValidationError> {
-        if email.contains('@') && email.contains('.') {
-            Ok(Email(email))
+    pub fn new(email: String) -> Result<Self, String> {
+        if email.contains('@') {
+            Ok(Self(email))
         } else {
-            Err(ValidationError::InvalidEmail)
+            Err("Invalid email format".to_string())
         }
     }
 
@@ -102,4 +108,31 @@ impl fmt::Display for DocumentType {
             DocumentType::Other(s) => write!(f, "{}", s),
         }
     }
+}
+
+/// Trait pour les modèles avec timestamps
+pub trait Timestamped {
+    fn created_at(&self) -> &DateTime<Utc>;
+    fn updated_at(&self) -> &DateTime<Utc>;
+}
+
+/// Trait pour les modèles avec identifiant
+pub trait Identifiable {
+    fn id(&self) -> &Id;
+}
+
+/// Trait pour les modèles avec propriétaire
+pub trait Owned {
+    fn user_id(&self) -> &Id;
+}
+
+/// Trait pour la conversion depuis/sur la base de données
+pub trait DatabaseModel: Sized + Identifiable {
+    fn table_name() -> &'static str;
+    
+    async fn create(pool: &DbPool, model: &Self) -> DbResult<()>;
+    async fn find_by_id(pool: &DbPool, id: &Id) -> DbResult<Option<Self>>;
+    async fn update(pool: &DbPool, model: &Self) -> DbResult<()>;
+    async fn delete(pool: &DbPool, id: &Id) -> DbResult<()>;
+    fn from_row(row: DbRow) -> DbResult<Self>;
 } 

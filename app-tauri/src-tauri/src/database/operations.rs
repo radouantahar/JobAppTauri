@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result, params};
+use tauri_plugin_sql::{SqlitePool, Row};
 use crate::models::{User, Job, JobStats, Document, DocumentTemplate, SearchPreferences, JobApplication};
 use std::path::Path;
 use std::sync::Arc;
@@ -19,71 +19,39 @@ struct CacheEntry<T> {
 }
 
 pub struct DatabaseOperations {
-    pool: Arc<Mutex<VecDeque<Connection>>>,
-    path: String,
+    pool: SqlitePool,
     job_cache: Arc<Mutex<HashMap<String, CacheEntry<Vec<Job>>>>>,
 }
 
 impl DatabaseOperations {
-    pub fn new(path: &str) -> Result<Self> {
-        let mut pool = VecDeque::with_capacity(MAX_CONNECTIONS);
+    pub async fn new(path: &str) -> Result<Self, AppError> {
+        let pool = SqlitePool::new(path).await?;
         
-        // Créer les connexions initiales
-        for _ in 0..MAX_CONNECTIONS {
-            let conn = Connection::open(path)?;
-            pool.push_back(conn);
-        }
-
         Ok(Self {
-            pool: Arc::new(Mutex::new(pool)),
-            path: path.to_string(),
+            pool,
             job_cache: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
-    async fn get_connection(&self) -> Result<Connection, AppError> {
-        let mut pool = self.pool.lock().await;
-        
-        // Attendre jusqu'à ce qu'une connexion soit disponible
-        let start_time = std::time::Instant::now();
-        while pool.is_empty() {
-            if start_time.elapsed() > CONNECTION_TIMEOUT {
-                return Err(AppError::Internal("Timeout waiting for database connection".to_string()));
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-
-        // Récupérer une connexion du pool
-        let conn = pool.pop_front().unwrap();
-        Ok(conn)
-    }
-
-    async fn return_connection(&self, conn: Connection) {
-        let mut pool = self.pool.lock().await;
-        pool.push_back(conn);
-    }
-
-    pub async fn init(&self) -> Result<()> {
-        let conn = self.get_connection().await?;
-        
+    pub async fn init(&self) -> Result<(), AppError> {
         // Création des tables avec optimisations
-        conn.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 created_at DATETIME NOT NULL
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Création de l'index sur l'email
-        conn.execute(
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
-            [],
-        )?;
+            &[],
+        ).await?;
 
-        conn.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS jobs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
@@ -97,29 +65,29 @@ impl DatabaseOperations {
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Création des index pour les requêtes fréquentes
-        conn.execute(
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status)",
-            [],
-        )?;
-        conn.execute(
+            &[],
+        ).await?;
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_jobs_matching_score ON jobs(matching_score)",
-            [],
-        )?;
-        conn.execute(
+            &[],
+        ).await?;
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_jobs_company ON jobs(company)",
-            [],
-        )?;
-        conn.execute(
+            &[],
+        ).await?;
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_jobs_location ON jobs(location)",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Table des documents avec index
-        conn.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS documents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -128,17 +96,17 @@ impl DatabaseOperations {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Index pour les documents
-        conn.execute(
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Table des modèles de documents avec index
-        conn.execute(
+        self.pool.execute(
             "CREATE TABLE IF NOT EXISTS document_templates (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -146,61 +114,56 @@ impl DatabaseOperations {
                 content TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
 
         // Index pour les templates
-        conn.execute(
+        self.pool.execute(
             "CREATE INDEX IF NOT EXISTS idx_templates_type ON document_templates(template_type)",
-            [],
-        )?;
+            &[],
+        ).await?;
 
-        self.return_connection(conn).await;
         Ok(())
     }
 
     pub async fn get_user_by_email(&self, email: &str) -> Result<User, AppError> {
-        let conn = self.get_connection().await?;
-        let mut stmt = conn.prepare("SELECT id, email, password_hash FROM users WHERE email = ?")?;
-        let user = stmt.query_row(params![email], |row| {
-            Ok(User {
-                id: row.get(0)?,
-                email: row.get(1)?,
-                password_hash: row.get(2)?,
-            })
-        })?;
-        self.return_connection(conn).await;
-        Ok(user)
+        let row = self.pool.query_one(
+            "SELECT * FROM users WHERE email = ?",
+            &[&email],
+        ).await?;
+
+        Ok(User::from(row))
     }
 
     pub async fn create_user(&self, email: &str, password: &str) -> Result<User, AppError> {
-        let conn = self.get_connection().await?;
-        conn.execute(
-            "INSERT INTO users (email, password_hash) VALUES (?, ?)",
-            params![email, password],
-        )?;
-        let id = conn.last_insert_rowid();
-        Ok(User {
-            id,
-            email: email.to_string(),
-            password_hash: password.to_string(),
-        })
+        let now = chrono::Utc::now();
+        self.pool.execute(
+            "INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)",
+            &[&email, &password, &now],
+        ).await?;
+
+        let row = self.pool.query_one(
+            "SELECT * FROM users WHERE email = ?",
+            &[&email],
+        ).await?;
+
+        Ok(User::from(row))
     }
 
     pub fn create_job(&self, job: Job) -> Result<Job> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         conn.execute(
             "INSERT INTO jobs (title, company, location, description, salary_range, matching_score, status, source) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            params![
-                job.title,
-                job.company,
-                job.location,
-                job.description,
-                job.salary_range,
-                job.matching_score,
-                job.status,
-                job.source,
+            &[
+                &job.title,
+                &job.company,
+                &job.location,
+                &job.description,
+                &job.salary_range,
+                &job.matching_score,
+                &job.status,
+                &job.source,
             ],
         )?;
         let id = conn.last_insert_rowid();
@@ -211,16 +174,16 @@ impl DatabaseOperations {
     }
 
     pub fn update_job_status(&self, job_id: i64, status: &str) -> Result<bool> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let rows_affected = conn.execute(
             "UPDATE jobs SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            params![status, job_id],
+            &[status, &job_id],
         )?;
         Ok(rows_affected > 0)
     }
 
     pub fn get_user_documents(&self, user_id: i64) -> Result<Vec<Document>> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let mut stmt = conn.prepare("SELECT * FROM documents WHERE user_id = ?")?;
         let documents = stmt
             .query_map([user_id], |row| {
@@ -238,7 +201,7 @@ impl DatabaseOperations {
     }
 
     pub fn get_template_by_type(&self, template_type: &str) -> Result<Option<DocumentTemplate>> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let mut stmt = conn.prepare("SELECT * FROM document_templates WHERE template_type = ?")?;
         let template = stmt
             .query_row([template_type], |row| {
@@ -265,7 +228,7 @@ impl DatabaseOperations {
             }
         }
 
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let mut stmt = conn.prepare(
             "SELECT id, title, company, location, description, salary_range, matching_score, status, source 
              FROM jobs 
@@ -297,12 +260,11 @@ impl DatabaseOperations {
             },
         );
 
-        self.return_connection(conn).await;
         Ok(jobs)
     }
 
     pub async fn get_job_stats(&self) -> Result<JobStats, AppError> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         
         // Requête optimisée pour les statistiques
         let mut stmt = conn.prepare(
@@ -329,7 +291,6 @@ impl DatabaseOperations {
             })
         })?;
 
-        self.return_connection(conn).await;
         Ok(stats)
     }
 
@@ -340,10 +301,10 @@ impl DatabaseOperations {
         content: &str,
         document_type: &str,
     ) -> Result<Document, AppError> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         conn.execute(
             "INSERT INTO documents (user_id, title, content, document_type) VALUES (?, ?, ?, ?)",
-            params![user_id, title, content, document_type],
+            &[&user_id, &title, &content, &document_type],
         )?;
         let id = conn.last_insert_rowid();
         Ok(Document {
@@ -356,7 +317,7 @@ impl DatabaseOperations {
     }
 
     pub async fn get_document_templates(&self) -> Result<Vec<DocumentTemplate>, AppError> {
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let mut stmt = conn.prepare("SELECT id, template_type, content FROM document_templates")?;
         let templates = stmt
             .query_map([], |row| {
@@ -399,7 +360,7 @@ impl DatabaseOperations {
             return Ok(cached_jobs);
         }
 
-        let conn = self.get_connection().await?;
+        let conn = self.pool.get_connection()?;
         let mut query = "SELECT id, title, company, location, description, matching_score FROM jobs WHERE 1=1".to_string();
         let mut params = Vec::new();
 
@@ -432,8 +393,6 @@ impl DatabaseOperations {
             })?
             .collect::<Result<Vec<_>>>()?;
 
-        self.return_connection(conn).await;
-        
         // Mettre en cache les résultats
         self.cache_jobs(cache_key, jobs.clone()).await;
         

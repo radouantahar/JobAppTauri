@@ -1,8 +1,8 @@
 use crate::AppState;
-use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use uuid::Uuid;
+use tauri_plugin_sql::{SqlitePool, Row};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchPreference {
@@ -48,35 +48,26 @@ pub async fn get_search_preferences(
     state: State<'_, AppState>,
     user_id: String,
 ) -> Result<SearchPreference, String> {
-    let conn = state.db.lock().await;
-    let conn = conn.as_ref().ok_or("Database connection not initialized")?;
-
-    let mut stmt = conn
-        .prepare(
-            "SELECT id, user_id, keywords, location, salary_min, salary_max, 
-            contract_types, experience_levels, remote, skills 
-            FROM search_preferences WHERE user_id = ?",
-        )
-        .map_err(|e| e.to_string())?;
-
-    let preference = stmt
-        .query_row(params![user_id], |row| {
-            Ok(SearchPreference {
-                id: row.get(0)?,
-                user_id: row.get(1)?,
-                keywords: row.get(2)?,
-                location: row.get(3)?,
-                salary_min: row.get(4)?,
-                salary_max: row.get(5)?,
-                contract_types: serde_json::from_str(&row.get::<_, String>(6)?).unwrap_or_default(),
-                experience_levels: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or_default(),
-                remote: row.get(8)?,
-                skills: serde_json::from_str(&row.get::<_, String>(9)?).unwrap_or_default(),
-            })
+    let conn = state.db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT * FROM search_preferences WHERE user_id = ?")?;
+    let mut rows = stmt.query(&[&user_id])?;
+    
+    if let Some(row) = rows.next()? {
+        Ok(SearchPreference {
+            id: row.get("id")?,
+            user_id: row.get("user_id")?,
+            keywords: row.get("keywords")?,
+            location: row.get("location")?,
+            salary_min: row.get("salary_min")?,
+            salary_max: row.get("salary_max")?,
+            contract_types: serde_json::from_str(&row.get::<_, String>("contract_types")?).unwrap_or_default(),
+            experience_levels: serde_json::from_str(&row.get::<_, String>("experience_levels")?).unwrap_or_default(),
+            remote: row.get("remote")?,
+            skills: serde_json::from_str(&row.get::<_, String>("skills")?).unwrap_or_default(),
         })
-        .map_err(|_| "No search preferences found".to_string())?;
-
-    Ok(preference)
+    } else {
+        Err("No search preferences found".to_string())
+    }
 }
 
 #[tauri::command]

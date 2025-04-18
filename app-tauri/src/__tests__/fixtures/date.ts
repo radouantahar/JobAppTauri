@@ -1,4 +1,4 @@
-import { ISODateString } from '../../types';
+import { ISODateString } from '../../types/core';
 
 /**
  * Crée une chaîne de date ISO valide

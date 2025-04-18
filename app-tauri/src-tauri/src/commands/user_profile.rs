@@ -12,18 +12,16 @@ pub async fn get_user_profile(
 ) -> Result<UserProfile, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    let profile: UserProfile = sqlx::query_as!(
-        UserProfile,
-        r#"
-        SELECT * FROM user_profiles WHERE user_id = $1
-        "#,
-        user_id
-    )
-    .fetch_one(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM user_profiles WHERE user_id = ?",
+        &[&user_id.to_string()],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(profile)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(UserProfile::from(row))
+    } else {
+        Err("Profil utilisateur non trouvé".to_string())
+    }
 }
 
 #[tauri::command]
@@ -33,31 +31,30 @@ pub async fn update_user_profile(
 ) -> Result<(), String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    sqlx::query!(
+    conn.execute(
         r#"
         UPDATE user_profiles
-        SET name = $1, phone = $2, location = $3, primary_home = $4,
-            secondary_home = $5, skills = $6, experience = $7,
-            education = $8, cv_path = $9, cv_last_updated = $10,
-            updated_at = $11
-        WHERE user_id = $12
+        SET name = ?, phone = ?, location = ?, primary_home = ?,
+            secondary_home = ?, skills = ?, experience = ?,
+            education = ?, cv_path = ?, cv_last_updated = ?,
+            updated_at = ?
+        WHERE user_id = ?
         "#,
-        profile.name,
-        profile.phone,
-        profile.location,
-        profile.primary_home,
-        profile.secondary_home,
-        profile.skills,
-        profile.experience,
-        profile.education,
-        profile.cv_path,
-        profile.cv_last_updated,
-        Utc::now(),
-        profile.user_id
-    )
-    .execute(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+        &[
+            &profile.name,
+            &profile.phone,
+            &profile.location,
+            &profile.primary_home,
+            &profile.secondary_home,
+            &profile.skills,
+            &profile.experience,
+            &profile.education,
+            &profile.cv_path,
+            &profile.cv_last_updated,
+            &Utc::now().to_string(),
+            &profile.user_id.to_string(),
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -69,18 +66,16 @@ pub async fn get_user_locations(
 ) -> Result<UserLocations, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    let locations: UserLocations = sqlx::query_as!(
-        UserLocations,
-        r#"
-        SELECT * FROM user_locations WHERE user_id = $1
-        "#,
-        user_id
-    )
-    .fetch_one(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM user_locations WHERE user_id = ?",
+        &[&user_id.to_string()],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(locations)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(UserLocations::from(row))
+    } else {
+        Err("Localisations utilisateur non trouvées".to_string())
+    }
 }
 
 #[tauri::command]
@@ -90,20 +85,19 @@ pub async fn update_user_locations(
 ) -> Result<(), String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    sqlx::query!(
+    conn.execute(
         r#"
         UPDATE user_locations
-        SET primary_home = $1, secondary_home = $2, updated_at = $3
-        WHERE user_id = $4
+        SET primary_home = ?, secondary_home = ?, updated_at = ?
+        WHERE user_id = ?
         "#,
-        locations.primary_home,
-        locations.secondary_home,
-        Utc::now(),
-        locations.user_id
-    )
-    .execute(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+        &[
+            &locations.primary_home,
+            &locations.secondary_home,
+            &Utc::now().to_string(),
+            &locations.user_id.to_string(),
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -115,18 +109,16 @@ pub async fn get_cv_info(
 ) -> Result<CVInfo, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    let cv_info: CVInfo = sqlx::query_as!(
-        CVInfo,
-        r#"
-        SELECT * FROM cv_info WHERE user_id = $1
-        "#,
-        user_id
-    )
-    .fetch_one(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM cv_info WHERE user_id = ?",
+        &[&user_id.to_string()],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(cv_info)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(CVInfo::from(row))
+    } else {
+        Err("Informations CV non trouvées".to_string())
+    }
 }
 
 #[tauri::command]
@@ -136,20 +128,19 @@ pub async fn update_cv_info(
 ) -> Result<(), String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    sqlx::query!(
+    conn.execute(
         r#"
         UPDATE cv_info
-        SET cv_path = $1, last_updated = $2, updated_at = $3
-        WHERE user_id = $4
+        SET cv_path = ?, last_updated = ?, updated_at = ?
+        WHERE user_id = ?
         "#,
-        cv_info.cv_path,
-        cv_info.last_updated,
-        Utc::now(),
-        cv_info.user_id
-    )
-    .execute(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+        &[
+            &cv_info.cv_path,
+            &cv_info.last_updated,
+            &Utc::now().to_string(),
+            &cv_info.user_id.to_string(),
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -161,18 +152,16 @@ pub async fn get_user_preferences(
 ) -> Result<UserPreferences, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    let preferences: UserPreferences = sqlx::query_as!(
-        UserPreferences,
-        r#"
-        SELECT * FROM user_preferences WHERE user_id = $1
-        "#,
-        user_id
-    )
-    .fetch_one(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM user_preferences WHERE user_id = ?",
+        &[&user_id.to_string()],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(preferences)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(UserPreferences::from(row))
+    } else {
+        Err("Préférences utilisateur non trouvées".to_string())
+    }
 }
 
 #[tauri::command]
@@ -182,21 +171,20 @@ pub async fn update_user_preferences(
 ) -> Result<(), String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    sqlx::query!(
+    conn.execute(
         r#"
         UPDATE user_preferences
-        SET theme = $1, language = $2, notifications = $3, updated_at = $4
-        WHERE user_id = $5
+        SET theme = ?, language = ?, notifications = ?, updated_at = ?
+        WHERE user_id = ?
         "#,
-        preferences.theme,
-        preferences.language,
-        preferences.notifications,
-        Utc::now(),
-        preferences.user_id
-    )
-    .execute(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+        &[
+            &preferences.theme,
+            &preferences.language,
+            &preferences.notifications,
+            &Utc::now().to_string(),
+            &preferences.user_id.to_string(),
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -208,18 +196,16 @@ pub async fn get_job_preferences(
 ) -> Result<JobPreferences, String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    let preferences: JobPreferences = sqlx::query_as!(
-        JobPreferences,
-        r#"
-        SELECT * FROM job_preferences WHERE user_id = $1
-        "#,
-        user_id
-    )
-    .fetch_one(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+    let mut rows = conn.query(
+        "SELECT * FROM job_preferences WHERE user_id = ?",
+        &[&user_id.to_string()],
+    ).map_err(|e| e.to_string())?;
 
-    Ok(preferences)
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        Ok(JobPreferences::from(row))
+    } else {
+        Err("Préférences d'emploi non trouvées".to_string())
+    }
 }
 
 #[tauri::command]
@@ -229,24 +215,182 @@ pub async fn update_job_preferences(
 ) -> Result<(), String> {
     let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
     
-    sqlx::query!(
+    conn.execute(
         r#"
         UPDATE job_preferences
-        SET job_types = $1, locations = $2, salary_range = $3,
-            experience_level = $4, skills = $5, updated_at = $6
-        WHERE user_id = $7
+        SET job_types = ?, locations = ?, salary_range = ?,
+            experience_level = ?, skills = ?, updated_at = ?
+        WHERE user_id = ?
         "#,
-        preferences.job_types,
-        preferences.locations,
-        preferences.salary_range,
-        preferences.experience_level,
-        preferences.skills,
-        Utc::now(),
-        preferences.user_id
-    )
-    .execute(&conn)
-    .await
-    .map_err(|e| e.to_string())?;
+        &[
+            &preferences.job_types,
+            &preferences.locations,
+            &preferences.salary_range,
+            &preferences.experience_level,
+            &preferences.skills,
+            &Utc::now().to_string(),
+            &preferences.user_id.to_string(),
+        ],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_user_profile(
+    db: State<'_, TauriSql>,
+    user_id: Uuid,
+    name: String,
+    phone: Option<String>,
+    location: Option<String>,
+) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let now = Utc::now().to_string();
+    
+    conn.execute(
+        r#"
+        INSERT INTO user_profiles (
+            user_id, name, phone, location, primary_home, secondary_home,
+            skills, experience, education, cv_path, cv_last_updated,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &name,
+            &phone,
+            &location,
+            &None::<String>,
+            &None::<String>,
+            &None::<String>,
+            &None::<String>,
+            &None::<String>,
+            &None::<String>,
+            &None::<String>,
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_user_locations(
+    db: State<'_, TauriSql>,
+    user_id: Uuid,
+    primary_home: Option<String>,
+    secondary_home: Option<String>,
+) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let now = Utc::now().to_string();
+    
+    conn.execute(
+        r#"
+        INSERT INTO user_locations (
+            user_id, primary_home, secondary_home, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &primary_home,
+            &secondary_home,
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_cv_info(
+    db: State<'_, TauriSql>,
+    user_id: Uuid,
+    cv_path: Option<String>,
+) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let now = Utc::now().to_string();
+    
+    conn.execute(
+        r#"
+        INSERT INTO cv_info (
+            user_id, cv_path, last_updated, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &cv_path,
+            &None::<String>,
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_user_preferences(
+    db: State<'_, TauriSql>,
+    user_id: Uuid,
+    theme: Option<String>,
+    language: Option<String>,
+    notifications: Option<bool>,
+) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let now = Utc::now().to_string();
+    
+    conn.execute(
+        r#"
+        INSERT INTO user_preferences (
+            user_id, theme, language, notifications, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &theme,
+            &language,
+            &notifications,
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_job_preferences(
+    db: State<'_, TauriSql>,
+    user_id: Uuid,
+    job_types: Option<Vec<String>>,
+    locations: Option<Vec<String>>,
+    salary_range: Option<String>,
+    experience_level: Option<String>,
+    skills: Option<Vec<String>>,
+) -> Result<(), String> {
+    let conn = db.get("sqlite:app.db").map_err(|e| e.to_string())?;
+    let now = Utc::now().to_string();
+    
+    conn.execute(
+        r#"
+        INSERT INTO job_preferences (
+            user_id, job_types, locations, salary_range,
+            experience_level, skills, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &user_id.to_string(),
+            &job_types.map(|v| serde_json::to_string(&v).unwrap()),
+            &locations.map(|v| serde_json::to_string(&v).unwrap()),
+            &salary_range,
+            &experience_level,
+            &skills.map(|v| serde_json::to_string(&v).unwrap()),
+            &now,
+            &now,
+        ],
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 } 

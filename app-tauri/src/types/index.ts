@@ -1,4 +1,44 @@
 /**
+ * Fichier d'export des types
+ * Centralise tous les exports de types pour une meilleure maintenabilité
+ */
+
+import { CommuteMode } from './models/job';
+
+// Types de base
+export type { Id } from './core/id';
+export { isValidId } from './core/id';
+export type { ISODateString } from './core/date';
+export { isValidISODate, toISODateString } from './core/date';
+export type { AppError, Result } from './core/error';
+export { success, error } from './core/error';
+
+// Types des modèles
+export type { 
+  CreateJobRequest, 
+  UpdateJobRequest, 
+  JobResult, 
+  JobListResult,
+  Salary,
+  CommuteTime
+} from './models/job';
+
+// Types API
+export type {
+  AuthRequest,
+  SearchJobsRequest,
+  UpdateStatusRequest,
+  UploadDocumentRequest
+} from './api/requests';
+
+export type {
+  PaginatedResponse,
+  SearchJobsResponse,
+  DocumentResponse,
+  StatsResponse
+} from './api/responses';
+
+/**
  * Main types file that re-exports all type definitions
  */
 
@@ -27,11 +67,7 @@ export * from './search';
 export * from './llm';
 
 // Enums and literals
-export type JobSource = 'linkedin' | 'indeed' | 'glassdoor' | 'other';
 export type JobStatus = 'saved' | 'applied' | 'interview' | 'offer' | 'rejected';
-export type CommuteMode = 'driving' | 'transit' | 'walking' | 'bicycling';
-export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
-export type JobType = 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary';
 export type RemotePreference = 'office' | 'hybrid' | 'remote';
 export type InterviewType = 'phone' | 'video' | 'onsite' | 'technical';
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'CHF';
@@ -102,12 +138,6 @@ export interface User {
   noticePeriod?: number;
 }
 
-export interface CommuteTime {
-  duration: number;
-  distance: number;
-  mode: CommuteMode;
-}
-
 export interface SearchFilters {
   keywords: string;
   location: string;
@@ -134,25 +164,6 @@ export interface AppState {
   isLoading: boolean;
   setSearchQuery: (query: string) => void;
   setFilters: (filters: SearchFilters) => void;
-}
-
-import { ISODateString } from './core';
-
-export interface KanbanCard {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  updatedAt: ISODateString;
-  notes?: string;
-  interviews?: {
-    date: ISODateString;
-    type: InterviewType;
-    notes?: string;
-    contactPerson?: string;
-    outcome?: 'positive' | 'negative' | 'pending';
-  }[];
-  createdAt: ISODateString;
 }
 
 import { ApplicationStatus } from './core';

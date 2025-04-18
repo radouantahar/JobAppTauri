@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::fs;
 use chrono::Utc;
-use tauri_plugin_sql::SqlitePool;
+use tauri_plugin_sql::{SqlitePool, TauriSql};
 use crate::error::AppError;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -11,14 +11,14 @@ const MAX_BACKUPS: usize = 7; // Garder une semaine de backups
 const BACKUP_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 24 heures
 
 pub struct DatabaseBackup {
-    pool: SqlitePool,
+    db: TauriSql,
     backup_dir: String,
 }
 
 impl DatabaseBackup {
-    pub fn new(pool: SqlitePool) -> Self {
+    pub fn new(db: TauriSql) -> Self {
         Self {
-            pool,
+            db,
             backup_dir: BACKUP_DIR.to_string(),
         }
     }
@@ -40,10 +40,8 @@ impl DatabaseBackup {
         let backup_path = format!("{}/backup_{}.db", self.backup_dir, timestamp);
 
         // Créer une copie de la base de données
-        sqlx::query("VACUUM INTO ?")
-            .bind(&backup_path)
-            .execute(&self.pool)
-            .await?;
+        let conn = self.db.get("sqlite:app.db").await?;
+        conn.execute("VACUUM INTO ?", &[&backup_path]).await?;
 
         // Nettoyer les vieux backups
         self.cleanup_old_backups().await?;
@@ -96,9 +94,6 @@ impl DatabaseBackup {
         if !Path::new(backup_path).exists() {
             return Err(AppError::BackupError("Le fichier de backup n'existe pas".to_string()));
         }
-
-        // Fermer la connexion actuelle
-        self.pool.close().await;
 
         // Copier le backup vers la base de données principale
         fs::copy(backup_path, "app.db")?;

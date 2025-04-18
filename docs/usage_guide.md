@@ -168,4 +168,137 @@ const file = await generateDocument(document);
 - Support technique
 - Suggestions d'amélioration
 - Signalement de bugs
-- Demandes de fonctionnalités 
+- Demandes de fonctionnalités
+
+## Utilisation de la Base de Données
+
+### Connexion à la Base de Données
+```typescript
+// La connexion est gérée automatiquement par tauri-plugin-sql
+// Aucune configuration manuelle n'est nécessaire
+```
+
+### Exécution de Requêtes
+```typescript
+// Exemple de requête simple
+const results = await invoke('query', {
+  sql: 'SELECT * FROM users WHERE email = ?',
+  params: ['user@example.com']
+});
+
+// Exemple de transaction
+const result = await invoke('transaction', {
+  operations: [
+    {
+      sql: 'INSERT INTO applications (user_id, job_id) VALUES (?, ?)',
+      params: [userId, jobId]
+    },
+    {
+      sql: 'UPDATE jobs SET status = ? WHERE id = ?',
+      params: ['APPLIED', jobId]
+    }
+  ]
+});
+```
+
+## Gestion des Documents
+
+1. **Création d'un Document**
+   ```typescript
+   const document = await invoke('create_document', {
+     name: 'Mon CV',
+     content: 'Contenu du CV...',
+     document_type: 'CV'
+   });
+   ```
+
+2. **Recherche de Documents**
+   ```typescript
+   const documents = await invoke('find_documents', {
+     filters: {
+       type: 'CV',
+       date_from: '2024-01-01'
+     }
+   });
+   ```
+
+## Gestion des Candidatures
+
+1. **Création d'une Candidature**
+   ```typescript
+   const application = await invoke('create_application', {
+     job_id: '123e4567-e89b-12d3-a456-426614174000',
+     documents: ['cv_id', 'lettre_id'],
+     notes: 'Notes importantes...'
+   });
+   ```
+
+2. **Suivi des Candidatures**
+   ```typescript
+   const applications = await invoke('get_applications', {
+     status: 'EN_COURS',
+     date_from: '2024-01-01'
+   });
+   ```
+
+## Optimisation des Performances
+
+1. **Utilisation du Cache**
+   ```typescript
+   // Les requêtes fréquentes sont automatiquement mises en cache
+   const jobs = await invoke('get_cached_jobs', {
+     cache_key: 'recent_jobs'
+   });
+   ```
+
+2. **Indexation**
+   ```typescript
+   // Les index sont créés automatiquement au démarrage
+   await invoke('create_indexes');
+   ```
+
+## Gestion des Erreurs
+
+```typescript
+try {
+  const result = await invoke('some_command');
+} catch (error) {
+  console.error('Erreur:', error.message);
+  // Gérer l'erreur selon son type
+  if (error.code === 'Database') {
+    // Erreur de base de données
+  } else if (error.code === 'Validation') {
+    // Erreur de validation
+  }
+}
+```
+
+## Bonnes Pratiques
+
+1. **Transactions**
+   - Utiliser les transactions pour les opérations multiples
+   - S'assurer de la cohérence des données
+
+2. **Requêtes**
+   - Utiliser des paramètres pour éviter les injections SQL
+   - Limiter le nombre de résultats avec `LIMIT`
+   - Utiliser les index appropriés
+
+3. **Cache**
+   - Mettre en cache les données fréquemment utilisées
+   - Invalider le cache lors des modifications
+
+4. **Sécurité**
+   - Ne jamais exposer les requêtes SQL directement
+   - Valider toutes les entrées utilisateur
+   - Utiliser les transactions pour les opérations critiques
+
+5. **Monitoring**
+   - Surveiller les performances des requêtes
+   - Analyser les logs d'erreur
+   - Optimiser les requêtes lentes
+
+6. **Backup**
+   - Effectuer des backups réguliers
+   - Tester les procédures de restauration
+   - Stocker les backups en lieu sûr 

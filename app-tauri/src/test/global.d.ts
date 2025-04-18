@@ -21,4 +21,12 @@ declare global {
   const afterEach: typeof import('vitest')['afterEach'];
   const beforeAll: typeof import('vitest')['beforeAll'];
   const afterAll: typeof import('vitest')['afterAll'];
+}
+
+declare module 'vitest' {
+  export const describe: typeof globalThis.describe;
+  export const it: typeof globalThis.it;
+  export const expect: typeof globalThis.expect;
+  export const vi: typeof globalThis.vi;
+  export const beforeEach: typeof globalThis.beforeEach;
 } 

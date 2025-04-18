@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Stack, Title } from '@mantine/core';
-import { StatisticsDashboard } from '../components/StatisticsDashboard';
+import StatisticsDashboard from '../components/StatisticsDashboard';
 
 const Dashboard: React.FC = () => {
   return (

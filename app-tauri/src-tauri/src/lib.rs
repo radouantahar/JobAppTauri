@@ -7,5 +7,11 @@ pub fn run() {
 
 pub mod commands;
 pub mod models;
+pub mod types;
 pub mod auth;
-pub mod error;
+pub mod db;
+
+#[cfg(test)]
+mod tests {
+    mod application_test;
+}

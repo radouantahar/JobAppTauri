@@ -1,10 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Search from '../Search';
+import type { Job, JobType, ExperienceLevel, JobSource, Salary } from '../../types/job';
+import type { AppState } from '../../types';
+import { toISODateString } from '../../types/core/date';
 import { useAppStore } from '../../store';
 import { jobService } from '../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import type { Job, AppState, JobType } from '../../types';
-import { createISODateString } from '../../types';
 
 jest.mock('../../store');
 
@@ -186,28 +187,25 @@ describe('SearchPage', () => {
     const mockJobs: Job[] = [
       {
         id: '1',
-        title: 'Software Engineer',
-        company: 'Test Company',
-        location: 'Remote',
-        type: 'CDI',
-        jobType: 'CDI' as JobType,
-        experienceLevel: 'mid',
-        publishedAt: createISODateString('2024-04-15T12:00:00Z'),
+        title: 'Développeur Full Stack',
+        company: 'Tech Corp',
+        location: 'Paris',
+        type: 'CDI' as JobType,
+        postedAt: toISODateString(new Date('2024-03-20')),
+        experienceLevel: 'mid' as ExperienceLevel,
         salary: {
-          min: 50000,
-          max: 100000,
+          min: 40000,
+          max: 60000,
           currency: 'EUR',
           period: 'year'
-        },
-        skills: ['React', 'TypeScript'],
-        matchingScore: 0.85,
-        remote: false,
-        contractType: 'permanent',
-        createdAt: createISODateString('2024-04-15T12:00:00Z'),
-        description: 'Test description',
+        } as Salary,
+        description: 'Description du poste',
         url: 'https://example.com/job/1',
-        source: 'linkedin',
-        commuteTimes: []
+        remote: true,
+        skills: ['React', 'Node.js'],
+        jobType: 'CDI' as JobType,
+        commuteTimes: [],
+        source: 'linkedin' as JobSource
       }
     ];
 

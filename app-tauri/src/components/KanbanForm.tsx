@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Stack, TextInput, Textarea, Button, Group } from '@mantine/core';
-import type { KanbanCard } from '../types/index';
+import type { KanbanCard } from '../types/kanban';
 import { createISODateString } from '../types/core';
 
 interface KanbanFormProps {
@@ -11,14 +11,15 @@ interface KanbanFormProps {
 }
 
 export const KanbanForm = ({ initialData, onSubmit, onCancel, isLoading }: KanbanFormProps) => {
+  const now = new Date().toISOString();
   const [formData, setFormData] = useState<Partial<KanbanCard>>({
     title: initialData?.title || '',
     description: initialData?.description || '',
     notes: initialData?.notes || '',
-    status: initialData?.status || 'saved',
+    status: initialData?.status || 'todo',
     interviews: initialData?.interviews || [],
-    createdAt: initialData?.createdAt || createISODateString(new Date().toISOString()),
-    updatedAt: initialData?.updatedAt || createISODateString(new Date().toISOString()),
+    createdAt: initialData?.createdAt || createISODateString(now),
+    updatedAt: initialData?.updatedAt || createISODateString(now),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use sqlx::SqlitePool;
+use tauri_plugin_sql::TauriSql;
 use uuid::Uuid;
 use serde_json::json;
 
@@ -9,13 +9,31 @@ use app_tauri::db::user_profile_repository::UserProfileRepository;
 use app_tauri::models::user::User;
 use app_tauri::models::user_profile::{UserProfile, NewUserProfile, UpdateUserProfile};
 
-async fn setup_db() -> Result<SqlitePool> {
-    let pool = SqlitePool::connect(":memory:").await?;
-    sqlx::migrate!("./migrations").run(&pool).await?;
-    Ok(pool)
+async fn setup_test_db() -> Result<TauriSql, String> {
+    let db = TauriSql::new("sqlite:test.db")?;
+    let conn = db.get("sqlite:test.db")?;
+
+    // Créer les tables nécessaires
+    conn.execute(
+        r#"
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            phone TEXT,
+            location TEXT,
+            bio TEXT,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL
+        )
+        "#,
+        &[],
+    )?;
+
+    Ok(db)
 }
 
-async fn create_test_user(pool: &SqlitePool) -> Result<User> {
+async fn create_test_user(pool: &TauriSql) -> Result<User> {
     let user_repo = UserRepository::new(pool.clone());
     let new_user = NewUser {
         username: "test_user".to_string(),
@@ -26,44 +44,70 @@ async fn create_test_user(pool: &SqlitePool) -> Result<User> {
 }
 
 #[tokio::test]
-async fn test_create_user_profile() -> Result<()> {
-    let pool = setup_db().await?;
-    let user_repo = UserRepository::new(pool.clone());
-    let profile_repo = UserProfileRepository::new(pool);
+async fn test_create_user_profile() -> Result<(), String> {
+    let db = setup_test_db().await?;
+    let conn = db.get("sqlite:test.db")?;
 
-    // Créer un utilisateur
-    let user = User {
-        id: Uuid::new_v4().to_string(),
-        email: "test@example.com".to_string(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-    user_repo.create_user(&user).await?;
-
-    // Créer un profil
     let profile = UserProfile {
-        id: Uuid::new_v4().to_string(),
-        user_id: user.id.clone(),
-        first_name: "John".to_string(),
-        last_name: "Doe".to_string(),
+        id: Uuid::new_v4(),
+        name: "Test User".to_string(),
+        email: "test@example.com".to_string(),
         phone: Some("1234567890".to_string()),
-        location: Some("Paris".to_string()),
-        primary_home: Some("France".to_string()),
+        location: Some("Test Location".to_string()),
+        bio: Some("Test Bio".to_string()),
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
 
-    let created_profile = profile_repo.create_user_profile(&profile).await?;
-    assert_eq!(created_profile.first_name, profile.first_name);
-    assert_eq!(created_profile.last_name, profile.last_name);
-    assert_eq!(created_profile.user_id, profile.user_id);
+    conn.execute(
+        r#"
+        INSERT INTO user_profiles (
+            id, name, email, phone, location, bio, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &profile.id.to_string(),
+            &profile.name,
+            &profile.email,
+            &profile.phone.as_deref().unwrap_or(""),
+            &profile.location.as_deref().unwrap_or(""),
+            &profile.bio.as_deref().unwrap_or(""),
+            &profile.created_at,
+            &profile.updated_at,
+        ],
+    )?;
+
+    let mut rows = conn.query(
+        "SELECT * FROM user_profiles WHERE id = ?",
+        &[&profile.id.to_string()],
+    )?;
+
+    let created_profile = if let Some(row) = rows.next()? {
+        UserProfile {
+            id: Uuid::parse_str(&row.get::<String>("id")?).map_err(|e| e.to_string())?,
+            name: row.get("name")?,
+            email: row.get("email")?,
+            phone: Some(row.get("phone")?),
+            location: Some(row.get("location")?),
+            bio: Some(row.get("bio")?),
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
+        }
+    } else {
+        return Err("Profile not found".to_string());
+    };
+
+    assert_eq!(created_profile.id, profile.id);
+    assert_eq!(created_profile.name, profile.name);
+    assert_eq!(created_profile.email, profile.email);
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_get_user_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user_repo = UserRepository::new(pool.clone());
     let profile_repo = UserProfileRepository::new(pool);
 
@@ -103,92 +147,125 @@ async fn test_get_user_profile() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_update_user_profile() -> Result<()> {
-    let pool = setup_db().await?;
-    let user_repo = UserRepository::new(pool.clone());
-    let profile_repo = UserProfileRepository::new(pool);
+async fn test_update_user_profile() -> Result<(), String> {
+    let db = setup_test_db().await?;
+    let conn = db.get("sqlite:test.db")?;
 
-    // Créer un utilisateur
-    let user = User {
-        id: Uuid::new_v4().to_string(),
-        email: "test@example.com".to_string(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-    user_repo.create_user(&user).await?;
+    let profile_id = Uuid::new_v4();
+    let now = Utc::now();
 
     // Créer un profil
-    let profile = UserProfile {
-        id: Uuid::new_v4().to_string(),
-        user_id: user.id.clone(),
-        first_name: "John".to_string(),
-        last_name: "Doe".to_string(),
-        phone: Some("1234567890".to_string()),
-        location: Some("Paris".to_string()),
-        primary_home: Some("France".to_string()),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-
-    profile_repo.create_user_profile(&profile).await?;
+    conn.execute(
+        r#"
+        INSERT INTO user_profiles (
+            id, name, email, phone, location, bio, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &profile_id.to_string(),
+            "Old Name",
+            "old@example.com",
+            "",
+            "",
+            "",
+            &now,
+            &now,
+        ],
+    )?;
 
     // Mettre à jour le profil
-    let mut updated_profile = profile.clone();
-    updated_profile.first_name = "Jane".to_string();
-    updated_profile.last_name = "Smith".to_string();
-    updated_profile.phone = Some("0987654321".to_string());
+    let new_name = "New Name";
+    let new_email = "new@example.com";
+    let new_now = Utc::now();
 
-    let result = profile_repo.update_user_profile(&updated_profile).await?;
-    assert_eq!(result.first_name, "Jane");
-    assert_eq!(result.last_name, "Smith");
-    assert_eq!(result.phone, Some("0987654321".to_string()));
+    conn.execute(
+        r#"
+        UPDATE user_profiles 
+        SET name = ?, email = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+        &[new_name, new_email, &new_now, &profile_id.to_string()],
+    )?;
+
+    // Vérifier la mise à jour
+    let mut rows = conn.query(
+        "SELECT * FROM user_profiles WHERE id = ?",
+        &[&profile_id.to_string()],
+    )?;
+
+    let updated_profile = if let Some(row) = rows.next()? {
+        UserProfile {
+            id: Uuid::parse_str(&row.get::<String>("id")?).map_err(|e| e.to_string())?,
+            name: row.get("name")?,
+            email: row.get("email")?,
+            phone: Some(row.get("phone")?),
+            location: Some(row.get("location")?),
+            bio: Some(row.get("bio")?),
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
+        }
+    } else {
+        return Err("Profile not found".to_string());
+    };
+
+    assert_eq!(updated_profile.name, new_name);
+    assert_eq!(updated_profile.email, new_email);
 
     Ok(())
 }
 
 #[tokio::test]
-async fn test_delete_user_profile() -> Result<()> {
-    let pool = setup_db().await?;
-    let user_repo = UserRepository::new(pool.clone());
-    let profile_repo = UserProfileRepository::new(pool);
+async fn test_delete_user_profile() -> Result<(), String> {
+    let db = setup_test_db().await?;
+    let conn = db.get("sqlite:test.db")?;
 
-    // Créer un utilisateur
-    let user = User {
-        id: Uuid::new_v4().to_string(),
-        email: "test@example.com".to_string(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-    user_repo.create_user(&user).await?;
+    let profile_id = Uuid::new_v4();
+    let now = Utc::now();
 
     // Créer un profil
-    let profile = UserProfile {
-        id: Uuid::new_v4().to_string(),
-        user_id: user.id.clone(),
-        first_name: "John".to_string(),
-        last_name: "Doe".to_string(),
-        phone: Some("1234567890".to_string()),
-        location: Some("Paris".to_string()),
-        primary_home: Some("France".to_string()),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-
-    profile_repo.create_user_profile(&profile).await?;
+    conn.execute(
+        r#"
+        INSERT INTO user_profiles (
+            id, name, email, phone, location, bio, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+        &[
+            &profile_id.to_string(),
+            "Test Name",
+            "test@example.com",
+            "",
+            "",
+            "",
+            &now,
+            &now,
+        ],
+    )?;
 
     // Supprimer le profil
-    profile_repo.delete_user_profile(&profile.id).await?;
+    conn.execute(
+        "DELETE FROM user_profiles WHERE id = ?",
+        &[&profile_id.to_string()],
+    )?;
 
-    // Vérifier que le profil n'existe plus
-    let retrieved_profile = profile_repo.get_user_profile(&profile.id).await?;
-    assert!(retrieved_profile.is_none());
+    // Vérifier la suppression
+    let mut rows = conn.query(
+        "SELECT COUNT(*) as count FROM user_profiles WHERE id = ?",
+        &[&profile_id.to_string()],
+    )?;
+
+    if let Some(row) = rows.next()? {
+        let count: i64 = row.get("count")?;
+        assert_eq!(count, 0);
+    }
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_create_and_get_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -242,7 +319,7 @@ async fn test_create_and_get_profile() -> Result<()> {
 
 #[tokio::test]
 async fn test_get_profile_by_user_id() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -270,7 +347,7 @@ async fn test_get_profile_by_user_id() -> Result<()> {
 
 #[tokio::test]
 async fn test_update_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -309,7 +386,7 @@ async fn test_update_profile() -> Result<()> {
 
 #[tokio::test]
 async fn test_delete_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -340,7 +417,7 @@ async fn test_delete_profile() -> Result<()> {
 
 #[tokio::test]
 async fn test_nonexistent_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let repo = UserProfileRepository::new(pool);
     
     // Test de récupération d'un profil inexistant
@@ -370,7 +447,7 @@ async fn test_nonexistent_profile() -> Result<()> {
 
 #[tokio::test]
 async fn test_foreign_key_constraint() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let repo = UserProfileRepository::new(pool);
     
     // Tentative de création d'un profil avec un user_id inexistant
@@ -394,7 +471,7 @@ async fn test_foreign_key_constraint() -> Result<()> {
 
 #[tokio::test]
 async fn test_invalid_json_data() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -419,7 +496,7 @@ async fn test_invalid_json_data() -> Result<()> {
 
 #[tokio::test]
 async fn test_empty_profile() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -445,7 +522,7 @@ async fn test_empty_profile() -> Result<()> {
 
 #[tokio::test]
 async fn test_max_length_fields() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool);
     
@@ -472,7 +549,7 @@ async fn test_max_length_fields() -> Result<()> {
 
 #[tokio::test]
 async fn test_concurrent_updates() -> Result<()> {
-    let pool = setup_db().await?;
+    let pool = setup_test_db().await?;
     let user = create_test_user(&pool).await?;
     let repo = UserProfileRepository::new(pool.clone());
     

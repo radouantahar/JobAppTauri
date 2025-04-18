@@ -21,5 +21,16 @@ tauri-build = { version = "2.2.0", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.5.0", features = [] }
+tauri = { version = "2.5.0", features = ["shell-all"] }
 tauri-plugin-log = "2.0.0-rc"
+tauri-plugin-sql = { version = "2.2.0", features = ["sqlite"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.7", features = ["v4", "serde"] }
+anyhow = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls"] }
+argon2 = "0.5"
+jsonwebtoken = "9.3"
+password-hash = "0.5"
+rand = "0.8"
+base64 = "0.21"

@@ -6,11 +6,11 @@ import { userService } from '../services/api';
 import { showNotification } from '@mantine/notifications';
 import type { UserProfile, ExperienceLevel } from '../types';
 
-const experienceLevels: { value: ExperienceLevel; label: string }[] = [
-  { value: 'entry', label: 'Junior' },
-  { value: 'mid', label: 'Confirmé' },
-  { value: 'senior', label: 'Senior' },
-  { value: 'lead', label: 'Expert' },
+const experienceLevels = [
+  { value: 'junior' as ExperienceLevel, label: 'Débutant' },
+  { value: 'mid' as ExperienceLevel, label: 'Intermédiaire' },
+  { value: 'senior' as ExperienceLevel, label: 'Senior' },
+  { value: 'expert' as ExperienceLevel, label: 'Expert' }
 ];
 
 export const Profile = () => {

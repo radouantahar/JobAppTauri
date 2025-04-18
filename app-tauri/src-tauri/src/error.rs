@@ -1,6 +1,6 @@
 use std::fmt;
-use rusqlite::Error as SqliteError;
 use serde::{Serialize, Deserialize};
+use tauri_plugin_sql::Error as SqlError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum AppError {
@@ -37,8 +37,8 @@ impl fmt::Display for AppError {
     }
 }
 
-impl From<SqliteError> for AppError {
-    fn from(error: SqliteError) -> Self {
+impl From<SqlError> for AppError {
+    fn from(error: SqlError) -> Self {
         AppError::Database(error.to_string())
     }
 }

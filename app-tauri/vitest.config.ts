@@ -7,9 +7,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/__tests__/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
@@ -22,6 +23,9 @@ export default defineConfig({
     },
     deps: {
       inline: [/@mantine\/.*/, /@tabler\/icons-react/],
+    },
+    typecheck: {
+      checker: 'tsc',
     },
   },
   resolve: {

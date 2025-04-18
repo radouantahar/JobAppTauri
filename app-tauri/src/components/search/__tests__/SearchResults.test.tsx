@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults } from '../SearchResults';
-import type { Job, JobType, JobSource, ExperienceLevel } from '../../../types';
-import { createISODateString } from '../../../types';
+import type { Job, JobType, JobSource, ExperienceLevel, Salary } from '../../../types/job';
+import { toISODateString } from '../../../types/core/date';
 
 vi.mock('../../JobCard', () => ({
   JobCard: ({ job }: { job: Job }) => <div data-testid={`job-card-${job.id}`}>{job.title}</div>
@@ -12,65 +12,47 @@ describe('SearchResults', () => {
   const mockJobs: Job[] = [
     {
       id: '1',
-      title: 'Développeur React',
-      company: 'TechCorp',
+      title: 'Développeur Full Stack',
+      company: 'Tech Corp',
       location: 'Paris',
-      description: 'Description du poste',
-      url: 'https://example.com/job',
-      type: 'CDI',
-      source: 'linkedin' as JobSource,
-      publishedAt: createISODateString('2024-03-20T00:00:00.000Z'),
-      jobType: 'full-time' as JobType,
+      type: 'CDI' as JobType,
+      postedAt: toISODateString(new Date('2024-03-20')),
       experienceLevel: 'mid' as ExperienceLevel,
       salary: {
-        min: 45000,
-        max: 55000,
+        min: 40000,
+        max: 60000,
         currency: 'EUR',
         period: 'year'
-      },
-      matchingScore: 0.95,
-      skills: ['React', 'TypeScript', 'Node.js'],
-      commuteTimes: [
-        {
-          mode: 'transit',
-          duration: 30,
-          distance: 5
-        }
-      ],
+      } as Salary,
+      description: 'Description du poste',
+      url: 'https://example.com/job/1',
       remote: true,
-      contractType: 'CDI',
-      createdAt: '2024-03-20T00:00:00.000Z'
+      skills: ['React', 'Node.js'],
+      jobType: 'CDI' as JobType,
+      commuteTimes: [],
+      source: 'linkedin' as JobSource
     },
     {
       id: '2',
-      title: 'Frontend Developer',
-      company: 'WebCorp',
+      title: 'Développeur Frontend',
+      company: 'Web Inc',
       location: 'Lyon',
-      description: 'Description du poste',
-      url: 'https://example.com/job2',
-      type: 'CDI',
-      source: 'indeed' as JobSource,
-      publishedAt: createISODateString('2024-03-19T00:00:00.000Z'),
-      jobType: 'full-time' as JobType,
+      type: 'CDI' as JobType,
+      postedAt: '2024-03-19',
       experienceLevel: 'senior' as ExperienceLevel,
       salary: {
         min: 50000,
-        max: 65000,
+        max: 70000,
         currency: 'EUR',
         period: 'year'
-      },
-      matchingScore: 0.85,
-      skills: ['React', 'TypeScript', 'CSS'],
-      commuteTimes: [
-        {
-          mode: 'driving',
-          duration: 45,
-          distance: 8
-        }
-      ],
+      } as Salary,
+      description: 'Description du poste',
+      url: 'https://example.com/job/2',
       remote: false,
-      contractType: 'CDI',
-      createdAt: '2024-03-19T00:00:00.000Z'
+      skills: ['React', 'TypeScript'],
+      jobType: 'CDI' as JobType,
+      commuteTimes: [],
+      source: 'indeed' as JobSource
     }
   ];
 
