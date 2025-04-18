@@ -12,10 +12,11 @@
 - [x] Configuration de Tauri avec React et TypeScript (2024-04-14)
 - [x] Configuration de la base de données SQLite (2024-04-14)
 - [x] Mise en place de la structure de base du projet (2024-04-14)
-- [x] Mise à jour des dépendances Tauri vers la version 2.0.0-rc.16 (2024-04-22)
-  - [x] Migration vers tauri-plugin-shell 2.0.0-rc.4
-  - [x] Mise à jour de tauri-build
+- [x] Mise à jour des dépendances Tauri vers la version 2.5.0 (2024-04-23)
+  - [x] Migration vers tauri-plugin-shell 2.0.0-rc
   - [x] Configuration des plugins
+  - [x] Tests de compilation réussis
+  - [x] Mise à jour de tauri-build
   - [x] Correction des features de tauri-plugin-shell
 
 ### Frontend
@@ -137,6 +138,12 @@
   - [x] Exemples de code
   - [x] Migration des données
   - [x] Tests unitaires
+- [x] Unification de la documentation des conversions de types (2024-04-23)
+  - [x] Fusion des fichiers de documentation
+  - [x] Mise à jour de la structure
+  - [x] Ajout d'exemples détaillés
+  - [x] Documentation des cas d'erreur
+  - [x] Guide des bonnes pratiques
 
 ### Tests des Modèles de Données
 - [x] Tests pour le modèle User (2024-04-23)
@@ -367,4 +374,21 @@
   - [x] Tests de mise à jour
   - [x] Tests de suppression
   - [x] Tests de recherche
-  - [x] Tests de validation 
+  - [x] Tests de validation
+
+## Tâches de Correction des Erreurs de Compilation 🔧
+
+### Phase 1 : Nettoyage des Imports
+- [x] Supprimer les imports redondants dans `src/commands/mod.rs`
+- [x] Supprimer les imports redondants dans `src/types/mod.rs`
+- [x] Organiser les imports par module
+- [x] Corriger les chemins d'import
+
+### Phase 2 : Implémentation des Traits
+- [x] Implémenter `Display` pour `UserId`
+- [x] Implémenter `FromRow` pour `DocumentTemplate`
+- [x] Implémenter `FromRow` pour `KanbanColumn`
+- [x] Implémenter `FromRow` pour `KanbanCard`
+- [x] Implémenter `FromRow` pour `JobStats`
+- [x] Résoudre les conflits de traits pour `UserProfile`
+- [x] Corriger les signatures de `find_by_id` pour utiliser `Uuid` au lieu de `
